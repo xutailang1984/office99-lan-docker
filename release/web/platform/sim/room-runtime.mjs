@@ -111,7 +111,7 @@ export class RoomRuntime {
       if(!this.running)p.ready=member.ready;
       session={playerId:p.id,accountId:member.accountId,readyForPlay:message.clientReady!==true,ackFrame:null,ackId:null,pendingFrame:null,pendingId:null,sequence:0,windowAt:this.now(),count:0};
       this.sessions.set(peerId,session);this.applyOwner();
-      this.output(peerId,{type:'welcome',selfId:p.id,slotId:p.slotId,spectator:false,protocolVersion:3,build:'0.11.7',stateDelta:1,maxPlayers:this.config.baseline.max_players,catalog:this.world.catalog(),world:this.world.staticWorld()});
+      this.output(peerId,{type:'welcome',selfId:p.id,slotId:p.slotId,spectator:false,protocolVersion:3,build:'0.11.8',stateDelta:1,maxPlayers:this.config.baseline.max_players,catalog:this.world.catalog(),world:this.world.staticWorld()});
       this.snapshot(peerId,session);this.events();return;
     }
     if(message.type==='snapshot_ack'){
@@ -133,7 +133,7 @@ export class RoomRuntime {
       if(message.command==='Save')void this.save().then(()=>this.output(peerId,{type:'event',eventType:'SaveResult',payload:{ok:true}})).catch(()=>{});
     }catch{this.output(peerId,{type:'error',code:'INVALID_TARGET',message:'操作无法完成，请重试'});}
   }
-  state() {const s=this.world.publicState(this.saveStatus);s.build='0.11.7';s.room={id:this.room.id,title:this.room.title,status:this.room.status};return s;}
+  state() {const s=this.world.publicState(this.saveStatus);s.build='0.11.8';s.room={id:this.room.id,title:this.room.title,status:this.room.status};return s;}
   snapshot(peerId,session,frame=null) {
     if(session.pendingId!==null)return;
     frame??=compileState(this.state());const delta=session.ackFrame&&session.ackFrame.worldId===frame.worldId?diffState(session.ackFrame,frame):null;

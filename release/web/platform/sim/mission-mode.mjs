@@ -65,12 +65,24 @@ function spawnPracticeProp(world,slot){
   const park=world.s.mission.park,types=world.c.destructibles.types;
   if(!types.length)return null;
   const kind=types[park.propCursor%types.length],center=PARK.props[slot];
-  if(world.scenePlayers().some(p=>p.lifeState!=='DEAD_WAIT'&&distance(p,center)<2.5))return null;
-  if(Object.values(world.s.destructibles).some(prop=>!prop.broken&&distance(prop,center)<3))return null;
-  const prop={id:world.id('prop'),kind:kind.id,material:kind.material,x:center.x,y:world.ground(center.x,center.z),z:center.z,yaw:0,hp:kind.hp,maxHp:kind.hp,size:{...kind.size},radius:Math.hypot(kind.size.x,kind.size.z)/2,revision:1,broken:false,seed:Math.floor(world.rng('props')*2147483647),missionFixture:true,practiceFixture:true,practiceSlot:slot,opened:false,resolution:null,lootContainerId:null};
-  world.s.destructibles[prop.id]=prop;
+  const paired=kind.id==='copier_shell',barrelPoint={x:center.x+2.35,z:center.z};
+  if(paired&&(slot!==0||park.activePropIds.length))return null;
+  const centers=paired?[center,barrelPoint]:[center];
+  if(centers.some(point=>world.scenePlayers().some(p=>p.lifeState!=='DEAD_WAIT'&&distance(p,point)<2.5)))return null;
+  if(centers.some(point=>Object.values(world.s.destructibles).some(prop=>!prop.broken&&distance(prop,point)<2)))return null;
+  const create=(definition,point,practiceSlot)=>{
+    const prop={id:world.id('prop'),kind:definition.id,material:definition.material,x:point.x,y:world.ground(point.x,point.z),z:point.z,yaw:0,hp:definition.hp,maxHp:definition.hp,size:{...definition.size},radius:Math.hypot(definition.size.x,definition.size.z)/2,revision:1,broken:false,seed:Math.floor(world.rng('props')*2147483647),missionFixture:true,practiceFixture:true,practiceSlot,opened:false,resolution:null,lootContainerId:null};
+    world.s.destructibles[prop.id]=prop;park.activePropIds.push(prop.id);return prop;
+  };
+  const prop=create(kind,center,slot);
+  if(paired){
+    const barrel=create(types.find(type=>type.id==='barrel'),barrelPoint,1);
+    prop.linkedBarrelId=barrel.id;prop.armed=false;prop.chainTriggered=false;prop.revision++;
+    barrel.linkedShellId=prop.id;barrel.revision++;
+    if(!park.propSeen.includes('barrel'))park.propSeen.push('barrel');
+  }
   if(world.navGeometry)world.navGeometry.tick=-1;
-  park.activePropIds.push(prop.id);park.propCursor++;
+  park.propCursor++;
   if(!park.propSeen.includes(kind.id))park.propSeen.push(kind.id);
   return prop;
 }

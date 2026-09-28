@@ -197,7 +197,7 @@ export class SurvivalWorld {
     return cached.solids=parts;
   }
   generateDestructibles() {
-    this.s.destructibles={};const types=this.c.destructibles.types,archive=types.find(type=>type.id==='archive_cabinet'),partition=types.find(type=>type.id==='partition_panel'),ordinary=types.filter(type=>!['archive_cabinet','partition_panel'].includes(type.id));
+    this.s.destructibles={};const types=this.c.destructibles.types,archive=types.find(type=>type.id==='archive_cabinet'),partition=types.find(type=>type.id==='partition_panel'),copier=types.find(type=>type.id==='copier_shell'),ordinary=types.filter(type=>!['archive_cabinet','partition_panel','copier_shell'].includes(type.id));
     // A new day can begin while teammates are already outside the camp.
     // Reserve their footprints, including downed players and retained fish,
     // so new solid scenery cannot appear around an existing body.
@@ -247,8 +247,32 @@ export class SurvivalWorld {
       const partitionGroupId=this.id('partition');
       for(let index=0;index<3;index++)create(partition,selected.points[index],{yaw:selected.yaw,partitionGroupId,partitionIndex:index,zoneId:zone.id});
     }
+    // Each shell is bound to one of the existing barrels. A paired barrel is
+    // still an ordinary prop: the shell cannot produce extra barrels or loot.
+    const barrels=Object.values(this.s.destructibles).filter(prop=>prop.kind==='barrel');
+    let paired=0;
+    for(const barrel of barrels){
+      if(paired>=copier.count)break;
+      let point=null;
+      for(let attempt=0;attempt<32&&!point;attempt++){
+        const angle=(attempt%16)*Math.PI/8+this.rng('props')*.08,distance=2.25+(attempt>=16?.3:0),x=barrel.x+Math.cos(angle)*distance,z=barrel.z+Math.sin(angle)*distance,y=this.ground(x,z);
+        if(Math.hypot(x,z)<16||Math.hypot(x,z)>this.c.level.boundary_radius-4||this.c.cycle.low_water_y-y>.6||Math.abs(y-barrel.y)>.4||this.blocked(x,y,z,.72)||occupied.some(actor=>Math.hypot(actor.x-x,actor.z-z)<(actor.radius??.45)+1.05))continue;
+        point={x,y,z};
+      }
+      if(!point)continue;
+      const shell=create(copier,point,{yaw:this.rng('props')<.5?0:Math.PI/2,linkedBarrelId:barrel.id,armed:false,chainTriggered:false});
+      barrel.linkedShellId=shell.id;barrel.revision++;paired++;
+    }
+    if(paired!==copier.count)throw Error('No safe copier shell placement');
   }
-  propMaterial(prop) { return prop?.material??(['barrel','archive_cabinet','equipment'].includes(prop?.kind)?'metal':'wood'); }
+  propMaterial(prop) { return prop?.material??(['barrel','archive_cabinet','copier_shell','equipment'].includes(prop?.kind)?'metal':'wood'); }
+  copierWeakHit(prop,hit) {
+    if(prop?.kind!=='copier_shell'||!['pistol','smg','carbine','lmg','shotgun','rifle'].includes(hit.weaponId))return false;
+    const at=hit.position;
+    if(!at||![at.x,at.y,at.z].every(Number.isFinite))return false;
+    const yaw=prop.yaw??0,dx=at.x-prop.x,dz=at.z-prop.z,localX=dx*Math.cos(yaw)-dz*Math.sin(yaw),localZ=dx*Math.sin(yaw)+dz*Math.cos(yaw),height=at.y-prop.y;
+    return Math.abs(localX)<=prop.size.x*.13&&height>=prop.size.y*.64&&height<=prop.size.y*.80&&localZ<=-prop.size.z*.46&&localZ>=-prop.size.z*.58;
+  }
   resolveArchiveLoot(prop,resolution,actorId=null) {
     if(prop.kind!=='archive_cabinet'||prop.resolution)return prop.lootContainerId?this.s.containers[prop.lootContainerId]??null:null;
     const config=this.c.destructibles.archive,table=resolution==='searched'?config.searched_rewards:config.smashed_rewards,index=resolution==='searched'?prop.seed%table.length:(prop.seed%10<7?0:Math.min(1,table.length-1)),rewards=table[index];
@@ -268,10 +292,18 @@ export class SurvivalWorld {
       this.event('Destroyed',{targetId:prop.id,kind:prop.kind,material:this.propMaterial(prop),position:{x:prop.x,y:prop.y,z:prop.z},seed:prop.seed,resolution:prop.resolution,lootContainerId:prop.lootContainerId??null,actorId:hit.actorId,weaponId:hit.weaponId??null,shotId:hit.shotId??null},prop.id);this.requestSave=true;return;
     }
     prop.broken=true;prop.hp=0;prop.revision++;
-    const partition=prop.kind==='partition_panel',forward={x:-Math.sin(prop.yaw??0),z:-Math.cos(prop.yaw??0)},dropX=partition?prop.x+forward.x*.8:prop.x,dropZ=partition?prop.z+forward.z*.8:prop.z;
-    const container=this.createContainer('loot',partition?1:2,{x:dropX,y:partition?this.ground(dropX,dropZ):prop.y,z:dropZ,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});
-    const definitionId=partition?'scrap':prop.seed%20===0?'treasure':prop.seed%7===0?'ammo_light':'scrap',quantity=partition?1:definitionId==='treasure'?1:definitionId==='ammo_light'?3:1+prop.seed%2;this.createItem(definitionId,quantity,container);prop.lootContainerId=container.id;
+    const partition=prop.kind==='partition_panel',copier=prop.kind==='copier_shell',forward={x:-Math.sin(prop.yaw??0),z:-Math.cos(prop.yaw??0)},dropX=partition||copier?prop.x+forward.x*.8:prop.x,dropZ=partition||copier?prop.z+forward.z*.8:prop.z;
+    const container=this.createContainer('loot',partition||copier?1:2,{x:dropX,y:partition||copier?this.ground(dropX,dropZ):prop.y,z:dropZ,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});
+    const definitionId=partition||copier?'scrap':prop.seed%20===0?'treasure':prop.seed%7===0?'ammo_light':'scrap',quantity=partition||copier?1:definitionId==='treasure'?1:definitionId==='ammo_light'?3:1+prop.seed%2;this.createItem(definitionId,quantity,container);prop.lootContainerId=container.id;
     this.event('Destroyed',{targetId:prop.id,kind:prop.kind,material:this.propMaterial(prop),position:{x:prop.x,y:prop.y,z:prop.z},seed:prop.seed,lootContainerId:container.id,actorId:hit.actorId,weaponId:hit.weaponId??null,shotId:hit.shotId??null},prop.id);this.requestSave=true;
+    if(copier&&prop.armed&&!prop.chainTriggered){
+      prop.chainTriggered=true;prop.revision++;
+      const barrel=this.s.destructibles[prop.linkedBarrelId];
+      if(barrel?.kind==='barrel'&&barrel.linkedShellId===prop.id&&!barrel.broken&&barrel.hp>0&&dist(prop,barrel)<=3){
+        this.event('CopierChain',{targetId:prop.id,barrelId:barrel.id,from:{x:prop.x,y:prop.y+prop.size.y*.7,z:prop.z},to:{x:barrel.x,y:barrel.y+barrel.size.y*.55,z:barrel.z},actorId:hit.actorId},prop.id);
+        this.breakProp(barrel,{actorId:hit.actorId,weaponId:hit.weaponId,shotId:hit.shotId});
+      }
+    }
   }
   drainEvents() { const events=this.events;this.events=[];return events; }
   location(id) { return this.c.level.locations.find(x=>x.id===id); }
@@ -883,11 +915,12 @@ export class SurvivalWorld {
   }
   resolveDamage() {
     const queued=this.damageQueue;this.damageQueue=[];const pending=[],groups=new Map();
-    for(const hit of queued){const key=hit.shotId?`${hit.shotId}:${hit.target}`:null;if(key&&groups.has(key)){const group=groups.get(key);group.damage+=hit.damage;group.pelletHits=(group.pelletHits??1)+(hit.pelletHits??1);}else {const group={...hit};pending.push(group);if(key)groups.set(key,group);}}
+    for(const hit of queued){const prop=this.s.destructibles?.[hit.target],weak=this.copierWeakHit(prop,hit),adjusted=prop?.kind==='copier_shell'?{...hit,damage:hit.damage*(weak?3:1),weak}:hit,key=hit.shotId?`${hit.shotId}:${hit.target}`:null;if(key&&groups.has(key)){const group=groups.get(key);group.damage+=adjusted.damage;group.pelletHits=(group.pelletHits??1)+(adjusted.pelletHits??1);if(weak&&!group.weak){group.weak=true;group.position=adjusted.position;}}else {const group={...adjusted};pending.push(group);if(key)groups.set(key,group);}}
     for(const hit of pending){const target=this.s.players[hit.target]??this.s.enemies[hit.target]??this.s.buildings[hit.target]??this.s.turrets[hit.target]??this.s.destructibles?.[hit.target];if(!target||(target.lifeState&&!this.inScene(target))||target.hp<=0&&target.lifeState!=='DOWNED')continue;
       const actor=this.s.players[hit.actorId]??this.s.enemies[hit.actorId]??this.s.turrets[hit.actorId],direction=unit(hit.direction??{x:target.x-(actor?.x??target.x),y:0,z:target.z-(actor?.z??target.z)}),targetKind=target.lifeState?'player':this.s.enemies[target.id]?'enemy':this.s.turrets[target.id]?'turret':this.s.destructibles?.[target.id]?'prop':'building';
       if(actor?.source==='practice'&&(targetKind!=='player'||!practiceEnemyInside(actor,target)))continue;
       const feedback={actorId:hit.actorId,targetId:target.id,targetKind,definitionId:target.definitionId??target.kind??'player',weaponId:hit.weaponId??actor?.definitionId??null,shotId:hit.shotId??null,direction,weak:hit.weak===true,shielded:hit.shielded===true,pelletHits:hit.pelletHits??1,position:hit.position??{x:target.x,y:target.y+(target.definitionId==='boss_crab'?1:.65),z:target.z}};
+      if(target.kind==='copier_shell'&&hit.weak&&!target.armed){target.armed=true;target.revision++;this.event('CopierArmed',{targetId:target.id,position:feedback.position,actorId:hit.actorId},target.id);this.requestSave=true;}
       if(target.lifeState){if(target.lifeState==='DEAD_WAIT')continue;if(this.s.players[hit.actorId]&&!this.s.friendlyFire)continue;if((target.joinProtectionUntil??0)>this.s.time||(target.lifeState==='DOWNED'&&(target.downedGraceRemaining??0)>0)){this.event('Hit',{...feedback,damage:0,killed:false,protected:true},target.id);continue;}target.damageAt=this.s.time;this.cancelRescueFor(target);this.cancelWork(target);this.cancelFishing(target,'受到伤害');if(target.lifeState==='DOWNED'){this.migrateLife(target);target.downedHp=Math.max(0,target.downedHp-hit.damage);target.selfReviveReadyIn=this.c.player.self_revive_quiet_seconds;target.hitSeq=(target.hitSeq??0)+1;target.hitAt=this.s.time;target.lastHitDirection=direction;target.downedRemaining=target.downedHp/target.downedBleedRate;this.setAction(target,'hurt',.18);this.event('Hit',{...feedback,damage:hit.damage,killed:target.downedHp<=0,hitSeq:target.hitSeq,hp:target.downedHp,maxHp:this.c.player.downed_hp,downed:true},target.id);if(target.downedHp<=0)this.die(target);continue;}this.setAction(target,'hurt',.15);}
       const hpBefore=target.hp;target.hp=Math.max(0,target.hp-hit.damage);target.revision=(target.revision??0)+1;target.hitSeq=(target.hitSeq??0)+1;target.hitAt=this.s.time;target.lastHitDirection=direction;
       if(targetKind==='enemy')this.aggro.damage(target,actor,Math.max(0,hpBefore-target.hp));
@@ -1240,7 +1273,7 @@ export class SurvivalWorld {
       Object.assign(publicPlayer,{weaponId:this.equipped(p,'weapon')?.definitionId??null,heldDefinitionId:p.heldSlot==='quick'&&s.time<(p.quickUseUntil??0)?p.quickUseDefinitionId:this.equipped(p)?.definitionId??null,equipmentDefinitionId:this.equipped(p)?.definitionId??null,velocity:p.velocity??{x:0,y:0,z:0},moveSpeed:p.moveSpeed??0,grounded:!p.swimming&&p.y<=this.ground(p.x,p.z)+.05,sprint:live(p)&&p.sprinting===true,ads:live(p)&&p.heldSlot==='weapon'&&!!this.equipped(p,'weapon')&&p.input.ads===true&&!p.sprinting&&!p.swimming&&s.time-(p.adsSince??s.time)>=(this.defs.weapons[this.equipped(p)?.definitionId]?.ads_seconds??.15),joinProtectionRemaining:Math.max(0,(p.joinProtectionUntil??0)-s.time),action:p.carryingId?'carry':s.time<(p.actionStartedAt??0)+(p.actionDuration??0)?p.action:p.reload?'reload':p.fishing?.state==='REEL'?'reel':p.work?'interact':'idle',actionSeq:p.actionSeq??0,actionStartedAt:p.actionStartedAt??s.time,actionDuration:p.actionDuration??0});
       publicPlayer.downedRemaining=p.lifeState==='DOWNED'?p.downedHp/p.downedBleedRate:0;publicPlayer.downedMaxHp=this.c.player.downed_hp;const rescuer=s.players[p.lockedBy];publicPlayer.rescue=rescuer?.work?.kind==='Revive'&&this.rescueValid(rescuer)&&this.rescueHeld(rescuer)?{rescuerId:rescuer.id,progress:rescuer.work.progress,duration:rescuer.work.duration}:null;
       publicPlayer.work=p.work?{kind:p.work.kind,targetId:p.work.targetId,progress:p.work.progress,duration:p.work.duration}:null;publicPlayer.fishing=p.fishing?{id:p.fishing.id,poolId:p.fishing.poolId,x:p.fishing.x,y:p.fishing.y??s.waterY,z:p.fishing.z,power:p.fishing.power??1,source:p.fishing.catch_kind==='salvage'?'magnet':'sea',catch_kind:p.fishing.catch_kind??'creature',state:p.fishing.state,progress:p.fishing.progress,tension:p.fishing.tension,remaining:p.fishing.remaining,struggling:p.fishing.struggling,reeling:p.input.reel===true,mode:p.fishing.mode,cue:p.fishing.cue,behavior:p.fishing.behavior,pullSide:p.fishing.pullSide,angleAdvantage:p.fishing.angleAdvantage,activity:p.fishing.activity,signal:p.fishing.signal,motion:p.fishing.motion}:null;return copy(publicPlayer);});
-    return {type:'state',protocolVersion:3,build:'0.11.7',mode:this.mode,mission:this.mode==='mission'?missionPublic(this):null,maxPlayers:this.c.baseline.max_players,difficulty:this.publicDifficulty(),snapshotId:s.tick,serverTick:s.tick,time:s.time,clock:this.publicClock(),dangerZones:this.dangerZones(),worldId:s.worldId,contentVersion:s.contentVersion,phase:s.phase,phaseElapsed:s.phaseElapsed,phaseRemaining:this.mode==='mission'?0:this.phaseRemaining(),dayIndex:s.dayIndex,threatStage:s.threatStage,lockedPlayerCount:s.lockedPlayerCount,waterY:s.waterY,paused:s.paused||this.needsBarrier,hostId:s.hostId,friendlyFire:s.friendlyFire,save,bank:copy(s.bank),players,items:copy(Object.values(s.items)),containers:copy(Object.values(s.containers)),buildings:copy(Object.values(s.buildings)),turrets:copy(Object.values(s.turrets)),enemies:copy(Object.values(s.enemies)),destructibles:copy(Object.values(s.destructibles??{}).map(prop=>({...prop,supportY:this.cachedPropBox(prop).y0}))),projectiles:copy(Object.values(s.projectiles)),nodes:copy(Object.values(s.nodes)),pools:Object.values(s.pools).map(p=>({...p,activeLines:this.scenePlayers().filter(x=>x.fishing?.poolId===p.id).length,submerged:s.waterY>this.ground(p.x+p.radius+2,p.z)+.6})),recovery:copy(s.recovery),night:copy(s.night),statistics:copy(s.statistics),world:this.staticWorld()};
+    return {type:'state',protocolVersion:3,build:'0.11.8',mode:this.mode,mission:this.mode==='mission'?missionPublic(this):null,maxPlayers:this.c.baseline.max_players,difficulty:this.publicDifficulty(),snapshotId:s.tick,serverTick:s.tick,time:s.time,clock:this.publicClock(),dangerZones:this.dangerZones(),worldId:s.worldId,contentVersion:s.contentVersion,phase:s.phase,phaseElapsed:s.phaseElapsed,phaseRemaining:this.mode==='mission'?0:this.phaseRemaining(),dayIndex:s.dayIndex,threatStage:s.threatStage,lockedPlayerCount:s.lockedPlayerCount,waterY:s.waterY,paused:s.paused||this.needsBarrier,hostId:s.hostId,friendlyFire:s.friendlyFire,save,bank:copy(s.bank),players,items:copy(Object.values(s.items)),containers:copy(Object.values(s.containers)),buildings:copy(Object.values(s.buildings)),turrets:copy(Object.values(s.turrets)),enemies:copy(Object.values(s.enemies)),destructibles:copy(Object.values(s.destructibles??{}).map(prop=>({...prop,supportY:this.cachedPropBox(prop).y0}))),projectiles:copy(Object.values(s.projectiles)),nodes:copy(Object.values(s.nodes)),pools:Object.values(s.pools).map(p=>({...p,activeLines:this.scenePlayers().filter(x=>x.fishing?.poolId===p.id).length,submerged:s.waterY>this.ground(p.x+p.radius+2,p.z)+.6})),recovery:copy(s.recovery),night:copy(s.night),statistics:copy(s.statistics),world:this.staticWorld()};
   }
   serialize() { for(const c of Object.values(this.s.containers))this.containerContent(c);this.aggro.prune();this.assertInvariants();return structuredClone(this.s); }
   assertInvariants() {

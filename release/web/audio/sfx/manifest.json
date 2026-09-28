@@ -130,6 +130,22 @@
       "priority": 56,
       "cooldown_ms": 45
     },
+    "impact_copier": {
+      "near": ["impacts/metal_01.ogg", "impacts/metal_02.ogg", "impacts/metal_03.ogg"],
+      "gain": 0.52,
+      "pitch_min": 1.14,
+      "pitch_max": 1.22,
+      "priority": 56,
+      "cooldown_ms": 55
+    },
+    "charge_copier": {
+      "near": ["interactions/archive_open_01.wav", "interactions/archive_open_02.wav", "interactions/archive_open_03.wav"],
+      "gain": 0.48,
+      "pitch_min": 1.22,
+      "pitch_max": 1.3,
+      "priority": 62,
+      "cooldown_ms": 180
+    },
     "impact_metal": {
       "near": ["impacts/metal_01.ogg", "impacts/metal_02.ogg", "impacts/metal_03.ogg"],
       "gain": 0.62,
@@ -201,6 +217,14 @@
       "pitch_max": 0.84,
       "priority": 61,
       "cooldown_ms": 90
+    },
+    "break_copier": {
+      "near": ["breaks/metal_01.ogg", "breaks/metal_02.ogg", "breaks/metal_03.ogg"],
+      "gain": 0.66,
+      "pitch_min": 1.14,
+      "pitch_max": 1.22,
+      "priority": 63,
+      "cooldown_ms": 110
     },
     "break_metal": {
       "near": ["breaks/metal_01.ogg", "breaks/metal_02.ogg", "breaks/metal_03.ogg"],

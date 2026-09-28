@@ -1,12 +1,16 @@
 {
   "schema": 1,
-  "version": "0.11.7",
+  "version": "0.11.8",
   "source": "verified-release",
   "fileCount": 171,
   "files": {
     ".dockerignore": {
       "bytes": 245,
       "sha256": "cf84b8e9cfef4d20c333ded8d7e201f8b0cb7275139a482159b71b9d369a5bc2"
+    },
+    "Dockerfile": {
+      "bytes": 1413,
+      "sha256": "18894eefb27e6b62498a394d7a36140680a0c058b9f015d274d7d1f2c95434ee"
     },
     "compose.yaml": {
       "bytes": 464,
@@ -16,21 +20,17 @@
       "bytes": 781,
       "sha256": "903660194f5194af2d0ded94d726e8cf127c236335905c4f38d2ce401453af87"
     },
-    "Dockerfile": {
-      "bytes": 1413,
-      "sha256": "18894eefb27e6b62498a394d7a36140680a0c058b9f015d274d7d1f2c95434ee"
-    },
     "docs/DOCKER-DEPLOYMENT.md": {
       "bytes": 4760,
       "sha256": "510f7c3e1de124a2219f36c5d53e8029440b52b189253bcd7ac30a42f892910d"
     },
     "server/package-lock.json": {
       "bytes": 915,
-      "sha256": "a2474a8b9f91e4d9d689f589fba267731ffb8328518782a62890db01ca90fae2"
+      "sha256": "08c9743f2705a7fc7373d882181a4e885e42fc88974d69cc05d45a10f1f4d015"
     },
     "server/package.json": {
       "bytes": 415,
-      "sha256": "4e63a996df4d7f9a72367a1c72eab92aa78609fc1a70bee09ea4e473d61f171f"
+      "sha256": "e69d3736c4828d975915722c0ee8dfa66ec82e98917933510fec8acc8b57fb26"
     },
     "server/platform/checked-store.mjs": {
       "bytes": 5294,
@@ -66,11 +66,11 @@
     },
     "server/server.mjs": {
       "bytes": 45928,
-      "sha256": "01d5541d41ff07a2519e2d34aaecef39e004c09f6e504edd1a222a26d8081380"
+      "sha256": "d0cc194f3554513616cbb4c131a569769ca3596791d7f5e74c4907c0be135377"
     },
     "server/survival/config.mjs": {
-      "bytes": 12700,
-      "sha256": "8add53d61a1bc38cb768663e4109b3bd0718d2c9a39430b8bad5d6f5f1a9ac39"
+      "bytes": 12928,
+      "sha256": "08d24a8e89badb6a16ae04c3eb75cbb9b6fe16e9744e9a1739f6604639265eb0"
     },
     "server/survival/director-combat.mjs": {
       "bytes": 14480,
@@ -117,8 +117,8 @@
       "sha256": "e2bc3a12be70f18d22b093a2f5b2fc45c7420f8162c3b16393a4acda6ee6abf7"
     },
     "server/survival/mission-mode.mjs": {
-      "bytes": 19318,
-      "sha256": "ff227b40117a889dcaecb549464afc3e9e23c641be7317b0eb91851065c3d197"
+      "bytes": 20013,
+      "sha256": "0b592ee98494cffcbe9a648ae5cd8920a6179672b3b437da8b67b320c796e1d4"
     },
     "server/survival/portable-id.mjs": {
       "bytes": 553,
@@ -126,7 +126,7 @@
     },
     "server/survival/room-runtime.mjs": {
       "bytes": 13251,
-      "sha256": "303c8e188cec44284391406051f3209134ce134c01aaae4e9cf7c56b446667ae"
+      "sha256": "b2082bd2533230161fa21ec7e32001ec1f30d5891d6bb6acee579245faa20848"
     },
     "server/survival/save-store.mjs": {
       "bytes": 3481,
@@ -134,7 +134,7 @@
     },
     "server/survival/service.mjs": {
       "bytes": 16379,
-      "sha256": "db5b5d17efd05376c67df434a90584493992d22fc80758e66a916ab70b7ea37e"
+      "sha256": "b4cb08ab97e918ca7cd81b60d1fcd3cfcc4217aa6c194832b4ea188b5239f3f8"
     },
     "server/survival/state-wire.mjs": {
       "bytes": 3347,
@@ -145,8 +145,8 @@
       "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
     },
     "server/survival/world.mjs": {
-      "bytes": 153503,
-      "sha256": "e500749fc77c91fa44e1676b9108b0e24aa304e8c3b8e14e33fdd4b855430c74"
+      "bytes": 156479,
+      "sha256": "07281ebc6b43ab56c42a23069d7f5a00b3e5c4d1c04e4423798979eb2bacd93e"
     },
     "tools/build-docker-release.mjs": {
       "bytes": 7601,
@@ -155,6 +155,14 @@
     "tools/verify-docker-release.mjs": {
       "bytes": 5404,
       "sha256": "023f4080f20fe84385af224ce9dcf3d991a1fd556ba77b171897906dfa3f2c2e"
+    },
+    "web/audio/sfx/LICENSE-KENNEY.txt": {
+      "bytes": 608,
+      "sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db"
+    },
+    "web/audio/sfx/SOURCES.md": {
+      "bytes": 2953,
+      "sha256": "393bbd9cd5f86617c1509d9669e750390e40a344f3364c4054e2cca38e38e4b2"
     },
     "web/audio/sfx/breaks/glass_01.ogg": {
       "bytes": 7403,
@@ -292,13 +300,9 @@
       "bytes": 2259,
       "sha256": "30896e9e1556333f00aaca99f590a40d1997c24bb50734d5e1a141158a85c129"
     },
-    "web/audio/sfx/LICENSE-KENNEY.txt": {
-      "bytes": 608,
-      "sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db"
-    },
     "web/audio/sfx/manifest.json": {
-      "bytes": 6935,
-      "sha256": "d538cc22a2c6a422f6dd419943d340ba86eae709d253a860e97951553fcfa36a"
+      "bytes": 7670,
+      "sha256": "0083650cbfc34d521b59c06c017ca9120898311bb23869e2fa217d30e159117c"
     },
     "web/audio/sfx/reloads/magazine_pistol.wav": {
       "bytes": 141416,
@@ -323,10 +327,6 @@
     "web/audio/sfx/reloads/shotgun_shell_03.ogg": {
       "bytes": 6156,
       "sha256": "c1d2c4f9910d4529581ae56a9a9a01454c4619fbb7d6da7616221d8ec58cc0c4"
-    },
-    "web/audio/sfx/SOURCES.md": {
-      "bytes": 2953,
-      "sha256": "393bbd9cd5f86617c1509d9669e750390e40a344f3364c4054e2cca38e38e4b2"
     },
     "web/audio/sfx/weapon-build.json": {
       "bytes": 6766,
@@ -470,15 +470,15 @@
     },
     "web/index.html": {
       "bytes": 10441,
-      "sha256": "4b35befef2ed35955507c7ff7965d97d3e50e0d45684d3796c3a3558209ba80b"
+      "sha256": "b6e48db74d33b6ed50e0b17b1048f0bfd481ad58c377a8c0be599079ead04bf6"
     },
     "web/index.js": {
       "bytes": 279815,
       "sha256": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba"
     },
     "web/index.pck": {
-      "bytes": 9237432,
-      "sha256": "042166490ee7d6394bbd3365b5ac90b01c17a3608c88f9c4403ad95a713c34c6"
+      "bytes": 9240632,
+      "sha256": "a6a169edeb1380c37ec9e476483ee10363350ce0e10be8c1844af5bd28ce44f5"
     },
     "web/index.png": {
       "bytes": 21443,
@@ -492,6 +492,10 @@
       "bytes": 175,
       "sha256": "a6e302069293159c9baa7ee2f7ff258a0b6d29614fae22f903e80123f3be54db"
     },
+    "web/platform/IslandSans.ttf": {
+      "bytes": 10589076,
+      "sha256": "c2b26e61020802aaf5ef11ee141d4e356daf9d33e61d4fcedda6d6da33a811c1"
+    },
     "web/platform/app.css": {
       "bytes": 22895,
       "sha256": "4dca6271d6915b84bdf0639e32c5b7016559c2b9b77e1c4e5b18fba25c175855"
@@ -501,8 +505,8 @@
       "sha256": "ab1440768ffbf87e81bd357f92389309f20e53ede0a7cd1bd65e698dcee7f1fe"
     },
     "web/platform/balance.json": {
-      "bytes": 25034,
-      "sha256": "81a66f092068ee6d3373317d2c9773a91fdf95a348256e4e103d988df31c8413"
+      "bytes": 25128,
+      "sha256": "e677c47609b95353c8eaf046c77601c1746a96e2a5e98158073c63feda6f735c"
     },
     "web/platform/checkpoint-store.mjs": {
       "bytes": 4240,
@@ -528,6 +532,10 @@
       "bytes": 1,
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
     },
+    "web/platform/icons/LICENSE-feather": {
+      "bytes": 1082,
+      "sha256": "308028e93fcf84972523cdf6e616f73168546b4953895f516d01287f16fe7bee"
+    },
     "web/platform/icons/arrow-left.svg": {
       "bytes": 261,
       "sha256": "a71d26dae8d7bd2c172a502258e13793ecf3fa80935d42f7fa692b8d182d0794"
@@ -543,10 +551,6 @@
     "web/platform/icons/home.svg": {
       "bytes": 287,
       "sha256": "2b633ad9144db455c1cb08dd75f6e47a1cbbb0aaa747205012db3578830e0541"
-    },
-    "web/platform/icons/LICENSE-feather": {
-      "bytes": 1082,
-      "sha256": "308028e93fcf84972523cdf6e616f73168546b4953895f516d01287f16fe7bee"
     },
     "web/platform/icons/plus.svg": {
       "bytes": 263,
@@ -578,11 +582,7 @@
     },
     "web/platform/index.html": {
       "bytes": 10441,
-      "sha256": "4b35befef2ed35955507c7ff7965d97d3e50e0d45684d3796c3a3558209ba80b"
-    },
-    "web/platform/IslandSans.ttf": {
-      "bytes": 10589076,
-      "sha256": "c2b26e61020802aaf5ef11ee141d4e356daf9d33e61d4fcedda6d6da33a811c1"
+      "sha256": "b6e48db74d33b6ed50e0b17b1048f0bfd481ad58c377a8c0be599079ead04bf6"
     },
     "web/platform/link-policy.mjs": {
       "bytes": 1193,
@@ -661,8 +661,8 @@
       "sha256": "e2bc3a12be70f18d22b093a2f5b2fc45c7420f8162c3b16393a4acda6ee6abf7"
     },
     "web/platform/sim/mission-mode.mjs": {
-      "bytes": 19318,
-      "sha256": "ff227b40117a889dcaecb549464afc3e9e23c641be7317b0eb91851065c3d197"
+      "bytes": 20013,
+      "sha256": "0b592ee98494cffcbe9a648ae5cd8920a6179672b3b437da8b67b320c796e1d4"
     },
     "web/platform/sim/portable-id.mjs": {
       "bytes": 553,
@@ -670,7 +670,7 @@
     },
     "web/platform/sim/room-runtime.mjs": {
       "bytes": 13251,
-      "sha256": "303c8e188cec44284391406051f3209134ce134c01aaae4e9cf7c56b446667ae"
+      "sha256": "b2082bd2533230161fa21ec7e32001ec1f30d5891d6bb6acee579245faa20848"
     },
     "web/platform/sim/state-wire.mjs": {
       "bytes": 3347,
@@ -681,12 +681,13 @@
       "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
     },
     "web/platform/sim/world.mjs": {
-      "bytes": 153503,
-      "sha256": "e500749fc77c91fa44e1676b9108b0e24aa304e8c3b8e14e33fdd4b855430c74"
+      "bytes": 156479,
+      "sha256": "07281ebc6b43ab56c42a23069d7f5a00b3e5c4d1c04e4423798979eb2bacd93e"
     },
     "web/play.html": {
       "bytes": 12445,
-      "sha256": "8f9132f912ebe448909e9e9cf9066a566cba0431e272796a87c02b0f1f41975c"
+      "sha256": "4551da32829fc6382fc3d5822c42f06ba1496a79e097adf8e621d4d9ee944124"
     }
-  }
+  },
+  "pckSha256": "a6a169edeb1380c37ec9e476483ee10363350ce0e10be8c1844af5bd28ce44f5"
 }
