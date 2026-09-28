@@ -114,6 +114,22 @@
       "priority": 52,
       "cooldown_ms": 45
     },
+    "impact_barricade": {
+      "near": ["impacts/wood_01.ogg", "impacts/wood_02.ogg", "impacts/wood_03.ogg"],
+      "gain": 0.6,
+      "pitch_min": 1.13,
+      "pitch_max": 1.2,
+      "priority": 54,
+      "cooldown_ms": 45
+    },
+    "impact_partition": {
+      "near": ["impacts/metal_01.ogg", "impacts/metal_02.ogg", "impacts/metal_03.ogg"],
+      "gain": 0.54,
+      "pitch_min": 0.78,
+      "pitch_max": 0.86,
+      "priority": 56,
+      "cooldown_ms": 45
+    },
     "impact_metal": {
       "near": ["impacts/metal_01.ogg", "impacts/metal_02.ogg", "impacts/metal_03.ogg"],
       "gain": 0.62,
@@ -168,6 +184,22 @@
       "pitch_min": 0.92,
       "pitch_max": 1.05,
       "priority": 58,
+      "cooldown_ms": 90
+    },
+    "break_barricade": {
+      "near": ["breaks/wood_01.ogg", "breaks/wood_02.ogg", "breaks/wood_03.ogg"],
+      "gain": 0.66,
+      "pitch_min": 1.1,
+      "pitch_max": 1.18,
+      "priority": 59,
+      "cooldown_ms": 90
+    },
+    "break_partition": {
+      "near": ["breaks/metal_01.ogg", "breaks/metal_02.ogg", "breaks/metal_03.ogg"],
+      "gain": 0.63,
+      "pitch_min": 0.76,
+      "pitch_max": 0.84,
+      "priority": 61,
       "cooldown_ms": 90
     },
     "break_metal": {

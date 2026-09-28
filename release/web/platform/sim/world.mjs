@@ -197,7 +197,7 @@ export class SurvivalWorld {
     return cached.solids=parts;
   }
   generateDestructibles() {
-    this.s.destructibles={};const types=this.c.destructibles.types,archive=types.find(type=>type.id==='archive_cabinet'),ordinary=types.filter(type=>type.id!=='archive_cabinet');
+    this.s.destructibles={};const types=this.c.destructibles.types,archive=types.find(type=>type.id==='archive_cabinet'),partition=types.find(type=>type.id==='partition_panel'),ordinary=types.filter(type=>!['archive_cabinet','partition_panel'].includes(type.id));
     // A new day can begin while teammates are already outside the camp.
     // Reserve their footprints, including downed players and retained fish,
     // so new solid scenery cannot appear around an existing body.
@@ -214,6 +214,38 @@ export class SurvivalWorld {
       for(let attempt=0;attempt<120;attempt++){const angle=(i%4)*Math.PI/2+(this.rng('props')-.5)*.55,radius=i<12?20+this.rng('props')*18:54+this.rng('props')*38,x=Math.sin(angle)*radius,z=Math.cos(angle)*radius,y=this.ground(x,z);if(this.c.cycle.low_water_y-y>=0||Math.hypot(x,z)<16||this.blocked(x,y,z,1.6)||Object.values(this.s.destructibles).some(prop=>Math.hypot(prop.x-x,prop.z-z)<3.5)||occupied.some(actor=>Math.hypot(actor.x-x,actor.z-z)<footprint+Math.SQRT2*actor.radius+.1))continue;point={x,y,z};break;}
       if(!point)point=this.choosePoint(this.location(i%2?'salvage':'supply'),22,[...Object.values(this.s.destructibles),...occupied],3.5,16,'props',this.c.cycle.low_water_y);
       create(definition,point);
+    }
+    // Each three-panel row is one readable obstacle, but every panel has its
+    // own authoritative health and collision. Removing the middle one opens a
+    // 1.25 m passage without removing the two pieces that still provide cover.
+    const panelSpacing=partition.size.x;
+    for(let groupIndex=0;groupIndex<partition.count/3;groupIndex++){
+      const zone=zones[(groupIndex*2)%zones.length];let selected=null;
+      const candidate=(x,z,yaw)=>{
+        const cosine=Math.cos(yaw),sine=Math.sin(yaw),points=[];
+        for(const index of [-1,0,1]){
+          const px=x+index*panelSpacing*cosine,pz=z-index*panelSpacing*sine,y=this.ground(px,pz);
+          if(Math.hypot(px,pz)<16||Math.hypot(px,pz)>this.c.level.boundary_radius-5||this.c.cycle.low_water_y-y>.6||this.blocked(px,y,pz,.85)||occupied.some(actor=>Math.hypot(actor.x-px,actor.z-pz)<(actor.radius??.45)+1.15))return null;
+          points.push({x:px,y,z:pz});
+        }
+        if(Math.max(...points.map(p=>p.y))-Math.min(...points.map(p=>p.y))>.3)return null;
+        for(const side of [-1,1]){
+          const ax=x+side*sine*1.35,az=z+side*cosine*1.35,ay=this.ground(ax,az);
+          if(this.c.cycle.low_water_y-ay>.6||this.blocked(ax,ay,az,.45)||occupied.some(actor=>Math.hypot(actor.x-ax,actor.z-az)<(actor.radius??.45)+.7))return null;
+        }
+        return {points,yaw};
+      };
+      for(let attempt=0;attempt<240&&!selected;attempt++){
+        const angle=this.rng('props')*Math.PI*2,radius=Math.sqrt(this.rng('props'))*Math.min(22,zone.radius??22),yaw=this.rng('props')<.5?0:Math.PI/2;
+        selected=candidate(zone.x+Math.sin(angle)*radius,zone.z+Math.cos(angle)*radius,yaw);
+      }
+      if(!selected)for(let radius=0;radius<=32&&!selected;radius+=4)for(let dx=-radius;dx<=radius&&!selected;dx+=4)for(let dz=-radius;dz<=radius&&!selected;dz+=4){
+        if(Math.max(Math.abs(dx),Math.abs(dz))!==radius)continue;
+        selected=candidate(zone.x+dx,zone.z+dz,0)??candidate(zone.x+dx,zone.z+dz,Math.PI/2);
+      }
+      if(!selected)throw Error('No safe partition placement');
+      const partitionGroupId=this.id('partition');
+      for(let index=0;index<3;index++)create(partition,selected.points[index],{yaw:selected.yaw,partitionGroupId,partitionIndex:index,zoneId:zone.id});
     }
   }
   propMaterial(prop) { return prop?.material??(['barrel','archive_cabinet','equipment'].includes(prop?.kind)?'metal':'wood'); }
@@ -235,8 +267,10 @@ export class SurvivalWorld {
       this.resolveArchiveLoot(prop,'smashed',hit.actorId);prop.broken=true;prop.hp=0;prop.revision++;
       this.event('Destroyed',{targetId:prop.id,kind:prop.kind,material:this.propMaterial(prop),position:{x:prop.x,y:prop.y,z:prop.z},seed:prop.seed,resolution:prop.resolution,lootContainerId:prop.lootContainerId??null,actorId:hit.actorId,weaponId:hit.weaponId??null,shotId:hit.shotId??null},prop.id);this.requestSave=true;return;
     }
-    prop.broken=true;prop.hp=0;prop.revision++;const container=this.createContainer('loot',2,{x:prop.x,y:prop.y,z:prop.z,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});
-    const definitionId=prop.seed%20===0?'treasure':prop.seed%7===0?'ammo_light':'scrap',quantity=definitionId==='treasure'?1:definitionId==='ammo_light'?3:1+prop.seed%2;this.createItem(definitionId,quantity,container);prop.lootContainerId=container.id;
+    prop.broken=true;prop.hp=0;prop.revision++;
+    const partition=prop.kind==='partition_panel',forward={x:-Math.sin(prop.yaw??0),z:-Math.cos(prop.yaw??0)},dropX=partition?prop.x+forward.x*.8:prop.x,dropZ=partition?prop.z+forward.z*.8:prop.z;
+    const container=this.createContainer('loot',partition?1:2,{x:dropX,y:partition?this.ground(dropX,dropZ):prop.y,z:dropZ,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});
+    const definitionId=partition?'scrap':prop.seed%20===0?'treasure':prop.seed%7===0?'ammo_light':'scrap',quantity=partition?1:definitionId==='treasure'?1:definitionId==='ammo_light'?3:1+prop.seed%2;this.createItem(definitionId,quantity,container);prop.lootContainerId=container.id;
     this.event('Destroyed',{targetId:prop.id,kind:prop.kind,material:this.propMaterial(prop),position:{x:prop.x,y:prop.y,z:prop.z},seed:prop.seed,lootContainerId:container.id,actorId:hit.actorId,weaponId:hit.weaponId??null,shotId:hit.shotId??null},prop.id);this.requestSave=true;
   }
   drainEvents() { const events=this.events;this.events=[];return events; }
@@ -1206,7 +1240,7 @@ export class SurvivalWorld {
       Object.assign(publicPlayer,{weaponId:this.equipped(p,'weapon')?.definitionId??null,heldDefinitionId:p.heldSlot==='quick'&&s.time<(p.quickUseUntil??0)?p.quickUseDefinitionId:this.equipped(p)?.definitionId??null,equipmentDefinitionId:this.equipped(p)?.definitionId??null,velocity:p.velocity??{x:0,y:0,z:0},moveSpeed:p.moveSpeed??0,grounded:!p.swimming&&p.y<=this.ground(p.x,p.z)+.05,sprint:live(p)&&p.sprinting===true,ads:live(p)&&p.heldSlot==='weapon'&&!!this.equipped(p,'weapon')&&p.input.ads===true&&!p.sprinting&&!p.swimming&&s.time-(p.adsSince??s.time)>=(this.defs.weapons[this.equipped(p)?.definitionId]?.ads_seconds??.15),joinProtectionRemaining:Math.max(0,(p.joinProtectionUntil??0)-s.time),action:p.carryingId?'carry':s.time<(p.actionStartedAt??0)+(p.actionDuration??0)?p.action:p.reload?'reload':p.fishing?.state==='REEL'?'reel':p.work?'interact':'idle',actionSeq:p.actionSeq??0,actionStartedAt:p.actionStartedAt??s.time,actionDuration:p.actionDuration??0});
       publicPlayer.downedRemaining=p.lifeState==='DOWNED'?p.downedHp/p.downedBleedRate:0;publicPlayer.downedMaxHp=this.c.player.downed_hp;const rescuer=s.players[p.lockedBy];publicPlayer.rescue=rescuer?.work?.kind==='Revive'&&this.rescueValid(rescuer)&&this.rescueHeld(rescuer)?{rescuerId:rescuer.id,progress:rescuer.work.progress,duration:rescuer.work.duration}:null;
       publicPlayer.work=p.work?{kind:p.work.kind,targetId:p.work.targetId,progress:p.work.progress,duration:p.work.duration}:null;publicPlayer.fishing=p.fishing?{id:p.fishing.id,poolId:p.fishing.poolId,x:p.fishing.x,y:p.fishing.y??s.waterY,z:p.fishing.z,power:p.fishing.power??1,source:p.fishing.catch_kind==='salvage'?'magnet':'sea',catch_kind:p.fishing.catch_kind??'creature',state:p.fishing.state,progress:p.fishing.progress,tension:p.fishing.tension,remaining:p.fishing.remaining,struggling:p.fishing.struggling,reeling:p.input.reel===true,mode:p.fishing.mode,cue:p.fishing.cue,behavior:p.fishing.behavior,pullSide:p.fishing.pullSide,angleAdvantage:p.fishing.angleAdvantage,activity:p.fishing.activity,signal:p.fishing.signal,motion:p.fishing.motion}:null;return copy(publicPlayer);});
-    return {type:'state',protocolVersion:3,build:'0.11.6',mode:this.mode,mission:this.mode==='mission'?missionPublic(this):null,maxPlayers:this.c.baseline.max_players,difficulty:this.publicDifficulty(),snapshotId:s.tick,serverTick:s.tick,time:s.time,clock:this.publicClock(),dangerZones:this.dangerZones(),worldId:s.worldId,contentVersion:s.contentVersion,phase:s.phase,phaseElapsed:s.phaseElapsed,phaseRemaining:this.mode==='mission'?0:this.phaseRemaining(),dayIndex:s.dayIndex,threatStage:s.threatStage,lockedPlayerCount:s.lockedPlayerCount,waterY:s.waterY,paused:s.paused||this.needsBarrier,hostId:s.hostId,friendlyFire:s.friendlyFire,save,bank:copy(s.bank),players,items:copy(Object.values(s.items)),containers:copy(Object.values(s.containers)),buildings:copy(Object.values(s.buildings)),turrets:copy(Object.values(s.turrets)),enemies:copy(Object.values(s.enemies)),destructibles:copy(Object.values(s.destructibles??{}).map(prop=>({...prop,supportY:this.cachedPropBox(prop).y0}))),projectiles:copy(Object.values(s.projectiles)),nodes:copy(Object.values(s.nodes)),pools:Object.values(s.pools).map(p=>({...p,activeLines:this.scenePlayers().filter(x=>x.fishing?.poolId===p.id).length,submerged:s.waterY>this.ground(p.x+p.radius+2,p.z)+.6})),recovery:copy(s.recovery),night:copy(s.night),statistics:copy(s.statistics),world:this.staticWorld()};
+    return {type:'state',protocolVersion:3,build:'0.11.7',mode:this.mode,mission:this.mode==='mission'?missionPublic(this):null,maxPlayers:this.c.baseline.max_players,difficulty:this.publicDifficulty(),snapshotId:s.tick,serverTick:s.tick,time:s.time,clock:this.publicClock(),dangerZones:this.dangerZones(),worldId:s.worldId,contentVersion:s.contentVersion,phase:s.phase,phaseElapsed:s.phaseElapsed,phaseRemaining:this.mode==='mission'?0:this.phaseRemaining(),dayIndex:s.dayIndex,threatStage:s.threatStage,lockedPlayerCount:s.lockedPlayerCount,waterY:s.waterY,paused:s.paused||this.needsBarrier,hostId:s.hostId,friendlyFire:s.friendlyFire,save,bank:copy(s.bank),players,items:copy(Object.values(s.items)),containers:copy(Object.values(s.containers)),buildings:copy(Object.values(s.buildings)),turrets:copy(Object.values(s.turrets)),enemies:copy(Object.values(s.enemies)),destructibles:copy(Object.values(s.destructibles??{}).map(prop=>({...prop,supportY:this.cachedPropBox(prop).y0}))),projectiles:copy(Object.values(s.projectiles)),nodes:copy(Object.values(s.nodes)),pools:Object.values(s.pools).map(p=>({...p,activeLines:this.scenePlayers().filter(x=>x.fishing?.poolId===p.id).length,submerged:s.waterY>this.ground(p.x+p.radius+2,p.z)+.6})),recovery:copy(s.recovery),night:copy(s.night),statistics:copy(s.statistics),world:this.staticWorld()};
   }
   serialize() { for(const c of Object.values(this.s.containers))this.containerContent(c);this.aggro.prune();this.assertInvariants();return structuredClone(this.s); }
   assertInvariants() {

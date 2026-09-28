@@ -1,6 +1,6 @@
 # 办公室的99夜 · Docker 部署
 
-这是已校验的 v0.11.6 网页版部署包，可在 Windows 和 macOS 的 Docker Desktop、以及 Linux Docker Engine 上运行。玩家只需用浏览器访问部署电脑的地址。下载本仓库不会带走原服务器的账号或冒险数据。
+这是已校验的 v0.11.7 网页版部署包，可在 Windows 和 macOS 的 Docker Desktop、以及 Linux Docker Engine 上运行。玩家只需用浏览器访问部署电脑的地址。下载本仓库不会带走原服务器的账号或冒险数据。
 
 ## 一次部署
 

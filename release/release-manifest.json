@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": "0.11.6",
+  "version": "0.11.7",
   "source": "verified-release",
   "fileCount": 171,
   "files": {
@@ -26,11 +26,11 @@
     },
     "server/package-lock.json": {
       "bytes": 915,
-      "sha256": "30302278a4adbeeb740e32f0e6d30d4c701073b64568326b5bf3aca0edf95d7b"
+      "sha256": "a2474a8b9f91e4d9d689f589fba267731ffb8328518782a62890db01ca90fae2"
     },
     "server/package.json": {
       "bytes": 415,
-      "sha256": "9faf414dbbe533b4136d625c252102248f1a5f8914e0abf2fa851a4cea60ccce"
+      "sha256": "4e63a996df4d7f9a72367a1c72eab92aa78609fc1a70bee09ea4e473d61f171f"
     },
     "server/platform/checked-store.mjs": {
       "bytes": 5294,
@@ -66,11 +66,11 @@
     },
     "server/server.mjs": {
       "bytes": 45928,
-      "sha256": "5db2213fe4018d4d6940023b36ae0da3548e67002d62431dfd06d19fbc7de318"
+      "sha256": "01d5541d41ff07a2519e2d34aaecef39e004c09f6e504edd1a222a26d8081380"
     },
     "server/survival/config.mjs": {
-      "bytes": 12625,
-      "sha256": "b0a464f4cc12ab6db06683555be0da59e82f4c7c9d360e8bdd21c24caf6f7d51"
+      "bytes": 12700,
+      "sha256": "8add53d61a1bc38cb768663e4109b3bd0718d2c9a39430b8bad5d6f5f1a9ac39"
     },
     "server/survival/director-combat.mjs": {
       "bytes": 14480,
@@ -126,7 +126,7 @@
     },
     "server/survival/room-runtime.mjs": {
       "bytes": 13251,
-      "sha256": "ad02527173f516fef6ffa33c8821a4e2758a2acd40277e4b36f910ea1f775f92"
+      "sha256": "303c8e188cec44284391406051f3209134ce134c01aaae4e9cf7c56b446667ae"
     },
     "server/survival/save-store.mjs": {
       "bytes": 3481,
@@ -134,7 +134,7 @@
     },
     "server/survival/service.mjs": {
       "bytes": 16379,
-      "sha256": "1e36e6204d348e4412010fb37c299b71657f5d3021c28376be2e40d40d3d8e16"
+      "sha256": "db5b5d17efd05376c67df434a90584493992d22fc80758e66a916ab70b7ea37e"
     },
     "server/survival/state-wire.mjs": {
       "bytes": 3347,
@@ -145,8 +145,8 @@
       "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
     },
     "server/survival/world.mjs": {
-      "bytes": 150868,
-      "sha256": "ab4f0e5069d1e4f955648f03e4d5ae96f84f4b6b986b51567bcba341195c1e18"
+      "bytes": 153503,
+      "sha256": "e500749fc77c91fa44e1676b9108b0e24aa304e8c3b8e14e33fdd4b855430c74"
     },
     "tools/build-docker-release.mjs": {
       "bytes": 7601,
@@ -297,8 +297,8 @@
       "sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db"
     },
     "web/audio/sfx/manifest.json": {
-      "bytes": 6004,
-      "sha256": "b37a4ff56e56d2e22919e5323a3a849092f37d722f77b0aea7219a1780a1eae9"
+      "bytes": 6935,
+      "sha256": "d538cc22a2c6a422f6dd419943d340ba86eae709d253a860e97951553fcfa36a"
     },
     "web/audio/sfx/reloads/magazine_pistol.wav": {
       "bytes": 141416,
@@ -470,15 +470,15 @@
     },
     "web/index.html": {
       "bytes": 10441,
-      "sha256": "b6990c02b6ecc0148ec6b2feebc834430ee17b70eeed401484a7d4dbde0ab746"
+      "sha256": "4b35befef2ed35955507c7ff7965d97d3e50e0d45684d3796c3a3558209ba80b"
     },
     "web/index.js": {
       "bytes": 279815,
       "sha256": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba"
     },
     "web/index.pck": {
-      "bytes": 9235288,
-      "sha256": "d921f2225508378c46d82887f43bdf4d7ec2bcf14ce7bb802c48dfc5caac0707"
+      "bytes": 9237432,
+      "sha256": "042166490ee7d6394bbd3365b5ac90b01c17a3608c88f9c4403ad95a713c34c6"
     },
     "web/index.png": {
       "bytes": 21443,
@@ -501,8 +501,8 @@
       "sha256": "ab1440768ffbf87e81bd357f92389309f20e53ede0a7cd1bd65e698dcee7f1fe"
     },
     "web/platform/balance.json": {
-      "bytes": 24939,
-      "sha256": "50e5e4b8e6b1128ea91449640c706bb7f22632b8f3d9724d1ea57fe2fa9ce7df"
+      "bytes": 25034,
+      "sha256": "81a66f092068ee6d3373317d2c9773a91fdf95a348256e4e103d988df31c8413"
     },
     "web/platform/checkpoint-store.mjs": {
       "bytes": 4240,
@@ -578,7 +578,7 @@
     },
     "web/platform/index.html": {
       "bytes": 10441,
-      "sha256": "b6990c02b6ecc0148ec6b2feebc834430ee17b70eeed401484a7d4dbde0ab746"
+      "sha256": "4b35befef2ed35955507c7ff7965d97d3e50e0d45684d3796c3a3558209ba80b"
     },
     "web/platform/IslandSans.ttf": {
       "bytes": 10589076,
@@ -670,7 +670,7 @@
     },
     "web/platform/sim/room-runtime.mjs": {
       "bytes": 13251,
-      "sha256": "ad02527173f516fef6ffa33c8821a4e2758a2acd40277e4b36f910ea1f775f92"
+      "sha256": "303c8e188cec44284391406051f3209134ce134c01aaae4e9cf7c56b446667ae"
     },
     "web/platform/sim/state-wire.mjs": {
       "bytes": 3347,
@@ -681,12 +681,12 @@
       "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
     },
     "web/platform/sim/world.mjs": {
-      "bytes": 150868,
-      "sha256": "ab4f0e5069d1e4f955648f03e4d5ae96f84f4b6b986b51567bcba341195c1e18"
+      "bytes": 153503,
+      "sha256": "e500749fc77c91fa44e1676b9108b0e24aa304e8c3b8e14e33fdd4b855430c74"
     },
     "web/play.html": {
       "bytes": 12445,
-      "sha256": "1c92fea9e98d42639ef4556b2ca6bcc4220e8af76fad4be7b8e029860dfb1354"
+      "sha256": "8f9132f912ebe448909e9e9cf9066a566cba0431e272796a87c02b0f1f41975c"
     }
   }
 }

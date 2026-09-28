@@ -494,7 +494,7 @@ export async function createGameServer(options = {}) {
       const survivalStatus = survival?.status() ?? null;
       const ready = !closed && (!survivalStatus || survivalStatus.ready) && (!platformStatus || platformStatus.ready);
       response.setHeader('Content-Type', MIME['.json']);
-      response.end(JSON.stringify({ ok: ready, service: 'voxel-fishing', build: '0.11.6', pid: process.pid, ready, players: players.size + (survivalStatus?.players ?? 0), classicPlayers: players.size, maxPlayers: testLegacyModes ? maxPlayers : 8, mode: testLegacyModes ? 'isolated-legacy-test' : 'latest-only', legacyEnabled: testLegacyModes, survival: survivalStatus, platform: platformStatus }));
+      response.end(JSON.stringify({ ok: ready, service: 'voxel-fishing', build: '0.11.7', pid: process.pid, ready, players: players.size + (survivalStatus?.players ?? 0), classicPlayers: players.size, maxPlayers: testLegacyModes ? maxPlayers : 8, mode: testLegacyModes ? 'isolated-legacy-test' : 'latest-only', legacyEnabled: testLegacyModes, survival: survivalStatus, platform: platformStatus }));
       return;
     }
     if (closed) { response.writeHead(503); response.end(); return; }
