@@ -1,0 +1,4 @@
+# Preserve the verified release byte-for-byte on Windows and macOS checkouts.
+/release/** -text
+/deploy.sh text eol=lf
+/deploy.ps1 text eol=lf

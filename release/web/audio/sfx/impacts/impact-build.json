@@ -1,0 +1,115 @@
+{
+  "source": "https://kenney.nl/assets/impact-sounds",
+  "license": "CC0 1.0",
+  "description": "Processed stylized Kenney impact samples; not live recordings",
+  "source_archive_sha256": "029D734AF1582474EDF3A694D1B0CEBC97C1C152F2F39FA34D4C2BAFC5DE77F8",
+  "sample_rate": 48000,
+  "channels": 1,
+  "bits_per_sample": 16,
+  "records": [
+    {
+      "output": "enemy_body_01.wav",
+      "output_sha256": "0F64569958865758CD706141659AA00CAE3469E890843819B958D38623BFBE82",
+      "sources": [
+        {
+          "name": "impactSoft_medium_000.ogg",
+          "sha256": "7D3BA0BB5E60A11B5D3E558C141303DCF494256675FBF753C0D252D2CF0481E3"
+        },
+        {
+          "name": "impactPunch_medium_000.ogg",
+          "sha256": "486988AA2D6440FFC4C62A0E8CCF3C23673BA84424BD4723378D451B7255EB5C"
+        }
+      ]
+    },
+    {
+      "output": "enemy_body_02.wav",
+      "output_sha256": "BE04D699D95A2281E1ADA99C58197711C685F454B9620AFED3E9C44CF753D404",
+      "sources": [
+        {
+          "name": "impactSoft_medium_002.ogg",
+          "sha256": "5069E3571A77D7F7AAE9EF71D0364AA245FB7D64A7C8CC9956F221D03088C089"
+        },
+        {
+          "name": "impactPunch_medium_001.ogg",
+          "sha256": "E71D23ABCC3F10D9D6BC9615B2A431FFF70B12333A5FCDD9964457564ACE4349"
+        }
+      ]
+    },
+    {
+      "output": "enemy_armor_01.wav",
+      "output_sha256": "021DF442D08ADB7DE3E760F1CB4C2B63BC3770EF1D5708F2241335300AC1C0F5",
+      "sources": [
+        {
+          "name": "impactSoft_medium_001.ogg",
+          "sha256": "7642A4FD43E547AFE4F7ADFADB3DABB681C0FF512F52C1674BAE30A726841FAF"
+        },
+        {
+          "name": "impactMetal_light_001.ogg",
+          "sha256": "FBA69C467DDD85DA7B1D82E259F936B876D9BA6A3D6F1B24BDD10468E46BFE08"
+        }
+      ]
+    },
+    {
+      "output": "enemy_armor_02.wav",
+      "output_sha256": "F3C01674C7F622E35EED1C472079E1885B66F6C94741E5A1559DE7699E8A6B50",
+      "sources": [
+        {
+          "name": "impactSoft_medium_003.ogg",
+          "sha256": "5C4A1F35FDE7E14046931DA7BC3D1B23736541B7190BA107E08A379C4CA43CD6"
+        },
+        {
+          "name": "impactMetal_light_002.ogg",
+          "sha256": "25A96F90A9A1F88A531E824E126F0519504625E5635E65A72E4F31611428DB29"
+        }
+      ]
+    },
+    {
+      "output": "enemy_weak_01.wav",
+      "output_sha256": "C0ED5EA96AF11A9B283E1C54889E057474DE9D9104D5E318B0683A843A9DD500",
+      "sources": [
+        {
+          "name": "impactPunch_medium_002.ogg",
+          "sha256": "6492F9CCBC8D24DCEF607BB1B48790B7870961474561F7FE5601E1C73A3018EF"
+        },
+        {
+          "name": "impactGlass_light_000.ogg",
+          "sha256": "D750CF88097D0C3E69920E6E14496E1444E1A9DA01AA4CCA8F5EC8CB44C57B4F"
+        }
+      ]
+    },
+    {
+      "output": "enemy_weak_02.wav",
+      "output_sha256": "2FC2AE9BF7A8E5413228F65B400B8B68DE0865E3A591FE2D45866EA3E586C76B",
+      "sources": [
+        {
+          "name": "impactPunch_medium_003.ogg",
+          "sha256": "2D7C719C05999E0532F4384E1018E04CD916DB715140BF16DEE2DFF3F820E908"
+        },
+        {
+          "name": "impactGlass_light_001.ogg",
+          "sha256": "05E513FBD42829060EB37855F8C3866722EC5C39A8937C9BFDE518CC609EFFA2"
+        }
+      ]
+    },
+    {
+      "output": "glass_01.wav",
+      "output_sha256": "AF402A7E563E2C0EEE8978C36D34AA1B48B8C81B5C8F8A6D3EBCC919E8544DF7",
+      "sources": [
+        {
+          "name": "impactGlass_light_002.ogg",
+          "sha256": "710DB7451BB7857B9140DFE6AFE4621EA2188AD65EDA3919C569D1BB285B933D"
+        }
+      ]
+    },
+    {
+      "output": "glass_02.wav",
+      "output_sha256": "574542CCDB8FB5CD40A94788D08FC6C048FCF4357EE4EEB2DB4D67C559C23D35",
+      "sources": [
+        {
+          "name": "impactGlass_light_003.ogg",
+          "sha256": "765290CE32FA108C939A0DBD6FBACBCD05ABDE622B57B708EB8A64058EF4225A"
+        }
+      ]
+    }
+  ]
+}

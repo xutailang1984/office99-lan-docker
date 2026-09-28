@@ -1,0 +1,52 @@
+{
+  "source": "https://opengameart.org/content/202-more-sound-effects",
+  "license": "CC0 1.0",
+  "source_archive_sha256": "9428C1437137D9EA06BA94E13DA12488D4C57990A1C32D83DB9E7707E69FB3AF",
+  "sample_rate": 48000,
+  "channels": 1,
+  "bits_per_sample": 16,
+  "records": [
+    {
+      "cue": "archive_rummage",
+      "output": "archive_rummage_01.wav",
+      "source": "Paper & Stationery/Stationery_01.wav",
+      "source_sha256": "C9665C85A609AA97400C6F938A82846BCB1B54AA759D860ED9846C2535F2EDD7",
+      "output_sha256": "F4A9DE11C240A68A8534CB01C5407CE975EE93FA57412195AE49FC9B9ED718EC"
+    },
+    {
+      "cue": "archive_rummage",
+      "output": "archive_rummage_02.wav",
+      "source": "Paper & Stationery/Stationery_06.wav",
+      "source_sha256": "EC82E73448916014CCD0A8838C82F8A83B2A30436644E87618DC700DF3B26EE4",
+      "output_sha256": "07E74F2F628B84AC070E43B9614D2B7710847A315A19325D8ADF07298A8A3799"
+    },
+    {
+      "cue": "archive_rummage",
+      "output": "archive_rummage_03.wav",
+      "source": "Paper & Stationery/Stationery_08.wav",
+      "source_sha256": "7A1654B01D6548DA3EBC578883010056503B9841971151310C86FB80AAB882B8",
+      "output_sha256": "69328DAF523FD5101782AD7D2337EC49EA6F20ABFC10922FF14D0E77648B6CA7"
+    },
+    {
+      "cue": "archive_open",
+      "output": "archive_open_01.wav",
+      "source": "Keys, Locks, Door/Key_Lock_Door_30.wav",
+      "source_sha256": "B5661A631D77D2CCDA85739C4537C88DD972D6F7BC95749E45DB883BD32C0653",
+      "output_sha256": "52A6CAF79FEDB74B1C27F0B23B7F96100F56F52E869A03AE80A2BF5D41720644"
+    },
+    {
+      "cue": "archive_open",
+      "output": "archive_open_02.wav",
+      "source": "Keys, Locks, Door/Key_Lock_Door_39.wav",
+      "source_sha256": "DFA8146ABBA4218538EEA56377F64287DF451070BFAAB5AFFA3480EF5E2B320C",
+      "output_sha256": "D461013152A726650AE7033B4D4439496B8FCB3008671D9573DE30934563654A"
+    },
+    {
+      "cue": "archive_open",
+      "output": "archive_open_03.wav",
+      "source": "Keys, Locks, Door/Key_Lock_Door_51.wav",
+      "source_sha256": "02A8251E9CCC74A9C8F79E07080C13B6F3A0729EF983FCCEDC3A2B860EC97E8B",
+      "output_sha256": "78756802D9D8E6E38E7CA2D3041055DD1D23183AAD30A0EF713137E91A8B43DB"
+    }
+  ]
+}

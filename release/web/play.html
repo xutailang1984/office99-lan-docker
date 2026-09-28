@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>办公室的99夜</title><link rel="icon" type="image/svg+xml" href="icon.svg">
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17393e;color:#fcf3dc;font:16px system-ui,sans-serif}canvas{display:block;width:100%;height:100%;outline:none}#loading{position:absolute;inset:0;display:grid;place-content:center;gap:18px;text-align:center;background:#17393e}h1{font-size:42px;letter-spacing:8px;margin:0}p{color:#b8d2c5;margin:0}progress{width:300px;height:6px;accent-color:#f2c778;border:0}#status{font-size:13px}#error{white-space:pre-wrap;max-width:600px;line-height:1.7}</style></head><body><canvas id="canvas" tabindex="0">请使用支持 WebGL 2 的新版 Chrome 或 Edge 浏览器。</canvas><div id="loading"><div style="font-size:12px;letter-spacing:5px;color:#f2c778">OFFICE / 99N · CO-OP SURVIVAL</div><h1>办公室的99夜</h1><p>午休钓鱼，工位寻宝。和同事一起守灯。</p><progress id="progress" max="100" value="0"></progress><div id="status">正在装好鱼竿…</div><div id="error"></div></div><script>if(window.parent===window||typeof window.parent.makeGameTransport!=="function"){location.replace("/");}else{window.tidalTransport=window.parent.makeGameTransport(window);}for(const event of ["error","unhandledrejection"])window.addEventListener(event,()=>window.tidalTransport?.loading?.({phase:"error"}));</script><script src="index.js"></script><script>
+const nameField=document.createElement('input');nameField.id='player-name';nameField.setAttribute('aria-label','渔友昵称');nameField.setAttribute('maxlength','16');nameField.setAttribute('autocomplete','off');nameField.style.cssText='position:absolute;display:none;box-sizing:border-box;border:1px solid #64857d;border-radius:7px;background:#244a50;color:#fff1d2;padding:0 18px;font:500 19px system-ui,sans-serif;outline:none;z-index:3';document.body.appendChild(nameField);
+window.updateNameField=(d)=>{if(!nameField.dataset.initialized){nameField.value=d.value;nameField.dataset.initialized='true';}const r=document.getElementById('canvas').getBoundingClientRect();Object.assign(nameField.style,{display:d.visible?'block':'none',left:(r.left+d.x*r.width/d.vw)+'px',top:(r.top+d.y*r.height/d.vh)+'px',width:(d.w*r.width/d.vw)+'px',height:(d.h*r.height/d.vh)+'px',fontSize:(18*r.height/d.vh)+'px'});};
+const config={"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":9235288,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const BrowserAudio=window.AudioContext||window.webkitAudioContext;
+window.islandAudioFallback=!BrowserAudio||!('audioWorklet' in BrowserAudio.prototype);
+if(window.islandAudioFallback){
+  // LAN HTTP has no AudioWorklet. Ordinary Web Audio plays the same licensed
+  // samples as Godot so coworkers do not get a lower-quality sound path.
+  config.args=['--audio-driver','Dummy',...(config.args||[])];
+  document.body.dataset.audioMode='browser-samples';
+  const audioRoot='audio/sfx/',manifestUrl=audioRoot+'manifest.json',encodedAssets=new Map(),decodedAssets=new Map(),assetLoads=new Map(),lastVariation=new Map(),lastPlayed=new Map(),synthBuffers=new Map(),activeVoices=[];
+  const profiles={reel:[.065,680,.46],spool:[.18,340,.55],sonar:[.10,1230,.05],metal_catch:[.16,900,.22],snag:[.16,190,.38],splash:[.13,210,.85],pistol:[.095,610,.38],smg:[.075,540,.64],lmg:[.15,230,.82],carbine:[.11,430,.58],shotgun:[.2,310,.78],rifle:[.17,790,.44],break:[.24,190,.94],impact:[.085,340,.74],step:[.075,115,.70],swim:[.16,235,.85],land:[.14,80,.82],reload:[.14,530,.45],reload_insert:[.095,980,.48],equip:[.075,610,.28],cast:[.24,280,.72],hook:[.12,610,.18],swing:[.15,175,.74],dry:[.045,740,.34],hit:[.065,830,.18],weak:[.10,1050,.14],kill:[.18,720,.10],hurt:[.19,85,.45],phase:[.4,360,.10]};
+  let context=null,toneCount=0,audioManifest={voice_limit:32,cues:{}},manifestPromise=null,decodePromise=null;
+  const loadManifest=()=>manifestPromise??=fetch(manifestUrl,{cache:'force-cache'}).then(response=>{if(!response.ok)throw Error('audio manifest '+response.status);return response.json();}).then(value=>{audioManifest=value;document.body.dataset.audioManifest='ready';return value;}).catch(()=>{document.body.dataset.audioManifest='fallback';return audioManifest;});
+  const assetList=manifest=>[...new Set(Object.values(manifest.cues||{}).flatMap(cue=>[...(cue.near||[]),...(cue.far||[])]))];
+  const fetchAsset=relative=>{if(!assetLoads.has(relative))assetLoads.set(relative,fetch(audioRoot+relative,{cache:'force-cache'}).then(response=>{if(!response.ok)throw Error('audio asset '+response.status);return response.arrayBuffer();}).then(data=>{encodedAssets.set(relative,data);return data;}));return assetLoads.get(relative);};
+  window.preloadTidalAudio=async()=>{
+    const manifest=await loadManifest(),files=assetList(manifest);document.body.dataset.audioAssetsRequested=String(files.length);
+    await Promise.allSettled(files.map(fetchAsset));document.body.dataset.audioAssetsFetched=String(encodedAssets.size);
+    if(context)await decodeAssets();
+  };
+  const decodeAssets=async()=>{
+    if(!context)return;
+    if(decodePromise)return decodePromise;
+    decodePromise=(async()=>{await loadManifest();await Promise.all([...encodedAssets].map(async([relative,data])=>{if(decodedAssets.has(relative))return;try{decodedAssets.set(relative,await context.decodeAudioData(data.slice(0)));}catch{}}));document.body.dataset.audioAssetsReady=String(decodedAssets.size);decodePromise=null;})();
+    return decodePromise;
+  };
+  window.preloadTidalAudio();
+  const unlockAudio=()=>{
+    if(!BrowserAudio)return;
+    try{
+      context??=new BrowserAudio();
+      context.onstatechange=()=>document.body.dataset.audioState=context.state;
+      document.body.dataset.audioState=context.state;
+      const ready=context.state==='suspended'?context.resume():Promise.resolve();
+      ready.then(()=>window.preloadTidalAudio()).catch(()=>{});
+    }catch(e){document.body.dataset.audioState='unavailable';}
+  };
+  document.addEventListener('pointerdown',unlockAudio,{capture:true,passive:true});
+  document.addEventListener('keydown',unlockAudio,{capture:true,passive:true});
+  window.playIslandTone=(frequency,duration)=>{
+    if(!context||context.state!=='running')return;
+    const oscillator=context.createOscillator(),gain=context.createGain(),start=context.currentTime;
+    oscillator.frequency.value=frequency;
+    gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(0.09,start+duration/2);gain.gain.linearRampToValueAtTime(0,start+duration);
+    oscillator.connect(gain);gain.connect(context.destination);
+    oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
+    oscillator.start(start);oscillator.stop(start+duration);
+    document.body.dataset.toneCount=String(++toneCount);
+  };
+  const fallbackBuffer=kind=>{
+    if(synthBuffers.has(kind))return synthBuffers.get(kind);
+    const [duration,frequency,noise]=(profiles[kind]||profiles.equip),buffer=context.createBuffer(1,Math.ceil(context.sampleRate*duration),context.sampleRate),samples=buffer.getChannelData(0);let filtered=0;
+    for(let i=0;i<samples.length;i++){const t=i/context.sampleRate,life=t/duration;filtered+=(((i*16807%2147483647)/1073741823.5-1)-filtered)*.40;samples[i]=(filtered*noise+Math.sin(2*Math.PI*(frequency*t-frequency*.3*t*t/duration))*(1-noise))*Math.min(t/.006,1)*Math.pow(1-life,2.2);}
+    synthBuffers.set(kind,buffer);return buffer;
+  };
+  const acquireVoice=priority=>{
+    const limit=Math.max(12,Math.min(40,Number(audioManifest.voice_limit||32)));
+    if(activeVoices.length<limit)return true;
+    const candidate=activeVoices.reduce((best,voice)=>voice.priority<best.priority||(voice.priority===best.priority&&voice.started<best.started)?voice:best,activeVoices[0]);
+    if(priority<candidate.priority){document.body.dataset.audioDrops=String(Number(document.body.dataset.audioDrops||0)+1);return false;}
+    const index=activeVoices.indexOf(candidate);if(index>=0)activeVoices.splice(index,1);candidate.source.stop();document.body.dataset.audioSteals=String(Number(document.body.dataset.audioSteals||0)+1);return true;
+  };
+  const playBuffer=(buffer,request,entry,fallback)=>{
+    const priority=Number(request.priority??entry.priority??45);if(!acquireVoice(priority))return;
+    const source=context.createBufferSource(),gain=context.createGain(),panner=context.createStereoPanner?.();source.buffer=buffer;
+    const pitchMin=Number(entry.pitch_min??.96),pitchMax=Number(entry.pitch_max??1.04);source.playbackRate.value=pitchMin+Math.random()*(pitchMax-pitchMin);
+    gain.gain.value=Math.min(Math.max(Number(request.volume??.45),0),1)*Number(entry.gain??1);
+    source.connect(gain);if(panner){panner.pan.value=Math.min(Math.max(Number(request.pan??0),-1),1);gain.connect(panner);panner.connect(context.destination);}else gain.connect(context.destination);
+    const voice={source,priority,started:performance.now()};activeVoices.push(voice);document.body.dataset.audioActive=String(activeVoices.length);
+    source.onended=()=>{const index=activeVoices.indexOf(voice);if(index>=0)activeVoices.splice(index,1);source.disconnect();gain.disconnect();panner?.disconnect();document.body.dataset.audioActive=String(activeVoices.length);};
+    source.start();document.body.dataset.tidalCueCount=String(Number(document.body.dataset.tidalCueCount||0)+1);document.body.dataset.audioLastCue=request.kind;document.body.dataset.audioLastSource=fallback?'synth':'sample';document.body.dataset.audioLastAsset=String(request.asset||'');document.body.dataset.audioLastPan=String(Number(request.pan??0));document.body.dataset.audioLastPriority=String(priority);
+  };
+  const pickRelative=(kind,entry,distant)=>{
+    const field=distant&&Array.isArray(entry.far)&&entry.far.length?'far':'near',files=entry[field]||[];if(!files.length)return '';
+    const key=kind+':'+field,last=lastVariation.get(key)??-1;let index=Math.floor(Math.random()*files.length);if(files.length>1&&index===last)index=(index+1+Math.floor(Math.random()*(files.length-1)))%files.length;lastVariation.set(key,index);return files[index];
+  };
+  window.playTidalCue=(request,legacyVolume=.45)=>{
+    if(typeof request==='string')request={kind:request,volume:legacyVolume};
+    if(!context||context.state!=='running'||Number(request.volume??0)<=0)return;
+    const kind=String(request.kind||'equip'),entry=audioManifest.cues?.[kind]||{},cooldown=Number(entry.cooldown_ms||0),key=kind+':'+String(request.source||''),now=performance.now();
+    if(cooldown&&now-(lastPlayed.get(key)??-1e9)<cooldown)return;lastPlayed.set(key,now);
+    const relative=pickRelative(kind,entry,Boolean(request.distant)),buffer=decodedAssets.get(relative);request.asset=relative;
+    playBuffer(buffer||fallbackBuffer(kind),request,entry,!buffer);if(!buffer){document.body.dataset.audioFallbackCount=String(Number(document.body.dataset.audioFallbackCount||0)+1);window.preloadTidalAudio();}
+  };
+}else{document.body.dataset.audioMode='godot';}
+const engine=new Engine(config);
+const progress=document.getElementById('progress'),status=document.getElementById('status');
+// Graphics acceleration is optional: a missing module cannot block loading.
+async function prepareGraphics() {
+ let pending = true, timer;
+ const setup = import('./platform/frame-state-cache.mjs').then(module => {
+  if (pending) module.installFrameStateCache(document.getElementById('canvas'));
+ }).catch(() => {});
+ await Promise.race([setup, new Promise(resolve => { timer = setTimeout(resolve, 800); })]);
+ pending = false;
+ clearTimeout(timer);
+}
+prepareGraphics().then(()=>engine.startGame({onProgress:(current,total)=>{window.tidalTransport?.loading?.({phase:'download',current,total});if(total>0){progress.value=current/total*100;status.textContent='正在下载游戏 '+Math.round(current/total*100)+'%';}}})).then(()=>{document.getElementById('loading').style.display='none';window.tidalTransport?.loading?.({phase:'engine'});}).catch(()=>{status.textContent='游戏没能打开';document.getElementById('error').textContent='请检查网络，或用新版 Chrome / Edge 并开启图形加速后重试。';window.tidalTransport?.loading?.({phase:'error'});});
+</script></body></html>

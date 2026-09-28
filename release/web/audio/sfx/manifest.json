@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "voice_limit": 32,
+  "cues": {
+    "pistol": {
+      "near": ["weapons/pistol_near_01.wav", "weapons/pistol_near_02.wav", "weapons/pistol_near_03.wav"],
+      "far": ["weapons/pistol_far_01.wav", "weapons/pistol_far_02.wav"],
+      "gain": 0.82,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015,
+      "priority": 80,
+      "cooldown_ms": 45
+    },
+    "smg": {
+      "near": ["weapons/smg_near_01.wav", "weapons/smg_near_02.wav", "weapons/smg_near_03.wav"],
+      "far": ["weapons/smg_far_01.wav", "weapons/smg_far_02.wav"],
+      "gain": 0.65,
+      "pitch_min": 0.99,
+      "pitch_max": 1.02,
+      "priority": 78,
+      "cooldown_ms": 40
+    },
+    "carbine": {
+      "near": ["weapons/carbine_near_01.wav", "weapons/carbine_near_02.wav", "weapons/carbine_near_03.wav"],
+      "far": ["weapons/carbine_far_01.wav", "weapons/carbine_far_02.wav"],
+      "gain": 0.76,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015,
+      "priority": 80,
+      "cooldown_ms": 45
+    },
+    "lmg": {
+      "near": ["weapons/lmg_near_01.wav", "weapons/lmg_near_02.wav", "weapons/lmg_near_03.wav"],
+      "far": ["weapons/lmg_far_01.wav", "weapons/lmg_far_02.wav"],
+      "gain": 0.76,
+      "pitch_min": 0.985,
+      "pitch_max": 1.012,
+      "priority": 82,
+      "cooldown_ms": 40
+    },
+    "shotgun": {
+      "near": ["weapons/shotgun_near_01.wav", "weapons/shotgun_near_02.wav", "weapons/shotgun_near_03.wav"],
+      "far": ["weapons/shotgun_far_01.wav", "weapons/shotgun_far_02.wav"],
+      "gain": 0.84,
+      "pitch_min": 0.98,
+      "pitch_max": 1.015,
+      "priority": 88,
+      "cooldown_ms": 90
+    },
+    "rifle": {
+      "near": ["weapons/rifle_near_01.wav", "weapons/rifle_near_02.wav", "weapons/rifle_near_03.wav"],
+      "far": ["weapons/rifle_far_01.wav", "weapons/rifle_far_02.wav"],
+      "gain": 0.86,
+      "pitch_min": 0.99,
+      "pitch_max": 1.01,
+      "priority": 90,
+      "cooldown_ms": 120
+    },
+    "reload_pistol": {
+      "near": ["reloads/magazine_pistol.wav"],
+      "gain": 0.58,
+      "priority": 64,
+      "cooldown_ms": 120
+    },
+    "reload_smg": {
+      "near": ["reloads/magazine_rifle.wav"],
+      "gain": 0.48,
+      "pitch_min": 1.08,
+      "pitch_max": 1.12,
+      "priority": 62,
+      "cooldown_ms": 120
+    },
+    "reload_carbine": {
+      "near": ["reloads/magazine_rifle.wav"],
+      "gain": 0.56,
+      "priority": 64,
+      "cooldown_ms": 120
+    },
+    "reload_lmg": {
+      "near": ["reloads/magazine_rifle.wav"],
+      "gain": 0.62,
+      "pitch_min": 0.82,
+      "pitch_max": 0.86,
+      "priority": 66,
+      "cooldown_ms": 120
+    },
+    "reload_rifle": {
+      "near": ["reloads/magazine_rifle.wav"],
+      "gain": 0.58,
+      "pitch_min": 0.9,
+      "pitch_max": 0.94,
+      "priority": 66,
+      "cooldown_ms": 120
+    },
+    "reload_shotgun": {
+      "near": ["reloads/shotgun_pump.wav"],
+      "gain": 0.66,
+      "priority": 70,
+      "cooldown_ms": 150
+    },
+    "reload_insert_shotgun": {
+      "near": ["reloads/shotgun_shell_01.ogg", "reloads/shotgun_shell_02.ogg", "reloads/shotgun_shell_03.ogg"],
+      "gain": 0.42,
+      "pitch_min": 0.96,
+      "pitch_max": 1.04,
+      "priority": 68,
+      "cooldown_ms": 80
+    },
+    "impact_wood": {
+      "near": ["impacts/wood_01.ogg", "impacts/wood_02.ogg", "impacts/wood_03.ogg"],
+      "gain": 0.66,
+      "pitch_min": 0.92,
+      "pitch_max": 1.08,
+      "priority": 52,
+      "cooldown_ms": 45
+    },
+    "impact_metal": {
+      "near": ["impacts/metal_01.ogg", "impacts/metal_02.ogg", "impacts/metal_03.ogg"],
+      "gain": 0.62,
+      "pitch_min": 0.95,
+      "pitch_max": 1.07,
+      "priority": 54,
+      "cooldown_ms": 45
+    },
+    "impact_hard": {
+      "near": ["impacts/hard_01.ogg", "impacts/hard_02.ogg", "impacts/hard_03.ogg"],
+      "gain": 0.58,
+      "pitch_min": 0.92,
+      "pitch_max": 1.06,
+      "priority": 50,
+      "cooldown_ms": 45
+    },
+    "impact_glass": {
+      "near": ["impacts/glass_01.wav", "impacts/glass_02.wav"],
+      "gain": 0.68,
+      "pitch_min": 0.97,
+      "pitch_max": 1.03,
+      "priority": 54,
+      "cooldown_ms": 55
+    },
+    "impact_creature": {
+      "near": ["impacts/enemy_body_01.wav", "impacts/enemy_body_02.wav"],
+      "gain": 0.74,
+      "pitch_min": 0.96,
+      "pitch_max": 1.04,
+      "priority": 58,
+      "cooldown_ms": 55
+    },
+    "impact_armor": {
+      "near": ["impacts/enemy_armor_01.wav", "impacts/enemy_armor_02.wav"],
+      "gain": 0.76,
+      "pitch_min": 0.97,
+      "pitch_max": 1.04,
+      "priority": 60,
+      "cooldown_ms": 55
+    },
+    "impact_weak": {
+      "near": ["impacts/enemy_weak_01.wav", "impacts/enemy_weak_02.wav"],
+      "gain": 0.78,
+      "pitch_min": 0.98,
+      "pitch_max": 1.04,
+      "priority": 64,
+      "cooldown_ms": 60
+    },
+    "break_wood": {
+      "near": ["breaks/wood_01.ogg", "breaks/wood_02.ogg", "breaks/wood_03.ogg"],
+      "gain": 0.72,
+      "pitch_min": 0.92,
+      "pitch_max": 1.05,
+      "priority": 58,
+      "cooldown_ms": 90
+    },
+    "break_metal": {
+      "near": ["breaks/metal_01.ogg", "breaks/metal_02.ogg", "breaks/metal_03.ogg"],
+      "gain": 0.7,
+      "pitch_min": 0.94,
+      "pitch_max": 1.04,
+      "priority": 60,
+      "cooldown_ms": 90
+    },
+    "break_glass": {
+      "near": ["breaks/glass_01.ogg", "breaks/glass_02.ogg", "breaks/glass_03.ogg"],
+      "gain": 0.62,
+      "pitch_min": 0.96,
+      "pitch_max": 1.04,
+      "priority": 58,
+      "cooldown_ms": 90
+    },
+    "archive_rummage": {
+      "near": ["interactions/archive_rummage_01.wav", "interactions/archive_rummage_02.wav", "interactions/archive_rummage_03.wav"],
+      "gain": 0.46,
+      "pitch_min": 0.97,
+      "pitch_max": 1.03,
+      "priority": 44,
+      "cooldown_ms": 260
+    },
+    "archive_open": {
+      "near": ["interactions/archive_open_01.wav", "interactions/archive_open_02.wav", "interactions/archive_open_03.wav"],
+      "gain": 0.58,
+      "pitch_min": 0.96,
+      "pitch_max": 1.03,
+      "priority": 54,
+      "cooldown_ms": 180
+    }
+  }
+}

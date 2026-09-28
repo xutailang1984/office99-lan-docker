@@ -1,0 +1,692 @@
+{
+  "schema": 1,
+  "version": "0.11.6",
+  "source": "verified-release",
+  "fileCount": 171,
+  "files": {
+    ".dockerignore": {
+      "bytes": 245,
+      "sha256": "cf84b8e9cfef4d20c333ded8d7e201f8b0cb7275139a482159b71b9d369a5bc2"
+    },
+    "compose.yaml": {
+      "bytes": 464,
+      "sha256": "10b950e02654a87969ee4c65d8de8042bca290e08a3049c40a3a11ab4df4140d"
+    },
+    "docker/healthcheck.mjs": {
+      "bytes": 781,
+      "sha256": "903660194f5194af2d0ded94d726e8cf127c236335905c4f38d2ce401453af87"
+    },
+    "Dockerfile": {
+      "bytes": 1413,
+      "sha256": "18894eefb27e6b62498a394d7a36140680a0c058b9f015d274d7d1f2c95434ee"
+    },
+    "docs/DOCKER-DEPLOYMENT.md": {
+      "bytes": 4760,
+      "sha256": "510f7c3e1de124a2219f36c5d53e8029440b52b189253bcd7ac30a42f892910d"
+    },
+    "server/package-lock.json": {
+      "bytes": 915,
+      "sha256": "30302278a4adbeeb740e32f0e6d30d4c701073b64568326b5bf3aca0edf95d7b"
+    },
+    "server/package.json": {
+      "bytes": 415,
+      "sha256": "9faf414dbbe533b4136d625c252102248f1a5f8914e0abf2fa851a4cea60ccce"
+    },
+    "server/platform/checked-store.mjs": {
+      "bytes": 5294,
+      "sha256": "61e1447ac9c05f9568fed888ccc12b3363c6850d1eb8b7cbb0d2457b3082c09b"
+    },
+    "server/platform/deleted-adventures.mjs": {
+      "bytes": 2448,
+      "sha256": "8eaf99fe41013d5074d63f855ccb308ddeeb85e0096dab14e7b285da055c44eb"
+    },
+    "server/platform/gm-service.mjs": {
+      "bytes": 8240,
+      "sha256": "c7b6de416fad95ebdcfa6e733ca7bb825a7d8bd42690036cc644a94ae82d1d0f"
+    },
+    "server/platform/member-records.mjs": {
+      "bytes": 3079,
+      "sha256": "60440a605448aa2e546ce18c95ffcefbc4d56a1afbdafc5e1eeec67d385b6adc"
+    },
+    "server/platform/onboarding.mjs": {
+      "bytes": 3262,
+      "sha256": "f2bfaeeb19400696ad032ba90b7cd25ea9041767ea079d981cb0a22cca03b3a4"
+    },
+    "server/platform/relay-router.mjs": {
+      "bytes": 5330,
+      "sha256": "476cd2676f3e4a4c38d95186c4d18559718b1785d15b9b5f383df113284d9593"
+    },
+    "server/platform/service.mjs": {
+      "bytes": 36725,
+      "sha256": "1cacd180c317f6967ebf5e85fb0cf8ee9f642eb9392440660e76523e633eddd7"
+    },
+    "server/platform/storage-policy.mjs": {
+      "bytes": 14882,
+      "sha256": "7157baccebe189ceca554ccb9bedd3a8b4cbdf80d54cf8eb567662387c798ab1"
+    },
+    "server/server.mjs": {
+      "bytes": 45928,
+      "sha256": "5db2213fe4018d4d6940023b36ae0da3548e67002d62431dfd06d19fbc7de318"
+    },
+    "server/survival/config.mjs": {
+      "bytes": 12625,
+      "sha256": "b0a464f4cc12ab6db06683555be0da59e82f4c7c9d360e8bdd21c24caf6f7d51"
+    },
+    "server/survival/director-combat.mjs": {
+      "bytes": 14480,
+      "sha256": "9c22b404b67a723af954b7b4535991f699d5e2d086fc5fb939fb598532d11f59"
+    },
+    "server/survival/director-config.mjs": {
+      "bytes": 10413,
+      "sha256": "0a28e134da1f2106ba9932e121153954807cda782a558e40747584c5096330dc"
+    },
+    "server/survival/director.mjs": {
+      "bytes": 21997,
+      "sha256": "9ff07bac973146a7e5e81ffb8a9ac6241a152df76a9dbb8c6b714d4d819075b3"
+    },
+    "server/survival/enemy-aggro.mjs": {
+      "bytes": 8889,
+      "sha256": "6c068304acd97833e15dbd367084d82e0ad02cdf8e2bed6c07c3a58f4b1b7bd7"
+    },
+    "server/survival/enemy-navigation.mjs": {
+      "bytes": 7966,
+      "sha256": "68123616bfa6f2818a4746fa8007186db7369836b67276cc32f61ce91333ff00"
+    },
+    "server/survival/exploration-config.mjs": {
+      "bytes": 3265,
+      "sha256": "49493b4ce4b130b4e87cbfd92e1b89b5f04c1083131d797347ff7010ab2e8c0f"
+    },
+    "server/survival/exploration.mjs": {
+      "bytes": 23838,
+      "sha256": "423e00508a7c7b88ec337d5de14ccffbb5b1889903f4b5435266e68e3d105c39"
+    },
+    "server/survival/fishing-experience.mjs": {
+      "bytes": 9470,
+      "sha256": "f10bafeb2f0576df3f6f289ea969b6fbc40fdaa9c48f1d2ed684246dc9dad1d6"
+    },
+    "server/survival/gm-resources.mjs": {
+      "bytes": 4074,
+      "sha256": "cc24d69b1b6f1600187dd30ddad26f302db1b83e31e24ac9822d10967bfc955a"
+    },
+    "server/survival/host-session.mjs": {
+      "bytes": 2654,
+      "sha256": "cc9ac5526f442c52f32db3fce88a390da6b7f7a58e826b5c3aa89254a8780ed9"
+    },
+    "server/survival/member-progress.mjs": {
+      "bytes": 6444,
+      "sha256": "e2bc3a12be70f18d22b093a2f5b2fc45c7420f8162c3b16393a4acda6ee6abf7"
+    },
+    "server/survival/mission-mode.mjs": {
+      "bytes": 19318,
+      "sha256": "ff227b40117a889dcaecb549464afc3e9e23c641be7317b0eb91851065c3d197"
+    },
+    "server/survival/portable-id.mjs": {
+      "bytes": 553,
+      "sha256": "63b7f3d29fce061c11c76085d78b179de2d78765435d22ade20465c38021bfcc"
+    },
+    "server/survival/room-runtime.mjs": {
+      "bytes": 13251,
+      "sha256": "ad02527173f516fef6ffa33c8821a4e2758a2acd40277e4b36f910ea1f775f92"
+    },
+    "server/survival/save-store.mjs": {
+      "bytes": 3481,
+      "sha256": "bada029bb9b7d0689b7e0759eed6c2cefbfe517b3fbeeff4825a6a7a90d133c3"
+    },
+    "server/survival/service.mjs": {
+      "bytes": 16379,
+      "sha256": "1e36e6204d348e4412010fb37c299b71657f5d3021c28376be2e40d40d3d8e16"
+    },
+    "server/survival/state-wire.mjs": {
+      "bytes": 3347,
+      "sha256": "aa2371969da55119d3acecd97aaf284f76650e8372ac2431c53323d07f2e045a"
+    },
+    "server/survival/terrain-layout.mjs": {
+      "bytes": 4097,
+      "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
+    },
+    "server/survival/world.mjs": {
+      "bytes": 150868,
+      "sha256": "ab4f0e5069d1e4f955648f03e4d5ae96f84f4b6b986b51567bcba341195c1e18"
+    },
+    "tools/build-docker-release.mjs": {
+      "bytes": 7601,
+      "sha256": "1a231111a6e68008f82bfabcd22c9d7b1570e69440abb5b3beb6fcf5f00448c2"
+    },
+    "tools/verify-docker-release.mjs": {
+      "bytes": 5404,
+      "sha256": "023f4080f20fe84385af224ce9dcf3d991a1fd556ba77b171897906dfa3f2c2e"
+    },
+    "web/audio/sfx/breaks/glass_01.ogg": {
+      "bytes": 7403,
+      "sha256": "b44b39a940e8948e74b9bd3776bff980df43cf220abdaf0d467dc4c43c0244a5"
+    },
+    "web/audio/sfx/breaks/glass_02.ogg": {
+      "bytes": 8946,
+      "sha256": "58686e0e562612cc566791844a10e269f8d1921f4766c14ba43976fd0a429f4e"
+    },
+    "web/audio/sfx/breaks/glass_03.ogg": {
+      "bytes": 7661,
+      "sha256": "4978654ac840ad519692d5d5ba48a8101cabce13b9a577be73ad589185e5e9ed"
+    },
+    "web/audio/sfx/breaks/metal_01.ogg": {
+      "bytes": 6110,
+      "sha256": "e07045693e4a2b3d165c424e3dab4c781d9ff8880a386880ac89a51315d7f831"
+    },
+    "web/audio/sfx/breaks/metal_02.ogg": {
+      "bytes": 7279,
+      "sha256": "83554049f81f4db9209379e103c30bfa63f65c42189a03f300b045c2c82e23ae"
+    },
+    "web/audio/sfx/breaks/metal_03.ogg": {
+      "bytes": 5634,
+      "sha256": "b914c8f1eb7c0f34bb165d7c77f4be0351f6be0660c13c53e65424e262e2c093"
+    },
+    "web/audio/sfx/breaks/wood_01.ogg": {
+      "bytes": 6233,
+      "sha256": "15ff82332f342c30e469215539e1cc57e11b221aa2cf7e11e811d313a9927f3d"
+    },
+    "web/audio/sfx/breaks/wood_02.ogg": {
+      "bytes": 6239,
+      "sha256": "f1b07a53ac10c615fff9ba470511fdeb722b5902e1a8520759fc20ad6f546015"
+    },
+    "web/audio/sfx/breaks/wood_03.ogg": {
+      "bytes": 6146,
+      "sha256": "ce1e06f2a05f2634c645cb72f6a1623e64bc2d92be34917430a61031fb6597d4"
+    },
+    "web/audio/sfx/impacts/enemy_armor_01.wav": {
+      "bytes": 26924,
+      "sha256": "021df442d08adb7de3e760f1cb4c2b63bc3770ef1d5708f2241335300ac1c0f5"
+    },
+    "web/audio/sfx/impacts/enemy_armor_02.wav": {
+      "bytes": 26924,
+      "sha256": "f3c01674c7f622e35eed1c472079e1885b66f6c94741e5a1559de7699e8a6b50"
+    },
+    "web/audio/sfx/impacts/enemy_body_01.wav": {
+      "bytes": 25004,
+      "sha256": "0f64569958865758cd706141659aa00cae3469e890843819b958d38623bfbe82"
+    },
+    "web/audio/sfx/impacts/enemy_body_02.wav": {
+      "bytes": 25004,
+      "sha256": "be04d699d95a2281e1ada99c58197711c685f454b9620afed3e9c44cf753d404"
+    },
+    "web/audio/sfx/impacts/enemy_weak_01.wav": {
+      "bytes": 24044,
+      "sha256": "c0ed5ea96af11a9b283e1c54889e057474de9d9104d5e318b0683a843a9dd500"
+    },
+    "web/audio/sfx/impacts/enemy_weak_02.wav": {
+      "bytes": 24044,
+      "sha256": "2fc2ae9bf7a8e5413228f65b400b8b68de0865e3a591fe2d45866ea3e586c76b"
+    },
+    "web/audio/sfx/impacts/glass_01.wav": {
+      "bytes": 19244,
+      "sha256": "af402a7e563e2c0eee8978c36d34aa1b48b8c81b5c8f8a6d3ebcc919e8544df7"
+    },
+    "web/audio/sfx/impacts/glass_02.wav": {
+      "bytes": 19244,
+      "sha256": "574542ccdb8fb5cd40a94788d08fc6c048fcf4357ee4eeb2db4d67c559c23d35"
+    },
+    "web/audio/sfx/impacts/hard_01.ogg": {
+      "bytes": 5827,
+      "sha256": "f0e982611e97512fee5f777986b67e8b435434b601f94992ec044f7e89fb5acb"
+    },
+    "web/audio/sfx/impacts/hard_02.ogg": {
+      "bytes": 5636,
+      "sha256": "c3cd1c073d186ae8fa35788ba94de581f1826e7427a7bb26490b2695fac18efa"
+    },
+    "web/audio/sfx/impacts/hard_03.ogg": {
+      "bytes": 5795,
+      "sha256": "d0bf60905b59ff630ffe01eb0edeeacd2504eaa8fb6523aeef7d2458b78264d3"
+    },
+    "web/audio/sfx/impacts/impact-build.json": {
+      "bytes": 3960,
+      "sha256": "4b232c3add7105a9ee7d6b59f81202626abe8022730235f62f6601d50e81fe9c"
+    },
+    "web/audio/sfx/impacts/metal_01.ogg": {
+      "bytes": 7651,
+      "sha256": "33b5e6e37c6e9d54e07bf5a89b12c76e879f40c1ea83cdd82714df1d6f9fec6d"
+    },
+    "web/audio/sfx/impacts/metal_02.ogg": {
+      "bytes": 6967,
+      "sha256": "fba69c467ddd85da7b1d82e259f936b876d9ba6a3d6f1b24bdd10468e46bfe08"
+    },
+    "web/audio/sfx/impacts/metal_03.ogg": {
+      "bytes": 6804,
+      "sha256": "25a96f90a9a1f88a531e824e126f0519504625e5635e65a72e4f31611428db29"
+    },
+    "web/audio/sfx/impacts/wood_01.ogg": {
+      "bytes": 6343,
+      "sha256": "eb45e35b4bed784d3f120de4afec4b0d6ac09d9e143cce8cfcb7d739e1b1f3c3"
+    },
+    "web/audio/sfx/impacts/wood_02.ogg": {
+      "bytes": 6373,
+      "sha256": "4b76bf3ccc8e60d19188f3165b778a7817786faa6887c55d9049bcbeef3b425f"
+    },
+    "web/audio/sfx/impacts/wood_03.ogg": {
+      "bytes": 6366,
+      "sha256": "b183cf7a5bd783817e0e4b82af34ac6658fa1927049089dadc8b15c2ecc771dc"
+    },
+    "web/audio/sfx/interactions/archive_open_01.wav": {
+      "bytes": 23112,
+      "sha256": "52a6caf79fedb74b1c27f0b23b7f96100f56f52e869a03ae80a2bf5d41720644"
+    },
+    "web/audio/sfx/interactions/archive_open_02.wav": {
+      "bytes": 33248,
+      "sha256": "d461013152a726650ae7033b4d4439496b8fcb3008671d9573de30934563654a"
+    },
+    "web/audio/sfx/interactions/archive_open_03.wav": {
+      "bytes": 32786,
+      "sha256": "78756802d9d8e6e38e7ca2d3041055dd1d23183aad30a0ef713137e91a8b43db"
+    },
+    "web/audio/sfx/interactions/archive_rummage_01.wav": {
+      "bytes": 75032,
+      "sha256": "f4a9de11c240a68a8534cb01c5407ce975ee93fa57412195ae49fc9b9ed718ec"
+    },
+    "web/audio/sfx/interactions/archive_rummage_02.wav": {
+      "bytes": 103268,
+      "sha256": "07e74f2f628b84ac070e43b9614d2b7710847a315a19325d8adf07298a8a3799"
+    },
+    "web/audio/sfx/interactions/archive_rummage_03.wav": {
+      "bytes": 96894,
+      "sha256": "69328daf523fd5101782ad7d2337ec49ea6f20abfc10922ff14d0e77648b6ca7"
+    },
+    "web/audio/sfx/interactions/interaction-build.json": {
+      "bytes": 2259,
+      "sha256": "30896e9e1556333f00aaca99f590a40d1997c24bb50734d5e1a141158a85c129"
+    },
+    "web/audio/sfx/LICENSE-KENNEY.txt": {
+      "bytes": 608,
+      "sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db"
+    },
+    "web/audio/sfx/manifest.json": {
+      "bytes": 6004,
+      "sha256": "b37a4ff56e56d2e22919e5323a3a849092f37d722f77b0aea7219a1780a1eae9"
+    },
+    "web/audio/sfx/reloads/magazine_pistol.wav": {
+      "bytes": 141416,
+      "sha256": "26bbc508cc0c86b09a54b3abc0f34c20c5330771393fcf53511ed11a8306a763"
+    },
+    "web/audio/sfx/reloads/magazine_rifle.wav": {
+      "bytes": 127194,
+      "sha256": "cd31d6a1fa53ae127081d1e8c13b72fad5b13e20c5250f51335602a5c8e93261"
+    },
+    "web/audio/sfx/reloads/shotgun_pump.wav": {
+      "bytes": 40896,
+      "sha256": "38c35ce1cc5d1e263379412617b760dae27915acfd217756a86711edd5845d08"
+    },
+    "web/audio/sfx/reloads/shotgun_shell_01.ogg": {
+      "bytes": 6509,
+      "sha256": "f4bbee66ca191ec744b84fc07ac9ed2a6fda955d51cfed8360f12b62815d3cbd"
+    },
+    "web/audio/sfx/reloads/shotgun_shell_02.ogg": {
+      "bytes": 6603,
+      "sha256": "84253095543c094d83cd749f42ecfbc96e356b60385f18a192c18eafb25b3cc6"
+    },
+    "web/audio/sfx/reloads/shotgun_shell_03.ogg": {
+      "bytes": 6156,
+      "sha256": "c1d2c4f9910d4529581ae56a9a9a01454c4619fbb7d6da7616221d8ec58cc0c4"
+    },
+    "web/audio/sfx/SOURCES.md": {
+      "bytes": 2953,
+      "sha256": "393bbd9cd5f86617c1509d9669e750390e40a344f3364c4054e2cca38e38e4b2"
+    },
+    "web/audio/sfx/weapon-build.json": {
+      "bytes": 6766,
+      "sha256": "176829c0feb09c5a122df84172effba3e111002aa81ddb70ed6f82e74e56fa16"
+    },
+    "web/audio/sfx/weapons/carbine_far_01.wav": {
+      "bytes": 42092,
+      "sha256": "775cbef46e79181e8d69793a75f75870944beb5ca74f986389fd8122a4e18721"
+    },
+    "web/audio/sfx/weapons/carbine_far_02.wav": {
+      "bytes": 42092,
+      "sha256": "a699d6ca7c6a3c51ec58278fc721e01dd789fa1568bd2a526c5bd01e476ff4fc"
+    },
+    "web/audio/sfx/weapons/carbine_near_01.wav": {
+      "bytes": 42092,
+      "sha256": "de4679b0cd6e37c0f04875ccd88aef1f94a738a9ae657a72756d2cc4da731dae"
+    },
+    "web/audio/sfx/weapons/carbine_near_02.wav": {
+      "bytes": 42092,
+      "sha256": "0586165af2e7f08d8c4c50c26ad56d83751c15f746644ef7d69217447cde8ba3"
+    },
+    "web/audio/sfx/weapons/carbine_near_03.wav": {
+      "bytes": 42092,
+      "sha256": "7f008476680d8f0498924b799da63d981a48dc76b383708174abc5ec61c6ef02"
+    },
+    "web/audio/sfx/weapons/lmg_far_01.wav": {
+      "bytes": 34412,
+      "sha256": "35bd6bf2243b27aa63f7aadaaf5090b86f6a8c3d8cee92be6e2cadd936ac52e7"
+    },
+    "web/audio/sfx/weapons/lmg_far_02.wav": {
+      "bytes": 34412,
+      "sha256": "d476e57e033f0fb3be70def1dbf55f4a422c80a58d8f6fbab8cf6ef5233fb9fa"
+    },
+    "web/audio/sfx/weapons/lmg_near_01.wav": {
+      "bytes": 34412,
+      "sha256": "8d06e27ac600612a646d49c29749778654dcec7829fbd72b5e432d7f6525bba2"
+    },
+    "web/audio/sfx/weapons/lmg_near_02.wav": {
+      "bytes": 34412,
+      "sha256": "22c2f9ba6acfc9dcc0bcff1a697b12c5d9a76fc0918c783853aaaef858e87712"
+    },
+    "web/audio/sfx/weapons/lmg_near_03.wav": {
+      "bytes": 34412,
+      "sha256": "a1380be50677e00e97355f1952986caa2d3dff1ccff187faf13dba427a34cd25"
+    },
+    "web/audio/sfx/weapons/pistol_far_01.wav": {
+      "bytes": 45932,
+      "sha256": "60fb7b15b86164f9c3fd20535b52a6de686b4bb1e6eff5c029719da63e7e3317"
+    },
+    "web/audio/sfx/weapons/pistol_far_02.wav": {
+      "bytes": 45932,
+      "sha256": "4c021c1d8f2d6265484ae60132a91eea0c24a29657c4f336438d63fba25f4d1e"
+    },
+    "web/audio/sfx/weapons/pistol_near_01.wav": {
+      "bytes": 45932,
+      "sha256": "54601bd68f269a57cf6a2499546af9ac3428aa95e2c89de13960a8b8d7a74535"
+    },
+    "web/audio/sfx/weapons/pistol_near_02.wav": {
+      "bytes": 45932,
+      "sha256": "be483f483a863b929b3c46b19a19df93791b055646900937684c94279ff25789"
+    },
+    "web/audio/sfx/weapons/pistol_near_03.wav": {
+      "bytes": 45932,
+      "sha256": "549ba928d8bf1be82a3affa6c5405f7ff81b643f380151310a6899240d4055b7"
+    },
+    "web/audio/sfx/weapons/rifle_far_01.wav": {
+      "bytes": 115052,
+      "sha256": "c8a6d361b197440c3cbf216f672e428513f71ab48a05b69370cb11f707e22c14"
+    },
+    "web/audio/sfx/weapons/rifle_far_02.wav": {
+      "bytes": 115052,
+      "sha256": "6c57f073c6448df80d58bc9e7d92f6b08658c48632ef43033a78fe9fee104068"
+    },
+    "web/audio/sfx/weapons/rifle_near_01.wav": {
+      "bytes": 115052,
+      "sha256": "95e333f31340240493c020dc6f5af8cfd4574dc085e9b766edf1730cca27794e"
+    },
+    "web/audio/sfx/weapons/rifle_near_02.wav": {
+      "bytes": 115052,
+      "sha256": "e210674866e57e3eecb9a184a01b2308f7719b720c30349ac5f01e5cb0f2c3f4"
+    },
+    "web/audio/sfx/weapons/rifle_near_03.wav": {
+      "bytes": 115052,
+      "sha256": "22cabb53525b2eb570b6ff2a2c5a24b09e4ef7aceb9fd05bd1b4699fd076a286"
+    },
+    "web/audio/sfx/weapons/shotgun_far_01.wav": {
+      "bytes": 80492,
+      "sha256": "d4774893fbd77819cd49c1926eea786b0af2bcbd0096e98590ea6ec0ad125921"
+    },
+    "web/audio/sfx/weapons/shotgun_far_02.wav": {
+      "bytes": 80492,
+      "sha256": "97b746b62e5cdae5da242e451f70ea61b3e10e140aae0fd679347976bda70752"
+    },
+    "web/audio/sfx/weapons/shotgun_near_01.wav": {
+      "bytes": 80492,
+      "sha256": "c716540b1edf96a83afa422a473d9373b1d93889d9f2a4561c7ada6c8dbafbef"
+    },
+    "web/audio/sfx/weapons/shotgun_near_02.wav": {
+      "bytes": 80492,
+      "sha256": "1ea555d5c4f13a88bf8ebcd525c21ebc4800a1623ead66affa6ce66bcfce03ce"
+    },
+    "web/audio/sfx/weapons/shotgun_near_03.wav": {
+      "bytes": 80492,
+      "sha256": "231cc1259f12b6b927d787fed3c85b6a7fa9e7e095282a058b796cf6085d213e"
+    },
+    "web/audio/sfx/weapons/smg_far_01.wav": {
+      "bytes": 24812,
+      "sha256": "d116f481eec05cbda72d1fb1b3234cd74183d864dca6033a0d2e960f3aec8519"
+    },
+    "web/audio/sfx/weapons/smg_far_02.wav": {
+      "bytes": 24812,
+      "sha256": "85a8afed7b94ec95a2ba7346d05589eb6e943a24f7e985ad9f34a7ae9c063bc3"
+    },
+    "web/audio/sfx/weapons/smg_near_01.wav": {
+      "bytes": 24812,
+      "sha256": "375eaafd8d90318bbed4dd9d13e7ef64a32f7f6877bc1b6e2c068f0b78c9db5d"
+    },
+    "web/audio/sfx/weapons/smg_near_02.wav": {
+      "bytes": 24812,
+      "sha256": "5df4c5167259c6b459c40e288586110b842fafc9fed008fa070f0b3d411d8dd8"
+    },
+    "web/audio/sfx/weapons/smg_near_03.wav": {
+      "bytes": 24812,
+      "sha256": "5b3eeada5bdba353ca650a0c1f798e8c8b55aae8cc99e3f21c73dd6e55384167"
+    },
+    "web/classic.html": {
+      "bytes": 175,
+      "sha256": "a6e302069293159c9baa7ee2f7ff258a0b6d29614fae22f903e80123f3be54db"
+    },
+    "web/icon.svg": {
+      "bytes": 369,
+      "sha256": "4f1ef92dfac569a81b958a222ab506ade0a71faadd261176793663bee3a170fd"
+    },
+    "web/index.audio.position.worklet.js": {
+      "bytes": 2973,
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
+    },
+    "web/index.audio.worklet.js": {
+      "bytes": 7298,
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
+    },
+    "web/index.html": {
+      "bytes": 10441,
+      "sha256": "b6990c02b6ecc0148ec6b2feebc834430ee17b70eeed401484a7d4dbde0ab746"
+    },
+    "web/index.js": {
+      "bytes": 279815,
+      "sha256": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba"
+    },
+    "web/index.pck": {
+      "bytes": 9235288,
+      "sha256": "d921f2225508378c46d82887f43bdf4d7ec2bcf14ce7bb802c48dfc5caac0707"
+    },
+    "web/index.png": {
+      "bytes": 21443,
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e"
+    },
+    "web/index.wasm": {
+      "bytes": 39514754,
+      "sha256": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0"
+    },
+    "web/legacy.html": {
+      "bytes": 175,
+      "sha256": "a6e302069293159c9baa7ee2f7ff258a0b6d29614fae22f903e80123f3be54db"
+    },
+    "web/platform/app.css": {
+      "bytes": 22895,
+      "sha256": "4dca6271d6915b84bdf0639e32c5b7016559c2b9b77e1c4e5b18fba25c175855"
+    },
+    "web/platform/app.mjs": {
+      "bytes": 47062,
+      "sha256": "ab1440768ffbf87e81bd357f92389309f20e53ede0a7cd1bd65e698dcee7f1fe"
+    },
+    "web/platform/balance.json": {
+      "bytes": 24939,
+      "sha256": "50e5e4b8e6b1128ea91449640c706bb7f22632b8f3d9724d1ea57fe2fa9ce7df"
+    },
+    "web/platform/checkpoint-store.mjs": {
+      "bytes": 4240,
+      "sha256": "023661d15b05eed8416679a5a84557519932b520349cb9ecaa33e2c387fb58f2"
+    },
+    "web/platform/frame-state-cache.mjs": {
+      "bytes": 4571,
+      "sha256": "5036289661f43a6b226c22e05f58fecd235769ba829670ea9da94b3dff164930"
+    },
+    "web/platform/gm-client.mjs": {
+      "bytes": 1667,
+      "sha256": "afa7a9a9256d76ea4cad4b72ee1cd5fa1221c5b447a73dcb3a6b0c91550c9bcb"
+    },
+    "web/platform/gm-worker.mjs": {
+      "bytes": 4145,
+      "sha256": "36ec6dbfb95fd30f60555ce3f23e714babff693197cc020c90edb82b54ff60b3"
+    },
+    "web/platform/host-worker.mjs": {
+      "bytes": 3866,
+      "sha256": "eff2e3ab0a4d909a8f19550f8c5b427df8a7685fcc6a7997d690c7f8019c3862"
+    },
+    "web/platform/icons/.gdignore": {
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "web/platform/icons/arrow-left.svg": {
+      "bytes": 261,
+      "sha256": "a71d26dae8d7bd2c172a502258e13793ecf3fa80935d42f7fa692b8d182d0794"
+    },
+    "web/platform/icons/briefcase.svg": {
+      "bytes": 297,
+      "sha256": "abbc92b9516db24adee1e582af9f61e82ac18149c6921da94fa639e8b29fbfeb"
+    },
+    "web/platform/icons/coffee.svg": {
+      "bytes": 386,
+      "sha256": "7c0cfa9dceaf1bc3dfcca17cfd4fba18853d981ff2c783d7c54e9da8e98a2b8a"
+    },
+    "web/platform/icons/home.svg": {
+      "bytes": 287,
+      "sha256": "2b633ad9144db455c1cb08dd75f6e47a1cbbb0aaa747205012db3578830e0541"
+    },
+    "web/platform/icons/LICENSE-feather": {
+      "bytes": 1082,
+      "sha256": "308028e93fcf84972523cdf6e616f73168546b4953895f516d01287f16fe7bee"
+    },
+    "web/platform/icons/plus.svg": {
+      "bytes": 263,
+      "sha256": "85779cf0106427ed7943bf3a296243b1cfa5dacc13d0f7683e96a0aa4e3176a8"
+    },
+    "web/platform/icons/refresh-cw.svg": {
+      "bytes": 339,
+      "sha256": "919af710371124a9af7bd719ca7cffa725011bb07431ae4345f4499c6d316b73"
+    },
+    "web/platform/icons/shield.svg": {
+      "bytes": 242,
+      "sha256": "4c7125a51403ca1cb4b8ced412fd54e4c831aacefb2e5b6a21164192f83ce887"
+    },
+    "web/platform/icons/trash-2.svg": {
+      "bytes": 388,
+      "sha256": "d8bc68160668de5e1eea9ac399122e539658f1481d197f0dbea66e26e9afa12f"
+    },
+    "web/platform/icons/user.svg": {
+      "bytes": 270,
+      "sha256": "9702770af562da1cc2cc970f54c61253a4271959e76f30b865132de63189526b"
+    },
+    "web/platform/icons/users.svg": {
+      "bytes": 344,
+      "sha256": "243fdb4e387832bca0a9085dece53772cb35c0bf08b02994da9d190195fb9a4a"
+    },
+    "web/platform/icons/x.svg": {
+      "bytes": 261,
+      "sha256": "9d855cf8aab176e80a0448bee43c56338d28c59ec91637ce034cced006e282a2"
+    },
+    "web/platform/index.html": {
+      "bytes": 10441,
+      "sha256": "b6990c02b6ecc0148ec6b2feebc834430ee17b70eeed401484a7d4dbde0ab746"
+    },
+    "web/platform/IslandSans.ttf": {
+      "bytes": 10589076,
+      "sha256": "c2b26e61020802aaf5ef11ee141d4e356daf9d33e61d4fcedda6d6da33a811c1"
+    },
+    "web/platform/link-policy.mjs": {
+      "bytes": 1193,
+      "sha256": "58a13497ffc3cc860396d340dd1bcb6c998e8cf10b86a7f92a83d4179ed0f34d"
+    },
+    "web/platform/loading-ui.mjs": {
+      "bytes": 3269,
+      "sha256": "60d6b877fa8e45a94c2bcc634438f715176cf44acdd5e9844e36a8117dafdd37"
+    },
+    "web/platform/lobby-view.mjs": {
+      "bytes": 4986,
+      "sha256": "7cba351545aa0d7a74545c015b2ba58a698b230adccf8d76e5219b19f8f3f3fe"
+    },
+    "web/platform/local-host-save.mjs": {
+      "bytes": 5974,
+      "sha256": "eba83bfd43d4472e1ae2aaf9db0e6ca73d08897ca8aae07e0a40fa63e4360c68"
+    },
+    "web/platform/office-lobby-background.png": {
+      "bytes": 162854,
+      "sha256": "c65a7daa88760a879c4a23d320d56f8623629543e2e16ad141b3a9af61418dac"
+    },
+    "web/platform/onboarding-client.mjs": {
+      "bytes": 1491,
+      "sha256": "5b9bff798a1e1f80b2e9678d44bd66478c563ee570b0269ef721d5d437f87a86"
+    },
+    "web/platform/pointer-guard.mjs": {
+      "bytes": 5574,
+      "sha256": "7e599097aec161297ebf2edad9ab62bc03cf6d18207916db7dc42336a9d8871f"
+    },
+    "web/platform/retired-peer.mjs": {
+      "bytes": 1191,
+      "sha256": "e21dccdb3cebcc30139405822f8d7afb339db48b866907868fafb7d4cff8699c"
+    },
+    "web/platform/sim/director-combat.mjs": {
+      "bytes": 14480,
+      "sha256": "9c22b404b67a723af954b7b4535991f699d5e2d086fc5fb939fb598532d11f59"
+    },
+    "web/platform/sim/director-config.mjs": {
+      "bytes": 10413,
+      "sha256": "0a28e134da1f2106ba9932e121153954807cda782a558e40747584c5096330dc"
+    },
+    "web/platform/sim/director.mjs": {
+      "bytes": 21997,
+      "sha256": "9ff07bac973146a7e5e81ffb8a9ac6241a152df76a9dbb8c6b714d4d819075b3"
+    },
+    "web/platform/sim/enemy-aggro.mjs": {
+      "bytes": 8889,
+      "sha256": "6c068304acd97833e15dbd367084d82e0ad02cdf8e2bed6c07c3a58f4b1b7bd7"
+    },
+    "web/platform/sim/enemy-navigation.mjs": {
+      "bytes": 7966,
+      "sha256": "68123616bfa6f2818a4746fa8007186db7369836b67276cc32f61ce91333ff00"
+    },
+    "web/platform/sim/exploration-config.mjs": {
+      "bytes": 3265,
+      "sha256": "49493b4ce4b130b4e87cbfd92e1b89b5f04c1083131d797347ff7010ab2e8c0f"
+    },
+    "web/platform/sim/exploration.mjs": {
+      "bytes": 23838,
+      "sha256": "423e00508a7c7b88ec337d5de14ccffbb5b1889903f4b5435266e68e3d105c39"
+    },
+    "web/platform/sim/fishing-experience.mjs": {
+      "bytes": 9470,
+      "sha256": "f10bafeb2f0576df3f6f289ea969b6fbc40fdaa9c48f1d2ed684246dc9dad1d6"
+    },
+    "web/platform/sim/gm-resources.mjs": {
+      "bytes": 4074,
+      "sha256": "cc24d69b1b6f1600187dd30ddad26f302db1b83e31e24ac9822d10967bfc955a"
+    },
+    "web/platform/sim/host-session.mjs": {
+      "bytes": 2654,
+      "sha256": "cc9ac5526f442c52f32db3fce88a390da6b7f7a58e826b5c3aa89254a8780ed9"
+    },
+    "web/platform/sim/member-progress.mjs": {
+      "bytes": 6444,
+      "sha256": "e2bc3a12be70f18d22b093a2f5b2fc45c7420f8162c3b16393a4acda6ee6abf7"
+    },
+    "web/platform/sim/mission-mode.mjs": {
+      "bytes": 19318,
+      "sha256": "ff227b40117a889dcaecb549464afc3e9e23c641be7317b0eb91851065c3d197"
+    },
+    "web/platform/sim/portable-id.mjs": {
+      "bytes": 553,
+      "sha256": "63b7f3d29fce061c11c76085d78b179de2d78765435d22ade20465c38021bfcc"
+    },
+    "web/platform/sim/room-runtime.mjs": {
+      "bytes": 13251,
+      "sha256": "ad02527173f516fef6ffa33c8821a4e2758a2acd40277e4b36f910ea1f775f92"
+    },
+    "web/platform/sim/state-wire.mjs": {
+      "bytes": 3347,
+      "sha256": "aa2371969da55119d3acecd97aaf284f76650e8372ac2431c53323d07f2e045a"
+    },
+    "web/platform/sim/terrain-layout.mjs": {
+      "bytes": 4097,
+      "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
+    },
+    "web/platform/sim/world.mjs": {
+      "bytes": 150868,
+      "sha256": "ab4f0e5069d1e4f955648f03e4d5ae96f84f4b6b986b51567bcba341195c1e18"
+    },
+    "web/play.html": {
+      "bytes": 12445,
+      "sha256": "1c92fea9e98d42639ef4556b2ca6bcc4220e8af76fad4be7b8e029860dfb1354"
+    }
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "sample_rate": 48000,
+  "records": [
+    {
+      "output": "pistol_near_01.wav",
+      "source": "Walther PPQ/X_39P.wav",
+      "peak_seconds": 1.412,
+      "sha256": "54601bd68f269a57cf6a2499546af9ac3428aa95e2c89de13960a8b8d7a74535"
+    },
+    {
+      "output": "pistol_near_02.wav",
+      "source": "Walther PPQ/X_39P.wav",
+      "peak_seconds": 6.449,
+      "sha256": "be483f483a863b929b3c46b19a19df93791b055646900937684c94279ff25789"
+    },
+    {
+      "output": "pistol_near_03.wav",
+      "source": "Walther PPQ/X_39P.wav",
+      "peak_seconds": 10.665,
+      "sha256": "549ba928d8bf1be82a3affa6c5405f7ff81b643f380151310a6899240d4055b7"
+    },
+    {
+      "output": "pistol_far_01.wav",
+      "source": "Walther PPQ/X_31P.wav",
+      "peak_seconds": 1.09,
+      "sha256": "60fb7b15b86164f9c3fd20535b52a6de686b4bb1e6eff5c029719da63e7e3317"
+    },
+    {
+      "output": "pistol_far_02.wav",
+      "source": "Walther PPQ/X_31P.wav",
+      "peak_seconds": 5.248,
+      "sha256": "4c021c1d8f2d6265484ae60132a91eea0c24a29657c4f336438d63fba25f4d1e"
+    },
+    {
+      "output": "smg_near_01.wav",
+      "source": "Carl Gustav M45/G_31P.wav",
+      "peak_seconds": 0.315,
+      "sha256": "375eaafd8d90318bbed4dd9d13e7ef64a32f7f6877bc1b6e2c068f0b78c9db5d"
+    },
+    {
+      "output": "smg_near_02.wav",
+      "source": "Carl Gustav M45/G_31P.wav",
+      "peak_seconds": 3.506,
+      "sha256": "5df4c5167259c6b459c40e288586110b842fafc9fed008fa070f0b3d411d8dd8"
+    },
+    {
+      "output": "smg_near_03.wav",
+      "source": "Carl Gustav M45/G_31P.wav",
+      "peak_seconds": 6.733,
+      "sha256": "5b3eeada5bdba353ca650a0c1f798e8c8b55aae8cc99e3f21c73dd6e55384167"
+    },
+    {
+      "output": "smg_far_01.wav",
+      "source": "Carl Gustav M45/G_20P.wav",
+      "peak_seconds": 0.353,
+      "sha256": "d116f481eec05cbda72d1fb1b3234cd74183d864dca6033a0d2e960f3aec8519"
+    },
+    {
+      "output": "smg_far_02.wav",
+      "source": "Carl Gustav M45/G_20P.wav",
+      "peak_seconds": 2.264,
+      "sha256": "85a8afed7b94ec95a2ba7346d05589eb6e943a24f7e985ad9f34a7ae9c063bc3"
+    },
+    {
+      "output": "carbine_near_01.wav",
+      "source": "AR-15/D_32P.wav",
+      "peak_seconds": 0.709,
+      "sha256": "de4679b0cd6e37c0f04875ccd88aef1f94a738a9ae657a72756d2cc4da731dae"
+    },
+    {
+      "output": "carbine_near_02.wav",
+      "source": "AR-15/D_32P.wav",
+      "peak_seconds": 5.652,
+      "sha256": "0586165af2e7f08d8c4c50c26ad56d83751c15f746644ef7d69217447cde8ba3"
+    },
+    {
+      "output": "carbine_near_03.wav",
+      "source": "SKS/U_14P.wav",
+      "peak_seconds": 3.582,
+      "sha256": "7f008476680d8f0498924b799da63d981a48dc76b383708174abc5ec61c6ef02"
+    },
+    {
+      "output": "carbine_far_01.wav",
+      "source": "AR-15/D_24P.wav",
+      "peak_seconds": 0.587,
+      "sha256": "775cbef46e79181e8d69793a75f75870944beb5ca74f986389fd8122a4e18721"
+    },
+    {
+      "output": "carbine_far_02.wav",
+      "source": "AR-15/D_24P.wav",
+      "peak_seconds": 3.942,
+      "sha256": "a699d6ca7c6a3c51ec58278fc721e01dd789fa1568bd2a526c5bd01e476ff4fc"
+    },
+    {
+      "output": "lmg_near_01.wav",
+      "source": "AK-47/C_28P.wav",
+      "peak_seconds": 0.616,
+      "sha256": "8d06e27ac600612a646d49c29749778654dcec7829fbd72b5e432d7f6525bba2"
+    },
+    {
+      "output": "lmg_near_02.wav",
+      "source": "AK-47/C_28P.wav",
+      "peak_seconds": 3.262,
+      "sha256": "22c2f9ba6acfc9dcc0bcff1a697b12c5d9a76fc0918c783853aaaef858e87712"
+    },
+    {
+      "output": "lmg_near_03.wav",
+      "source": "AK-47/C_28P.wav",
+      "peak_seconds": 6.026,
+      "sha256": "a1380be50677e00e97355f1952986caa2d3dff1ccff187faf13dba427a34cd25"
+    },
+    {
+      "output": "lmg_far_01.wav",
+      "source": "AK-47/C_31P.wav",
+      "peak_seconds": 0.361,
+      "sha256": "35bd6bf2243b27aa63f7aadaaf5090b86f6a8c3d8cee92be6e2cadd936ac52e7"
+    },
+    {
+      "output": "lmg_far_02.wav",
+      "source": "AK-47/C_31P.wav",
+      "peak_seconds": 4.425,
+      "sha256": "d476e57e033f0fb3be70def1dbf55f4a422c80a58d8f6fbab8cf6ef5233fb9fa"
+    },
+    {
+      "output": "shotgun_near_01.wav",
+      "source": "Nova/O_21P.wav",
+      "peak_seconds": 0.436,
+      "sha256": "c716540b1edf96a83afa422a473d9373b1d93889d9f2a4561c7ada6c8dbafbef"
+    },
+    {
+      "output": "shotgun_near_02.wav",
+      "source": "Nova/O_21P.wav",
+      "peak_seconds": 3.47,
+      "sha256": "1ea555d5c4f13a88bf8ebcd525c21ebc4800a1623ead66affa6ce66bcfce03ce"
+    },
+    {
+      "output": "shotgun_near_03.wav",
+      "source": "Mossberg/N_30P.wav",
+      "peak_seconds": 1.702,
+      "sha256": "231cc1259f12b6b927d787fed3c85b6a7fa9e7e095282a058b796cf6085d213e"
+    },
+    {
+      "output": "shotgun_far_01.wav",
+      "source": "Nova/O_17P.wav",
+      "peak_seconds": 0.699,
+      "sha256": "d4774893fbd77819cd49c1926eea786b0af2bcbd0096e98590ea6ec0ad125921"
+    },
+    {
+      "output": "shotgun_far_02.wav",
+      "source": "Nova/O_17P.wav",
+      "peak_seconds": 3.713,
+      "sha256": "97b746b62e5cdae5da242e451f70ea61b3e10e140aae0fd679347976bda70752"
+    },
+    {
+      "output": "rifle_near_01.wav",
+      "source": "Tikka/W_29P.wav",
+      "peak_seconds": 0.584,
+      "sha256": "95e333f31340240493c020dc6f5af8cfd4574dc085e9b766edf1730cca27794e"
+    },
+    {
+      "output": "rifle_near_02.wav",
+      "source": "Tikka/W_29P.wav",
+      "peak_seconds": 5.671,
+      "sha256": "e210674866e57e3eecb9a184a01b2308f7719b720c30349ac5f01e5cb0f2c3f4"
+    },
+    {
+      "output": "rifle_near_03.wav",
+      "source": "Mosin Nagant/M_21P.wav",
+      "peak_seconds": 1.039,
+      "sha256": "22cabb53525b2eb570b6ff2a2c5a24b09e4ef7aceb9fd05bd1b4699fd076a286"
+    },
+    {
+      "output": "rifle_far_01.wav",
+      "source": "Tikka/W_24P.wav",
+      "peak_seconds": 0.781,
+      "sha256": "c8a6d361b197440c3cbf216f672e428513f71ab48a05b69370cb11f707e22c14"
+    },
+    {
+      "output": "rifle_far_02.wav",
+      "source": "Tikka/W_24P.wav",
+      "peak_seconds": 5.405,
+      "sha256": "6c57f073c6448df80d58bc9e7d92f6b08658c48632ef43033a78fe9fee104068"
+    }
+  ],
+  "reloads": [
+    {
+      "output": "magazine_pistol.wav",
+      "source": "gunreload1.wav",
+      "sha256": "26bbc508cc0c86b09a54b3abc0f34c20c5330771393fcf53511ed11a8306a763"
+    },
+    {
+      "output": "magazine_rifle.wav",
+      "source": "assaultriflereload1.wav",
+      "sha256": "cd31d6a1fa53ae127081d1e8c13b72fad5b13e20c5250f51335602a5c8e93261"
+    },
+    {
+      "output": "shotgun_pump.wav",
+      "source": "shotguncock.wav",
+      "sha256": "38c35ce1cc5d1e263379412617b760dae27915acfd217756a86711edd5845d08"
+    }
+  ]
+}
