@@ -1,5 +1,7 @@
 import {extendExplorationConfig} from './exploration-config.mjs';
+import {extendCraftingConfig} from './crafting-config.mjs';
 import {extendDirectorConfig} from './director-config.mjs';
+import {extendNightContentConfig} from './night-content-config.mjs';
 import { promises as fs } from 'node:fs';
 export async function loadConfig(file) {
   const config = JSON.parse(await fs.readFile(file, 'utf8'));
@@ -9,8 +11,8 @@ export async function loadConfig(file) {
   for (const key of ['player','cycle','session','economy','fishing','construction','recovery','level']) if (!config[key]) throw Error(`Missing config ${key}`);
   if(['downed_hp','downed_seconds','downed_min_seconds','downed_repeat_penalty','downed_grace_seconds','crawl_speed','self_revive_quiet_seconds','self_revive_seconds','self_revive_hp','revive_seconds','revive_hp'].some(k=>!Number.isFinite(config.player[k])||config.player[k]<=0)||config.player.downed_min_seconds>config.player.downed_seconds||config.player.crawl_speed>=config.player.walk_speed||config.player.revive_hp>config.player.max_hp||config.player.self_revive_hp>config.player.max_hp)throw Error('Invalid downed rescue config');
   const terminals=config.level.terminals;
-  const stationTypes={terminal:'shop',storage:'storage',emergency_tools:'shop',emergency_storage:'storage',upgrade:'upgrade',recycle:'recycle',emergency_upgrade:'upgrade',emergency_recycle:'recycle'};
-  if(!Array.isArray(terminals)||terminals.length!==8||new Set(terminals.map(t=>t?.id)).size!==terminals.length||terminals.some(t=>!t||typeof t.id!=='string'||!Object.hasOwn(stationTypes,t.id)||stationTypes[t.id]!==t.type||!Number.isFinite(t.x)||!Number.isFinite(t.z)||typeof t.label!=='string'||!t.label.length||t.label.length>4||(t.type==='storage'&&t.containerId!=='storage')))throw Error('Invalid station layout');
+  const stationTypes={terminal:'shop',storage:'storage',emergency_tools:'shop',emergency_storage:'storage',upgrade:'upgrade',recycle:'recycle',emergency_upgrade:'upgrade',emergency_recycle:'recycle',craft:'craft',emergency_craft:'craft'};
+  if(!Array.isArray(terminals)||terminals.length!==10||new Set(terminals.map(t=>t?.id)).size!==terminals.length||terminals.some(t=>!t||typeof t.id!=='string'||!Object.hasOwn(stationTypes,t.id)||stationTypes[t.id]!==t.type||!Number.isFinite(t.x)||!Number.isFinite(t.z)||typeof t.label!=='string'||!t.label.length||t.label.length>4||(t.type==='storage'&&t.containerId!=='storage')))throw Error('Invalid station layout');
   for (const key of ['items','weapons','rods','creatures','buildings','waves']) {
     if (!Array.isArray(config[key]) || new Set(config[key].map(x => x.id ?? x.stage)).size !== config[key].length) throw Error(`Invalid config ${key}`);
   }
@@ -51,9 +53,9 @@ export async function loadConfig(file) {
   }
   const extended=extendExplorationConfig(extendDirectorConfig(config));
   const destructibles=extended.destructibles,types=destructibles?.types,archive=destructibles?.archive;
-  const expectedTypes=['crate','barrel','barricade','partition_panel','archive_cabinet','copier_shell'];
-  if(!destructibles||!Number.isSafeInteger(destructibles.total_count)||destructibles.total_count!==36||!Array.isArray(types)||types.length!==expectedTypes.length||new Set(types.map(x=>x?.id)).size!==types.length||expectedTypes.some(id=>!types.some(x=>x.id===id))||types.some(type=>!Number.isSafeInteger(type.count)||type.count<1||!Number.isFinite(type.hp)||type.hp<=0||!['wood','metal'].includes(type.material)||!type.size||['x','y','z'].some(axis=>!Number.isFinite(type.size[axis])||type.size[axis]<=0))||types.reduce((sum,type)=>sum+type.count,0)!==destructibles.total_count||types.find(type=>type.id==='crate').count!==10||types.find(type=>type.id==='barrel').count!==8||types.find(type=>type.id==='barricade').count!==4||types.find(type=>type.id==='partition_panel').count!==6||types.find(type=>type.id==='archive_cabinet').count!==6||types.find(type=>type.id==='copier_shell').count!==2)throw Error('Invalid destructible config');
+  const expectedTypes=['crate','barrel','barricade','partition_panel','archive_cabinet','copier_shell','supply_locker','cable_reel','punch_clock','notice_board'];
+  if(!destructibles||!Number.isSafeInteger(destructibles.total_count)||destructibles.total_count!==36||!Array.isArray(types)||types.length!==expectedTypes.length||new Set(types.map(x=>x?.id)).size!==types.length||expectedTypes.some(id=>!types.some(x=>x.id===id))||types.some(type=>!Number.isSafeInteger(type.count)||type.count<1||!Number.isFinite(type.hp)||type.hp<=0||!['wood','metal'].includes(type.material)||!type.size||['x','y','z'].some(axis=>!Number.isFinite(type.size[axis])||type.size[axis]<=0))||types.reduce((sum,type)=>sum+type.count,0)!==destructibles.total_count||types.find(type=>type.id==='crate').count!==6||types.find(type=>type.id==='barrel').count!==6||types.find(type=>type.id==='barricade').count!==2||types.find(type=>type.id==='partition_panel').count!==6||types.find(type=>type.id==='archive_cabinet').count!==6||types.find(type=>type.id==='copier_shell').count!==2)throw Error('Invalid destructible config');
   const rewardTables=[archive?.searched_rewards,archive?.smashed_rewards];
   if(!archive||!Number.isFinite(archive.search_seconds)||archive.search_seconds<=0||archive.search_seconds>10||!Number.isFinite(archive.search_radius)||archive.search_radius<=0||!Number.isFinite(archive.break_radius)||archive.break_radius<archive.search_radius||rewardTables.some(table=>!Array.isArray(table)||!table.length||table.some(row=>!Array.isArray(row)||!row.length||row.some(reward=>{const item=extended.items.find(candidate=>candidate.id===reward?.definitionId);return !item||!Number.isSafeInteger(reward.quantity)||reward.quantity<1||reward.quantity>item.stack;}))))throw Error('Invalid archive cabinet config');
-  return extended;
+  return extendNightContentConfig(extendCraftingConfig(extended));
 }

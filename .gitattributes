@@ -1,4 +1,7 @@
 # Preserve the verified release byte-for-byte on Windows and macOS checkouts.
 /release/** -text
+/.gitattributes text eol=lf
 /deploy.sh text eol=lf
 /deploy.ps1 text eol=lf
+/*.md text eol=lf
+/third-party-licenses/** -text

@@ -1,10 +1,12 @@
 # 版权与第三方资源
 
-本仓库提供《办公室的99夜》v0.11.8 的 Docker 部署材料。项目整体尚未附开源许可证；公开访问仓库不自动改变项目代码和原创素材的授权范围。
+本仓库提供《办公室的99夜》v0.17.0 的 Docker 部署材料。项目整体尚未附开源许可证；公开访问仓库不自动改变项目代码和原创素材的授权范围。
 
 发行包中的第三方资源按各自许可使用：
 
 - 音效来源、CC0 声明及 Kenney 许可正文位于 release/web/audio/sfx/SOURCES.md 和 release/web/audio/sfx/LICENSE-KENNEY.txt。
+- 夜袭及办公室社交音效来源见 release/web/audio/sfx/office45/SOURCES.md。
+- 网页游戏使用 Godot Engine（MIT许可）：https://godotengine.org/license 。Godot 4.7.2 的引擎及第三方版权原文附于 third-party-licenses/GODOT_COPYRIGHT.txt，来源 https://github.com/godotengine/godot/blob/4.7.2-stable/COPYRIGHT.txt 。
 - Feather 图标许可位于 release/web/platform/icons/LICENSE-feather。
 - 网页版资源包内嵌了字体文件；字体的 SIL Open Font License 原样正文收录于 third-party-licenses/OFL.txt。
 - Game-icons.net 图标使用 CC BY 3.0，来源和作者见 third-party-licenses/GAME-ICONS-ATTRIBUTION.md；游戏设置界面也提供署名。

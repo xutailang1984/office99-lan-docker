@@ -22,7 +22,7 @@ export function createRelayRouter({now=Date.now,getRoom,getPeer,isCurrent,sessio
   if(!room.members.has(peer.peerId)||!target||target===peer||!isCurrent(target)||!sessionActive(target)||target.roomId!==room.id||!room.members.has(target.peerId)){fail(peer,'NOT_MEMBER','转发对象不在当前房间',typeof message.to==='string'&&message.to.length>0&&message.to.length<=128?{roomId:room.id,epoch:room.epoch,to:message.to}:{});return true;}
   const host=peer.peerId===room.hostPeerId;
   if(!host&&target.peerId!==room.hostPeerId){fail(peer,'INVALID_TOPOLOGY','转发只允许队员与房主之间通信');return true;}
-  const guestId=host?target.peerId:peer.peerId;let ready=routes.get(room);if(!ready){ready=new Set();routes.set(room,ready);}
+  const guestId=host?target.peerId:peer.peerId;let route=routes.get(room);if(!route||route.epoch!==room.epoch){route={epoch:room.epoch,ready:new Set()};routes.set(room,route);}const ready=route.ready;
   if(message.type==='relay_open'){
    if(!quota(peer,host,0,true)){fail(peer,'RATE_LIMIT','连接请求过快，请稍后重试');return true;}
    ready.add(guestId);

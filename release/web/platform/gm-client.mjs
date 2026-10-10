@@ -25,7 +25,7 @@ export function routeGmSignal(message, context, notice) {
     notice({from:{name:'GM'}, text:message.text.slice(0,500)});
     return true;
   }
-  if (message.type !== 'gm_grant' || room.ownerId !== accountId || room.hostPeerId !== selfPeerId || !worker || workerFailed || typeof message.grantId !== 'string' || !grantId.test(message.grantId)) return false;
+  if (message.type !== 'gm_grant' || room.hostPeerId !== selfPeerId || !(room.members??[]).some(m=>m.peerId===selfPeerId&&m.accountId===accountId) || !worker || workerFailed || typeof message.grantId !== 'string' || !grantId.test(message.grantId)) return false;
   worker.postMessage({type:'gm_grant',roomId:room.id,epoch:room.epoch,grantId:message.grantId});
   return true;
 }

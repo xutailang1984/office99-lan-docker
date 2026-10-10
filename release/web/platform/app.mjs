@@ -1,3 +1,5 @@
+import {createBrowserAudioSession} from './browser-audio-session.mjs';
+const gameAudioSession=createBrowserAudioSession();window.tidalBrowserAudio=gameAudioSession;
 import {renderLobby} from './lobby-view.mjs';
 import {LinkPolicy} from './link-policy.mjs';
 import {roomHasPeer,rememberRetiredMembers,isRetiredRelayNotice} from './retired-peer.mjs';
@@ -6,17 +8,19 @@ import {chatSubmission,routeGmSignal} from './gm-client.mjs';
 import {createOnboardingChannel} from './onboarding-client.mjs';
 import {createPointerGuard} from './pointer-guard.mjs';
 import {BrowserCheckpointStore} from './checkpoint-store.mjs';
+import {installCareerUI} from './career-ui.mjs';
 const localCheckpoints=new BrowserCheckpointStore();
 let saveStatus={localRevision:0,remoteRevision:0,backupPending:false,error:null},lostRoom=false,lossJob=null;
 const $=id=>document.getElementById(id);
-let account=null,signal=null,self=null,room=null,worker=null,workerReady=false,workerInitFailed=false,workerFailed=false,roomExitSaved=false,workerPulse=0,revision=0;
+let account=null,signal=null,self=null,room=null,worker=null,workerReady=false,workerInitFailed=false,workerFailed=false,hostRevoked=false,roomExitSaved=false,workerPulse=0,revision=0;
 let frame=null,queue=[],registerMode=false,leaving=false,refreshTimer=null,heartbeatTimer=null,toastTimer=null,gameEntered=false,frameLoaded=false;
 let chatOpen=false,chatUnread=0,nativeUI={overlay:'lobby',resumeOverlay:'lobby',resumeCapture:false};
 let pointerGuard=null;
 let signalConnecting=null,lobbyBusy=false,lobbySnapshot={adventures:[],rooms:[]},refreshJob=null,refreshGeneration=0,roomGeneration=0,deleteTarget=null,deletePending=false,createTarget=null,createPending=false,practicePending=false;
 let missionReadyRequested=false,missionStartRequested=false,missionCompleting=false,missionCompletionShown=false,missionCompletionRetries=0,missionRetryTimer=null;
 const peers=new Map(),retiredPeers=new Set(),workerBacklog=[],closedWaiters=[];
-const loading=createLoadingUI({element:$('game-loading'),back:()=>leaveRoom(),transport:()=>({ready:transportReady(),relay:relayActive(),failed:room?.ownerId!==account?.id&&peers.get(room?.hostPeerId)?.policy?.mode==='failed'})});
+const careerExitWaiters=new Map();
+const loading=createLoadingUI({element:$('game-loading'),back:()=>leaveRoom(),transport:()=>({ready:transportReady(),relay:relayActive(),failed:!isRuntimeHost()&&peers.get(room?.hostPeerId)?.policy?.mode==='failed'})});
 const messages={disconnected:'房主离开了。最近的进度已保留，可以等房主再开房。',host_timeout:'房主连接中断。最近的进度已保留。',host_closed:'房间已结束，进度已保留。',session_replaced:'这个账号已在另一个网页登录。'};
 function toast(text){
  clearTimeout(toastTimer);
@@ -25,7 +29,7 @@ function toast(text){
 }
 function failGame(message){pointerGuard?.sync();loading.fail(message,frameLoaded?'游戏已暂停':'游戏没能打开');$('game-enter').classList.add('hidden');$('game-entry').classList.add('hidden');if(frame)pushPacket(JSON.stringify({type:'platform_focus',active:true}));}
 async function api(endpoint,{method='GET',body}={}){const response=await fetch('/api/platform/'+endpoint,{method,credentials:'same-origin',signal:AbortSignal.timeout(8000),headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});let data;try{data=await response.json();}catch{throw Error('服务器暂时没有回应，请稍后重试。');}if(!response.ok){const error=Error(data.error?.message||'操作没有完成，请重试。');error.status=response.status;error.code=data.error?.code;throw error;}return data;}
-function send(value){if(signal?.readyState===WebSocket.OPEN)signal.send(JSON.stringify(value));}
+function send(value){if(value.type==='signal'&&room){if(value.roomId!==undefined&&value.roomId!==room.id||value.epoch!==undefined&&value.epoch!==room.epoch)return;value={...value,roomId:room.id,epoch:room.epoch};}if(signal?.readyState===WebSocket.OPEN)signal.send(JSON.stringify(value));}
 function show(view){document.body.dataset.view=view;for(const id of ['auth-view','lobby-view','room-view'])$(id).classList.toggle('hidden',id!==view);}
 function formError(id,message){const error=$(id);error.textContent=message;const body=error.closest('.auth-body,.dialog-body');if(body&&message)body.scrollTop=body.scrollHeight;}
 function textElement(tag,text,cls){const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e;}
@@ -48,7 +52,7 @@ async function connectSignal(){
    if(!welcomed)return;
    if(m.type==='gm_notice'||m.type==='gm_grant'){routeGmSignal(m,{room,accountId:account?.id,selfPeerId:self?.peerId,worker,leaving,workerFailed},addChat);return;}
    if(m.type==='member_resets'){
-    if(!leaving&&room?.id===m.roomId&&room?.epoch===m.epoch&&room?.ownerId===account?.id&&Number.isSafeInteger(m.memberResetVersion)&&Array.isArray(m.memberResets)){
+    if(!leaving&&room?.id===m.roomId&&room?.epoch===m.epoch&&isRuntimeHost()&&Number.isSafeInteger(m.memberResetVersion)&&Array.isArray(m.memberResets)){
      if(workerReady)worker?.postMessage(m);else workerBacklog.push(m);
     }return;
    }
@@ -66,9 +70,10 @@ async function connectSignal(){
  signalConnecting=job;
  try{await job;}finally{if(signalConnecting===job)signalConnecting=null;}
 }
-async function enterLobby(){await connectSignal();$('account-name').textContent=account.name;$('logout').classList.remove('hidden');show('lobby-view');await refresh(true);clearInterval(refreshTimer);refreshTimer=setInterval(()=>{if(!room)refresh().catch(()=>{});},5000);}
+async function enterLobby(){await connectSignal();$('account-name').textContent=account.name;$('logout').classList.remove('hidden');show('lobby-view');await refresh(true);void careerUI.refresh();clearInterval(refreshTimer);refreshTimer=setInterval(()=>{if(!room)refresh().catch(()=>{});},5000);}
 function renderLobbyState(){
  if(!account)return;
+ if(room)careerUI.hide();
  renderLobby({account,...lobbySnapshot,busy:lobbyBusy||leaving,onContinue:openCreate,onJoin:id=>runLobbyAction(()=>joinRoom(id)),onDelete:openDelete});
  renderMissionEntry();
  for(const id of ['new-adventure','logout','refresh'])$(id).disabled=lobbyBusy||leaving;
@@ -91,7 +96,7 @@ async function refresh(force=false){
  const job=Promise.all([api('adventures'),api('rooms')]).then(async([a,r])=>{
   if(account?.id!==accountId||generation!==refreshGeneration)return;
   lobbySnapshot={adventures:a.adventures,rooms:r.rooms,capacity:a.capacity};renderLobbyState();
-  await localCheckpoints.prune(accountId,a.adventures.filter(x=>x.ownerId===accountId).map(x=>x.id),()=>account?.id===accountId&&generation===refreshGeneration&&!room&&!lobbyBusy).catch(()=>{});
+  await localCheckpoints.prune(accountId,a.adventures.map(a=>a.id),()=>account?.id===accountId&&generation===refreshGeneration&&!room&&!lobbyBusy).catch(()=>{});
  });
  refreshJob=job;
  try{await job;}finally{if(refreshJob===job)refreshJob=null;}
@@ -107,7 +112,7 @@ function openDelete(item){
  deleteTarget=item;$('delete-name').textContent=item.title;$('delete-error').textContent='';
  const mine=item.ownerId===account.id;
  $('delete-title').textContent=mine?'删除冒险？':'删除记录？';
- $('delete-description').textContent=mine?'队友也将无法继续这次冒险。其他冒险不受影响。':'只清空你的随身装备和个人成长。队伍物资保留，队友可以继续玩。再次加入不重复领取入队补贴。';
+ $('delete-description').textContent=item.economyVersion===1?(mine?'冒险会消失。请先归存：未带回的随身物品会丢失，个人仓库、钱包和能力保留。':'退出这份冒险。未带回的随身物品留在原地，个人仓库、钱包和能力保留。'):mine?'队友也将无法继续这次冒险。其他冒险不受影响。':'只清空你的随身装备和个人成长。队伍物资保留，队友可以继续玩。再次加入不重复领取入队补贴。';
  $('delete-confirm').textContent=mine?'删除冒险':'删除记录';
  $('delete-cancel').textContent=mine?'保留冒险':'保留记录';
  $('delete-dialog').showModal();$('delete-cancel').focus();
@@ -123,7 +128,7 @@ async function confirmDelete(){
   // Invalidate older polls before removing the row; a late response must not restore it.
   ++refreshGeneration;lobbySnapshot.adventures=lobbySnapshot.adventures.filter(a=>a.id!==target.id);renderLobbyState();
   $('delete-dialog').close();toast(target.ownerId===account.id?'冒险已删除。其他冒险不受影响。':'你的记录已删除，队友的进度保留。');
-  await refresh(true).catch(()=>{});
+  await refresh(true).catch(()=>{});void careerUI.refresh();
  }catch(e){formError('delete-error',e.name==='TimeoutError'?'暂未收到结果。可重试，或稍后刷新查看。':e.message);}
  finally{deletePending=false;for(const id of ['delete-confirm','delete-cancel','delete-close'])$(id).disabled=false;}
 }
@@ -139,39 +144,47 @@ async function createRoom(adventureId,title,solo){await requestRoom('rooms',{adv
 async function joinRoom(id){await requestRoom('rooms/'+id+'/join',{});}
 async function createMission(start,solo=true){await requestRoom('rooms',{mode:'mission',solo,missionStart:start});}
 function advanceMissionRoom(){
- if(room?.mode!=='mission'||!room.solo||room.ownerId!==account?.id||room.status==='running'||leaving||workerFailed)return;
+ if(room?.mode!=='mission'||!room.solo||!isRuntimeHost()||room.status==='running'||leaving||workerFailed)return;
  const mine=room.members.find(member=>member.peerId===self?.peerId);
  if(!mine)return;
  if(!mine.ready){if(!missionReadyRequested){missionReadyRequested=true;send({type:'ready',ready:true});}return;}
  if(!workerReady||missionStartRequested)return;
  missionStartRequested=true;roomUI();
- void api('rooms/'+room.id+'/start',{method:'POST',body:{}}).then(result=>{if(room?.id===result.room?.id&&room.status!=='running')void onRoom(result.room).catch(error=>toast(error.message));}).catch(error=>{missionStartRequested=false;roomUI();toast(error.message);});
+ void api('rooms/'+room.id+'/start',{method:'POST',body:{epoch:room.epoch}}).then(result=>{if(room?.id===result.room?.id&&room.status!=='running')void onRoom(result.room).catch(error=>toast(error.message));}).catch(error=>{missionStartRequested=false;roomUI();toast(error.message);});
 }
 function roomUI(){if(!room)return;const mission=room.mode==='mission',autoMission=mission&&room.solo;$('room-title').textContent=mission?(room.missionStart==='tutorial'?'入职任务':'自由试用'):room.title;$('room-mode').textContent=mission?(room.solo?'单人体验':'多人体验'):room.solo?'单人冒险':'多人合作';$('room-subtitle').textContent=mission?(room.solo?'正在准备体验园区，不占用冒险进度。':'等大家准备好，一起试用；途中也能加入。'):room.solo?'按下开始，去看看今天的园区。':'等大家准备好，一起出发；途中也能加入。';$('member-count').textContent=`${room.members.length}/${room.maxPlayers} 人`;
- const members=$('member-list'),rosterScroll=members.scrollTop;members.classList.toggle('dense',room.members.length>4);members.replaceChildren();for(const m of room.members){const row=textElement('div','','member'),copy=textElement('div');copy.append(textElement('b',m.name+(m.peerId===self.peerId?'（你）':'')),textElement('small',m.accountId===room.ownerId?'房主':'队员'));row.append(textElement('span',m.name.slice(0,1),'avatar'),copy,textElement('span',m.ready?'✓ 已准备':'等准备',m.ready?'ready-tag':'ready-tag not-ready'));copy.firstElementChild.title=m.name+(m.peerId===self.peerId?'（你）':'');members.append(row);}members.scrollTop=rosterScroll;
- const mine=room.members.find(m=>m.peerId===self.peerId),host=room.ownerId===account.id;$('ready').textContent=mine?.ready?'取消准备':'准备好了';$('ready').classList.toggle('hidden',autoMission);$('start').textContent=mission?(room.missionStart==='tutorial'?'开始任务':'开始试用'):'开始冒险';$('start').classList.toggle('hidden',!host);$('start').disabled=leaving||!workerReady||workerFailed||autoMission&&missionStartRequested||!room.members.every(m=>m.ready);$('ready').disabled=leaving;$('leave-room').disabled=leaving;const waiting=room.members.filter(m=>!m.ready).length;$('ready-hint').textContent=autoMission?(workerFailed?'任务未能启动，请回大厅重试。':'正在自动开始任务…'):leaving?'正在离开，请稍候…':host?(workerFailed?'房间暂停了，请回大厅重试。':!workerReady?'正在准备房间，请稍候…':waiting?`还有 ${waiting} 位队员未准备`:'全队已准备，可以开始。'):'准备好后，等待房主开始。';$('connection-state').textContent=mission?(host?(workerFailed?'体验园区准备失败':workerReady?'✓ 体验园区已就绪':'正在准备体验园区…'):(transportReady()?(relayActive()?'✓ 已连上房主 · 局域网中转':'✓ 已连上房主 · 直连'):(peers.get(room.hostPeerId)?.policy?.mode==='failed'?'连接未成功，请重试':'正在连接房主…'))):host?(workerFailed?'房间暂停了，请保存回大厅重试。':workerReady?(saveStatus.error?'● 本机已存 · 备份待重试':saveStatus.localRevision?(saveStatus.backupPending?'✓ 本机已存 · 备份中':'✓ 本机已存 · 已备份'):'✓ 房间已就绪'):'正在准备房间…'):(transportReady()?(relayActive()?'✓ 已连上房主 · 局域网中转':'✓ 已连上房主 · 直连'):(peers.get(room.hostPeerId)?.policy?.mode==='failed'?'连接未成功，请重试':'正在连接房主…'));}
+ const members=$('member-list'),rosterScroll=members.scrollTop;members.classList.toggle('dense',room.members.length>4);members.replaceChildren();for(const m of room.members){const row=textElement('div','','member'),copy=textElement('div');copy.append(textElement('b',m.name+(m.peerId===self.peerId?'（你）':'')),textElement('small',m.peerId===room.hostPeerId?'主机':'队员'));row.append(textElement('span',m.name.slice(0,1),'avatar'),copy,textElement('span',m.ready?'✓ 已准备':'等准备',m.ready?'ready-tag':'ready-tag not-ready'));copy.firstElementChild.title=m.name+(m.peerId===self.peerId?'（你）':'');members.append(row);}members.scrollTop=rosterScroll;
+ const mine=room.members.find(m=>m.peerId===self.peerId),host=isRuntimeHost();$('ready').textContent=mine?.ready?'取消准备':'准备好了';$('ready').classList.toggle('hidden',autoMission);$('start').textContent=mission?(room.missionStart==='tutorial'?'开始任务':'开始试用'):'开始冒险';$('start').classList.toggle('hidden',!host);$('start').disabled=room.status!=='waiting'||leaving||!workerReady||workerFailed||autoMission&&missionStartRequested||!room.members.every(m=>m.ready);$('ready').disabled=room.status!=='waiting'||leaving;$('leave-room').disabled=leaving;const waiting=room.members.filter(m=>!m.ready).length;$('ready-hint').textContent=room.status==='migrating'?'正在接替主机，请稍候…':autoMission?(workerFailed?'任务未能启动，请回大厅重试。':'正在自动开始任务…'):leaving?'正在离开，请稍候…':host?(workerFailed?'房间暂停了，请回大厅重试。':!workerReady?'正在准备房间，请稍候…':waiting?`还有 ${waiting} 位队员未准备`:'全队已准备，可以开始。'):'准备好后，等待房主开始。';$('connection-state').textContent=room.status==='migrating'?'正在同步已保存的进度…':mission?(host?(workerFailed?'体验园区准备失败':workerReady?'✓ 体验园区已就绪':'正在准备体验园区…'):(transportReady()?(relayActive()?'✓ 已连上房主 · 局域网中转':'✓ 已连上房主 · 直连'):(peers.get(room.hostPeerId)?.policy?.mode==='failed'?'连接未成功，请重试':'正在连接房主…'))):host?(workerFailed?'房间暂停了，请保存回大厅重试。':workerReady?(saveStatus.error?'● 本机已存 · 备份待重试':saveStatus.localRevision?(saveStatus.backupPending?'✓ 本机已存 · 备份中':'✓ 本机已存 · 已备份'):'✓ 房间已就绪'):'正在准备房间…'):(transportReady()?(relayActive()?'✓ 已连上房主 · 局域网中转':'✓ 已连上房主 · 直连'):(peers.get(room.hostPeerId)?.policy?.mode==='failed'?'连接未成功，请重试':'正在连接房主…'));}
+function isRuntimeHost(value=room){return !!value&&value.hostPeerId===self?.peerId;}
+function declineHost(value){if(!value||!isRuntimeHost(value))return;void api('rooms/'+value.id+'/decline',{method:'POST',body:{epoch:value.epoch}}).catch(()=>{});}
+function sameHostGeneration(value,generation){return roomGeneration===generation&&room?.id===value.id&&room?.epoch===value.epoch&&room?.hostPeerId===value.hostPeerId;}
 async function onRoom(next,reason){
- if(!next){if(leaving&&!lostRoom){lostRoom=true;return;}await preserveDisconnected(room?.mode==='mission'?'任务房已结束，可从大厅重新进入。':messages[reason]||'房间已结束，本机进度已保留。');return;}
- const fresh=room?.id!==next.id||room?.epoch!==next.epoch;if(fresh){cleanupRoom();clearTimeout(toastTimer);$('toast').classList.add('hidden');$('chat-messages').replaceChildren();}
- rememberRetiredMembers(room,next,retiredPeers);room=next;
+ if(!next){if(['host_transferred','host_timeout','handoff_unavailable','host_disconnected'].includes(reason))hostRevoked=true;if(leaving&&!lostRoom){lostRoom=true;return;}await preserveDisconnected(room?.mode==='mission'?'任务房已结束，可从大厅重新进入。':messages[reason]||'房间已结束，本机进度已保留。');return;}
+ if(room?.id===next.id&&next.epoch<room.epoch)return;
+ const transfer=room?.id===next.id&&next.epoch>room.epoch;
+ const fresh=room?.id!==next.id||room?.epoch!==next.epoch;if(fresh){cleanupRoom({keepChat:transfer});clearTimeout(toastTimer);$('toast').classList.add('hidden');if(!transfer)$('chat-messages').replaceChildren();}
+ if(transfer)toast('正在接替主机，进度同步后请继续游戏。');
+ rememberRetiredMembers(room,next,retiredPeers);room=next;if(fresh)send({type:'host_candidate',capable:typeof Worker==='function',hidden:document.hidden});
  // Retire old connections synchronously before any new connection awaits.
  for(const [id,p]of peers)if(!roomHasPeer(room,id)){peers.delete(id);closeDirect(p,true);worker?.postMessage({type:'disconnect',peerId:id});}
  const generation=roomGeneration;$('chat').classList.remove('hidden');if(!frame){$('room-chat-slot').append($('chat'));renderChat();}roomUI();
- if(fresh&&room.ownerId===account.id)await startHost(room);
+ if(fresh&&isRuntimeHost())try{await startHost(room);}catch(error){if(generation===roomGeneration){declineHost(room);toast('这台电脑未能接替，正在尝试其他队友。');}return;}
  if(generation!==roomGeneration||!room)return;
  if(workerReady)worker.postMessage({type:'room',room});
- if(room.ownerId===account.id){for(const m of room.members){if(generation!==roomGeneration||!room)return;if(m.peerId!==self.peerId&&!peers.has(m.peerId))await createPeer(m.peerId,true);}}else if(!peers.has(room.hostPeerId)){await createPeer(room.hostPeerId,false);}
+ if(isRuntimeHost()){for(const m of room.members){if(generation!==roomGeneration||!room)return;if(m.peerId!==self.peerId&&!peers.has(m.peerId))await createPeer(m.peerId,true);}}else if(!peers.has(room.hostPeerId)){await createPeer(room.hostPeerId,false);}
  if(generation!==roomGeneration||!room)return;
  if(room.status==='running')startGame();else show('room-view');roomUI();advanceMissionRoom();
 }
 async function startHost(initialRoom){
- const mission=initialRoom.mode==='mission';
- const [saved,config]=await Promise.all([mission?Promise.resolve({revision:0,state:null,head:null,memberResets:[],memberResetVersion:0}):api('adventures/'+initialRoom.adventureId+'/snapshot'),fetch('/platform/balance.json').then(r=>r.json())]);if(room?.id!==initialRoom.id)return;
+ const mission=initialRoom.mode==='mission',generation=roomGeneration;
+ const [saved,config]=await Promise.all([mission?api('rooms/'+initialRoom.id+'/checkpoint'):api('adventures/'+initialRoom.adventureId+'/snapshot'),fetch('/platform/balance.json').then(r=>r.json())]);if(!sameHostGeneration(initialRoom,generation))return;
  revision=saved.revision;workerReady=false;workerInitFailed=false;workerFailed=false;workerPulse=performance.now();
  worker=new Worker('/platform/host-worker.mjs',{type:'module'});const currentWorker=worker;
  worker.onmessage=({data:m})=>{
-  if(worker!==currentWorker||room?.id!==initialRoom.id)return;
-  if(m.type==='ready'){workerReady=true;workerPulse=performance.now();worker.postMessage({type:'room',room});while(workerBacklog.length)worker.postMessage(workerBacklog.shift());roomUI();advanceMissionRoom();if(m.notice)toast(m.notice);}
+  if(worker!==currentWorker||!sameHostGeneration(initialRoom,generation))return;
+  if(m.type==='ready'){if(room.status==='migrating')void api('rooms/'+room.id+'/activate',{method:'POST',body:{epoch:room.epoch,revision:saved.revision,economyEpoch:saved.economyEpoch??0,worldId:saved.state?.worldId??null}}).then(r=>{if(sameHostGeneration(initialRoom,generation))return onRoom(r.room);}).catch(e=>toast(e.message));workerReady=true;workerPulse=performance.now();worker.postMessage({type:'room',room});while(workerBacklog.length)worker.postMessage(workerBacklog.shift());roomUI();advanceMissionRoom();if(m.notice)toast(m.notice);}
+  else if(m.type==='career_exit_result'){send({type:'signal',to:m.peerId,data:{careerExitResult:true,requestId:m.requestId,ok:m.ok,settled:m.settled,message:m.message}});}
+  else if(m.type==='host_revoked'){hostRevoked=true;workerFailed=true;for(const waiter of closedWaiters.splice(0))waiter.resolve();void preserveDisconnected('主机已由队友接替，可从大厅重新加入。').catch(e=>toast(e.message));}
   else if(m.type==='pulse')workerPulse=performance.now();
   else if(m.type==='packet')sendPacket(m.peerId,m.json);
   else if(m.type==='saved_revision')revision=m.revision;
@@ -179,33 +192,36 @@ async function startHost(initialRoom){
   else if(m.type==='save_failed')toast(m.message||'进度保存失败，游戏已暂停。正在重试保存。');
   else if(m.type==='closed'){roomExitSaved=true;revision=m.revision;for(const waiter of closedWaiters.splice(0))waiter.resolve();}
   else if(m.type==='close_failed'){workerFailed=true;roomUI();failGame('游戏已暂停，保存尚未完成。请重试返回大厅。');for(const waiter of closedWaiters.splice(0))waiter.reject(Error(m.message));}
-  else if(m.type==='fatal'){if(!workerReady)workerInitFailed=true;workerFailed=true;roomUI();toast(m.message);failGame('房主的游戏运行中断，请回大厅重试。');for(const waiter of closedWaiters.splice(0))waiter.reject(Error(m.message));}
+  else if(m.type==='fatal'){if(room.status==='migrating')declineHost(room);if(!workerReady)workerInitFailed=true;workerFailed=true;roomUI();toast(m.message);failGame('房主的游戏运行中断，请回大厅重试。');for(const waiter of closedWaiters.splice(0))waiter.reject(Error(m.message));}
  };
- worker.onerror=()=>{if(worker!==currentWorker)return;if(!workerReady)workerInitFailed=true;workerFailed=true;roomUI();toast('房主的游戏运行中断。请回大厅重新打开最近的存档。');failGame('房主的游戏运行中断，请回大厅重试。');};
- worker.postMessage({type:'init',room:initialRoom,state:saved.state,revision:saved.revision,head:saved.head,config,memberResets:saved.memberResets??[],memberResetVersion:saved.memberResetVersion??0});
+ worker.onerror=()=>{if(worker!==currentWorker||!sameHostGeneration(initialRoom,generation))return;if(room.status==='migrating')declineHost(room);if(!workerReady)workerInitFailed=true;workerFailed=true;roomUI();toast('房主的游戏运行中断。请回大厅重新打开最近的存档。');failGame('房主的游戏运行中断，请回大厅重试。');};
+ worker.postMessage({type:'init',storageAccountId:account.id,room:initialRoom,state:saved.state,revision:saved.revision,head:saved.head,config,economyVersion:saved.economyVersion??0,economyEpoch:saved.economyEpoch??0,careerBindings:saved.careerBindings??[],memberResets:saved.memberResets??[],memberResetVersion:saved.memberResetVersion??0});
  // The simulation Worker sends its own heartbeat, even while Godot loads on the UI thread.
 }
 let packetSequence=0;
 function wireSend(channel,json){if(channel?.readyState!=='open')return;if(channel.bufferedAmount>1024*1024){channel.close();return;}if(json.length<=12000){channel.send(json);return;}const id=++packetSequence,total=Math.ceil(json.length/12000);for(let i=0;i<total;i++)channel.send(JSON.stringify({__chunk:id,index:i,total,text:json.slice(i*12000,(i+1)*12000)}));}
 function acceptPacket(peer,data){let value;try{value=JSON.parse(data);}catch{return;}if(value.__chunk){if(!Number.isSafeInteger(value.total)||value.total<1||value.total>700||!Number.isSafeInteger(value.index)||value.index<0||value.index>=value.total||typeof value.text!=='string'||value.text.length>12000)return;const now=performance.now();for(const [id,part]of peer.chunks)if(now-part.at>10000)peer.chunks.delete(id);let part=peer.chunks.get(value.__chunk);if(!part){if(peer.chunks.size>=4)return;part={parts:new Array(value.total),at:now,count:0};peer.chunks.set(value.__chunk,part);}if(part.parts.length!==value.total)return;if(part.parts[value.index]===undefined){part.parts[value.index]=value.text;part.count++;}if(part.count!==part.parts.length)return;peer.chunks.delete(value.__chunk);data=part.parts.join('');}
- if(room?.ownerId===account.id){const message={type:'packet',peerId:peer.id,json:data};if(workerReady)worker.postMessage(message);else if(workerBacklog.length<100)workerBacklog.push(message);}else pushPacket(data);
+ if(isRuntimeHost()){const message={type:'packet',peerId:peer.id,json:data};if(workerReady)worker.postMessage(message);else if(workerBacklog.length<100)workerBacklog.push(message);}else pushPacket(data);
 }
-function pushPacket(json){if(queue.length>=512){queue=[];const request=JSON.stringify({type:'state_resync'});if(room?.ownerId===account?.id)worker?.postMessage({type:'packet',peerId:self?.peerId,json:request});else sendPacket(room?.hostPeerId,request);}queue.push(json);}
-function transportReady(){if(!room||signal?.readyState!==WebSocket.OPEN)return false;return room.ownerId===account?.id?(workerReady&&!workerFailed):peers.get(room.hostPeerId)?.policy?.ready===true;}
-function relayActive(){if(!room)return false;return room.ownerId===account?.id?[...peers.values()].some(p=>p.policy?.mode==='relay'):peers.get(room.hostPeerId)?.policy?.mode==='relay';}
+function pushPacket(json){if(queue.length>=512){queue=[];const request=JSON.stringify({type:'state_resync'});if(isRuntimeHost())worker?.postMessage({type:'packet',peerId:self?.peerId,json:request});else sendPacket(room?.hostPeerId,request);}queue.push(json);}
+function transportReady(){if(!room||signal?.readyState!==WebSocket.OPEN)return false;return isRuntimeHost()?(workerReady&&!workerFailed):peers.get(room.hostPeerId)?.policy?.ready===true;}
+function relayActive(){if(!room)return false;return isRuntimeHost()?[...peers.values()].some(p=>p.policy?.mode==='relay'):peers.get(room.hostPeerId)?.policy?.mode==='relay';}
 function retryTransport(){if(!room)return;for(const peer of peers.values())if(!peer.policy?.ready)peer.policy?.fallback();}
 function closeDirect(peer,dispose=false){if(dispose)peer.policy?.dispose();if(peer.pc){peer.pc.onicecandidate=null;peer.pc.ondatachannel=null;peer.pc.onconnectionstatechange=null;}if(peer.channel){peer.channel.onopen=null;peer.channel.onmessage=null;peer.channel.onclose=null;peer.channel.close();}peer.pc?.close();peer.channel=null;}
 function currentPeer(peer){return !!peer&&room?.id===peer.roomId&&room?.epoch===peer.epoch&&peers.get(peer.id)===peer&&roomHasPeer(room,peer.id);}
-function makePeer(id){const roomId=room.id,epoch=room.epoch,peer={id,roomId,epoch,pc:null,channel:null,candidates:[],chunks:new Map(),error:null};peers.set(id,peer);peer.policy=new LinkPolicy({requestRelay:()=>{if(leaving||!currentPeer(peer))return;peer.error=null;send({type:'relay_open',roomId,epoch,to:id});roomUI();},onFailure:()=>{if(!currentPeer(peer))return;peer.error='直连和中转都未接通，请重试连接或回大厅重新加入。';roomUI();toast(peer.error);}});return peer;}
-function relayWire(peer,json){if(signal?.readyState!==WebSocket.OPEN)return;if(signal.bufferedAmount>2*1024*1024){toast('连接积压，正在断开以保护进度，请重新加入。');signal.close(4008,'Relay client too slow');return;}const sendPart=packet=>send({type:'relay',roomId:room.id,epoch:room.epoch,to:peer.id,packet});const bytes=new TextEncoder().encode(json).length;if(bytes<=16384){sendPart(json);return;}if(room.ownerId!==account.id){toast('操作报文过大，未发送。');return;}const id=++packetSequence,total=Math.ceil(json.length/3072);if(total>700){toast('当前世界报文过大，请保存后重新进入。');return;}for(let index=0;index<total;index++)sendPart(JSON.stringify({__chunk:id,index,total,text:json.slice(index*3072,(index+1)*3072)}));}
+function makePeer(id){const roomId=room.id,epoch=room.epoch,peer={id,roomId,epoch,pc:null,channel:null,candidates:[],chunks:new Map(),error:null};peers.set(id,peer);peer.policy=new LinkPolicy({deferDirectStart:true,requestRelay:()=>{if(leaving||!currentPeer(peer))return;peer.error=null;send({type:'relay_open',roomId,epoch,to:id});roomUI();},onFailure:()=>{if(!currentPeer(peer))return;peer.error='直连和中转都未接通，请重试连接或回大厅重新加入。';roomUI();toast(peer.error);}});return peer;}
+function relayWire(peer,json){if(signal?.readyState!==WebSocket.OPEN)return;if(signal.bufferedAmount>2*1024*1024){toast('连接积压，正在断开以保护进度，请重新加入。');signal.close(4008,'Relay client too slow');return;}const sendPart=packet=>send({type:'relay',roomId:room.id,epoch:room.epoch,to:peer.id,packet});const bytes=new TextEncoder().encode(json).length;if(bytes<=16384){sendPart(json);return;}if(!isRuntimeHost()){toast('操作报文过大，未发送。');return;}const id=++packetSequence,total=Math.ceil(json.length/3072);if(total>700){toast('当前世界报文过大，请保存后重新进入。');return;}for(let index=0;index<total;index++)sendPart(JSON.stringify({__chunk:id,index,total,text:json.slice(index*3072,(index+1)*3072)}));}
 function sendPacket(peerId,json){if(peerId===self?.peerId)pushPacket(json);else{const peer=peers.get(peerId);if(peer?.policy?.mode==='relay')relayWire(peer,json);else if(peer?.policy?.mode==='direct')wireSend(peer.channel,json);}}
-function onRelayReady(m){if(!room||m.roomId!==room.id||m.epoch!==room.epoch||!room.members.some(x=>x.peerId===m.peerId)||m.peerId===self?.peerId)return;const peer=peers.get(m.peerId)??makePeer(m.peerId);if(!peer.policy.relayReady())return;closeDirect(peer);peer.chunks.clear();peer.error=null;if(room.ownerId===account.id){const reset={type:'disconnect',peerId:peer.id};if(workerReady)worker?.postMessage(reset);else workerBacklog.push(reset);}else pushPacket(JSON.stringify({type:'platform_reconnect'}));roomUI();}
-function onRelayPacket(m){if(!room||m.roomId!==room.id||m.epoch!==room.epoch||typeof m.packet!=='string')return;const peer=peers.get(m.from);if(!peer||peer.policy?.mode!=='relay'||!room.members.some(x=>x.peerId===m.from))return;if(room.ownerId!==account.id&&m.from!==room.hostPeerId)return;acceptPacket(peer,m.packet);}
-function setupChannel(peer,channel){peer.channel=channel;channel.onopen=()=>{if(!currentPeer(peer)||!peer.policy.directOpen()){channel.close();return;}roomUI();if(room?.ownerId!==account.id)pushPacket(JSON.stringify({type:'platform_reconnect'}));};channel.onmessage=({data})=>{if(currentPeer(peer)&&peer.policy.mode==='direct'&&typeof data==='string')acceptPacket(peer,data);};channel.onclose=()=>{if(leaving||!currentPeer(peer))return;peer.policy.fallback();roomUI();};}
-async function createPeer(id,offer){if(!roomHasPeer(room,id)||leaving)return null;const previous=peers.get(id);if(previous?.policy?.mode==='relay')return previous;if(previous)closeDirect(previous,true);const peer=makePeer(id);try{const pc=new RTCPeerConnection({iceServers:[]});peer.pc=pc;pc.onicecandidate=({candidate})=>{if(candidate&&currentPeer(peer)&&['connecting','direct'].includes(peer.policy.mode))send({type:'signal',to:id,data:{candidate:candidate.toJSON()}});};pc.ondatachannel=({channel})=>{if(currentPeer(peer))setupChannel(peer,channel);else channel.close();};pc.onconnectionstatechange=()=>{if(['failed','disconnected'].includes(pc.connectionState)&&currentPeer(peer)&&!leaving)peer.policy.fallback();};if(offer){setupChannel(peer,pc.createDataChannel('tidal-game',{ordered:true}));await pc.setLocalDescription(await pc.createOffer());if(currentPeer(peer)&&['connecting','direct'].includes(peer.policy.mode))send({type:'signal',to:id,data:{description:pc.localDescription.toJSON()}});}}catch{if(currentPeer(peer)&&!leaving)peer.policy.fallback();}return peer;}
-async function onSignal(m){if(!room||m.roomId!==room.id||m.epoch!==room.epoch||!room.members.some(x=>x.peerId===m.from))return;const d=m.data;let peer=peers.get(m.from);if(peer&&!['connecting','direct'].includes(peer.policy.mode))return;
- if(d.retry&&room.ownerId===account.id){peer?.policy.fallback();return;}
- if(d.description?.type==='offer'){if(m.from!==room.hostPeerId)return;peer??=await createPeer(m.from,false);if(!peer?.pc||!currentPeer(peer)||peer.policy.mode!=='connecting')return;await peer.pc.setRemoteDescription(d.description);for(const c of peer.candidates)await peer.pc.addIceCandidate(c);peer.candidates=[];await peer.pc.setLocalDescription(await peer.pc.createAnswer());send({type:'signal',to:m.from,data:{description:peer.pc.localDescription.toJSON()}});}
+function onRelayReady(m){if(!room||m.roomId!==room.id||m.epoch!==room.epoch||!room.members.some(x=>x.peerId===m.peerId)||m.peerId===self?.peerId)return;const peer=peers.get(m.peerId)??makePeer(m.peerId);if(!peer.policy.relayReady())return;closeDirect(peer);peer.chunks.clear();peer.error=null;if(isRuntimeHost()){const reset={type:'disconnect',peerId:peer.id};if(workerReady)worker?.postMessage(reset);else workerBacklog.push(reset);}else pushPacket(JSON.stringify({type:'platform_reconnect'}));roomUI();}
+function onRelayPacket(m){if(!room||m.roomId!==room.id||m.epoch!==room.epoch||typeof m.packet!=='string')return;const peer=peers.get(m.from);if(!peer||peer.policy?.mode!=='relay'||!room.members.some(x=>x.peerId===m.from))return;if(!isRuntimeHost()&&m.from!==room.hostPeerId)return;acceptPacket(peer,m.packet);}
+function setupChannel(peer,channel){peer.channel=channel;channel.onopen=()=>{if(!currentPeer(peer)||!peer.policy.directOpen()){channel.close();return;}roomUI();if(!isRuntimeHost())pushPacket(JSON.stringify({type:'platform_reconnect'}));};channel.onmessage=({data})=>{if(currentPeer(peer)&&peer.policy.mode==='direct'&&typeof data==='string')acceptPacket(peer,data);};channel.onclose=()=>{if(leaving||!currentPeer(peer))return;peer.policy.fallback();roomUI();};}
+async function createPeer(id,offer){if(!roomHasPeer(room,id)||leaving)return null;const previous=peers.get(id);if(previous?.policy?.mode==='relay')return previous;if(previous)closeDirect(previous,true);const peer=makePeer(id);try{const pc=new RTCPeerConnection({iceServers:[]});peer.pc=pc;pc.onicecandidate=({candidate})=>{if(candidate&&currentPeer(peer)&&['connecting','direct'].includes(peer.policy.mode))send({type:'signal',to:id,data:{candidate:candidate.toJSON()}});};pc.ondatachannel=({channel})=>{if(currentPeer(peer))setupChannel(peer,channel);else channel.close();};pc.onconnectionstatechange=()=>{if(['failed','disconnected'].includes(pc.connectionState)&&currentPeer(peer)&&!leaving)peer.policy.fallback();};peer.policy.startDirect();if(offer){setupChannel(peer,pc.createDataChannel('tidal-game',{ordered:true}));await pc.setLocalDescription(await pc.createOffer());if(currentPeer(peer)&&['connecting','direct'].includes(peer.policy.mode))send({type:'signal',to:id,data:{description:pc.localDescription.toJSON()}});}}catch{if(currentPeer(peer)&&!leaving)peer.policy.fallback();}return peer;}
+async function onSignal(m){if(!room||m.roomId!==room.id||m.epoch!==room.epoch||!room.members.some(x=>x.peerId===m.from))return;const d=m.data;
+ if(d.careerExit&&isRuntimeHost()&&typeof d.requestId==='string'&&d.requestId.length<=80){worker?.postMessage({type:'settle_peer',peerId:m.from,requestId:d.requestId});return;}
+ if(d.careerExitResult&&m.from===room.hostPeerId){const waiter=careerExitWaiters.get(d.requestId);if(waiter){careerExitWaiters.delete(d.requestId);clearTimeout(waiter.timer);if(d.ok)waiter.resolve(d);else waiter.reject(Error(d.message||'物资还未保存，请重试'));}return;}
+ let peer=peers.get(m.from);if(peer&&!['connecting','direct'].includes(peer.policy.mode))return;
+ if(d.retry&&isRuntimeHost()){peer?.policy.fallback();return;}
+ if(d.description?.type==='offer'){if(m.from!==room.hostPeerId)return;peer??=await createPeer(m.from,false);if(!peer?.pc||!currentPeer(peer)||peer.policy.mode!=='connecting')return;await peer.pc.setRemoteDescription(d.description);if(!currentPeer(peer))return;for(const c of peer.candidates){await peer.pc.addIceCandidate(c);if(!currentPeer(peer))return;}peer.candidates=[];const answer=await peer.pc.createAnswer();if(!currentPeer(peer))return;await peer.pc.setLocalDescription(answer);if(!currentPeer(peer))return;send({type:'signal',roomId:peer.roomId,epoch:peer.epoch,to:m.from,data:{description:peer.pc.localDescription.toJSON()}});}
  else if(d.description?.type==='answer'){if(!peer?.pc)return;await peer.pc.setRemoteDescription(d.description);for(const c of peer.candidates)await peer.pc.addIceCandidate(c);peer.candidates=[];}
  else if(d.candidate){if(!peer?.pc)return;if(peer.pc.remoteDescription)await peer.pc.addIceCandidate(d.candidate);else peer.candidates.push(d.candidate);}
 }
@@ -237,7 +253,7 @@ window.makeGameTransport=child=>{
   ready:()=>child===frame?.contentWindow&&transportReady(),
   name:()=>child===frame?.contentWindow?(account?.name??'队员'):'队员',
   poll:()=>{if(child!==frame?.contentWindow)return '[]';const output=queue;queue=[];return '['+output.join(',')+']';},
-  send:json=>{if(child!==frame?.contentWindow||!room||typeof json!=='string'||json.length>16384)return;if(room.ownerId===account.id){const m={type:'packet',peerId:self.peerId,json};if(workerReady)worker.postMessage(m);else workerBacklog.push(m);}else sendPacket(room.hostPeerId,json);},
+  send:json=>{if(child!==frame?.contentWindow||!room||typeof json!=='string'||json.length>16384)return;if(isRuntimeHost()){const m={type:'packet',peerId:self.peerId,json};if(workerReady)worker.postMessage(m);else workerBacklog.push(m);}else sendPacket(room.hostPeerId,json);},
   loading:value=>{if(child===frame?.contentWindow)loading.report(value);},
   loaded:()=>{if(child!==frame?.contentWindow)return;frameLoaded=true;if(!workerFailed){loading.loaded();if(!gameEntered&&!leaving){$('game-enter').classList.remove('hidden');$('game-entry').classList.remove('hidden');}if(!$('toast').classList.contains('hidden'))toast($('toast').textContent);}},
   uiState:json=>{if(child!==frame?.contentWindow||typeof json!=='string'||json.length>512)return;let value;try{value=JSON.parse(json);}catch{return;}if(typeof value.overlay==='string'&&typeof value.resumeOverlay==='string'&&typeof value.resumeCapture==='boolean')nativeUI={overlay:value.overlay.slice(0,30),resumeOverlay:value.resumeOverlay.slice(0,30),resumeCapture:value.resumeCapture};pointerGuard?.sync();},
@@ -250,32 +266,36 @@ window.makeGameTransport=child=>{
  };
 };
 async function leaveRoom(){if(!room||leaving)return;if(lostRoom)return preserveDisconnected(room.mode==='mission'?'练习已结束，可从大厅重新进入。':'本机进度已保留，服务器恢复后可继续。');leaving=true;$('game-entry-back').disabled=true;$('game-enter').disabled=true;renderLobbyState();roomUI();const old=room;try{
- if(old.ownerId===account.id){if(worker&&!workerInitFailed)await closeHost(false);await api('rooms/'+old.id+'/close',{method:'POST',body:old.mode==='mission'?{}:worker?{finalRevision:revision}:{}});}
- else await api('rooms/'+old.id+'/leave',{method:'POST',body:{}});
- cleanupRoom();show('lobby-view');if(old.mode==='mission'){const latest=await api('me').catch(()=>null);if(latest?.account?.id===account?.id)account.training=latest.account.training;}await refresh();toast(old.mode==='mission'?'已回到大厅。冒险进度不受影响。':'已回到大厅。冒险进度已保留。');
+ if(isRuntimeHost(old)){const transfer=old.members.length>1;if(worker&&!workerInitFailed&&!roomExitSaved)await closeHost(false,transfer);await api('rooms/'+old.id+(transfer?'/handoff':'/close'),{method:'POST',body:transfer?{epoch:old.epoch,finalRevision:revision}:old.mode==='mission'?{epoch:old.epoch}:worker?{epoch:old.epoch,finalRevision:revision}:{epoch:old.epoch}}).catch(error=>{if(!hostRevoked)throw error;});}
+ else {if(old.economyVersion===1)await requestCareerExit();await api('rooms/'+old.id+'/leave',{method:'POST',body:{}});}
+ await disposeCurrentGame();cleanupRoom();show('lobby-view');if(old.mode==='mission'){const latest=await api('me').catch(()=>null);if(latest?.account?.id===account?.id)account.training=latest.account.training;}await refresh();void careerUI.refresh();toast(old.mode==='mission'?'已回到大厅。冒险进度不受影响。':'已回到大厅。冒险进度已保留。');
  }finally{leaving=false;$('game-entry-back').disabled=false;$('game-enter').disabled=roomExitSaved;$('game-enter').title=roomExitSaved?'进度已保存，请重试返回大厅':'';renderLobbyState();roomUI();if(!room)show(account?'lobby-view':'auth-view');if(frame&&frameLoaded&&!gameEntered&&!workerFailed){$('game-enter').classList.remove('hidden');$('game-entry').classList.remove('hidden');}}}
-function closeHost(localOnly){
+function closeHost(localOnly,transfer=false){
  const currentWorker=worker;
  return new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>{const i=closedWaiters.indexOf(waiter);if(i>=0)closedWaiters.splice(i,1);reject(Error('保存还没完成，请稍后重试。'));},25000);
   const waiter={resolve:()=>{clearTimeout(timer);resolve();},reject:error=>{clearTimeout(timer);reject(error);}};
-  closedWaiters.push(waiter);currentWorker.postMessage({type:'close',localOnly});
+  closedWaiters.push(waiter);currentWorker.postMessage({type:transfer?'prepare_transfer':'close',localOnly});
  });
+}
+function requestCareerExit(){
+ return new Promise((resolve,reject)=>{const requestId=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);const timer=setTimeout(()=>{careerExitWaiters.delete(requestId);reject(Error('房主还未确认保存，请重试；物资仍留在原冒险。'));},25000);careerExitWaiters.set(requestId,{resolve,reject,timer});send({type:'signal',to:room.hostPeerId,data:{careerExit:true,requestId}});});
 }
 async function preserveDisconnected(message){
  if(lossJob)return lossJob;
  const currentWorker=worker,currentRoom=room;lostRoom=true;leaving=true;pointerGuard?.sync();
  const job=(async()=>{
   try{
-   if(currentRoom?.ownerId===account?.id&&currentWorker&&workerReady&&!roomExitSaved)await closeHost(true);
+   if(isRuntimeHost(currentRoom)&&currentWorker&&workerReady&&!roomExitSaved&&!hostRevoked)await closeHost(true);
    if(worker!==currentWorker||room?.id!==currentRoom?.id||room?.epoch!==currentRoom?.epoch)return;
-   cleanupRoom();show(account?'lobby-view':'auth-view');toast(message);if(account)void refresh(true).catch(()=>{});
+   await disposeCurrentGame();cleanupRoom();show(account?'lobby-view':'auth-view');toast(message);if(account){void refresh(true).catch(()=>{});void careerUI.refresh();}
   }catch(error){workerFailed=true;failGame('游戏已暂停，本机保存未完成。请重试返回大厅。');throw error;}
   finally{leaving=false;renderLobbyState();roomUI();}
  })();
  lossJob=job;try{await job;}finally{if(lossJob===job)lossJob=null;}
 }
-function cleanupRoom(){lostRoom=false;saveStatus={localRevision:0,remoteRevision:0,backupPending:false,error:null};pointerGuard?.dispose();pointerGuard=null;++roomGeneration;loading.stop();clearInterval(heartbeatTimer);for(const p of peers.values())closeDirect(p,true);peers.clear();retiredPeers.clear();worker?.terminate();worker=null;workerReady=false;workerInitFailed=false;roomExitSaved=false;missionReadyRequested=false;missionStartRequested=false;missionCompleting=false;missionCompletionShown=false;missionCompletionRetries=0;clearTimeout(missionRetryTimer);missionRetryTimer=null;workerBacklog.length=0;room=null;queue=[];frame?.remove();frame=null;frameLoaded=false;if($('mission-complete-dialog').open)$('mission-complete-dialog').close();document.body.classList.remove('in-game','chat-open');chatOpen=false;chatUnread=0;gameEntered=false;nativeUI={overlay:'lobby',resumeOverlay:'lobby',resumeCapture:false};$('chat-input').value='';$('chat-messages').replaceChildren();$('shell').prepend($('toast'));$('game-stage').classList.add('hidden');$('chat').classList.add('hidden');$('chat').classList.remove('game-chat','collapsed');$('room-chat-slot').append($('chat'));}
+async function disposeCurrentGame(){const retiring=frame;if(!retiring)return;try{await Promise.race([Promise.resolve(retiring.contentWindow?.disposeTidalGame?.()),new Promise(resolve=>setTimeout(resolve,1500))]);}catch{} }
+function cleanupRoom({keepChat=false}={}){const chatRows=keepChat?[...$('chat-messages').childNodes].map(n=>n.cloneNode(true)):[],draft=keepChat?$('chat-input').value:'',unread=keepChat?chatUnread:0;for(const waiter of careerExitWaiters.values()){clearTimeout(waiter.timer);waiter.reject(Error('房间已经关闭'));}careerExitWaiters.clear();lostRoom=false;hostRevoked=false;saveStatus={localRevision:0,remoteRevision:0,backupPending:false,error:null};pointerGuard?.dispose();pointerGuard=null;++roomGeneration;loading.stop();clearInterval(heartbeatTimer);for(const p of peers.values())closeDirect(p,true);peers.clear();retiredPeers.clear();worker?.terminate();worker=null;workerReady=false;workerInitFailed=false;roomExitSaved=false;missionReadyRequested=false;missionStartRequested=false;missionCompleting=false;missionCompletionShown=false;missionCompletionRetries=0;clearTimeout(missionRetryTimer);missionRetryTimer=null;workerBacklog.length=0;room=null;queue=[];frame?.contentWindow?.disposeTidalGame?.();frame?.remove();frame=null;frameLoaded=false;if($('mission-complete-dialog').open)$('mission-complete-dialog').close();document.body.classList.remove('in-game','chat-open');chatOpen=false;chatUnread=0;gameEntered=false;nativeUI={overlay:'lobby',resumeOverlay:'lobby',resumeCapture:false};$('chat-input').value='';$('chat-messages').replaceChildren();$('shell').prepend($('toast'));$('game-stage').classList.add('hidden');$('chat').classList.add('hidden');$('chat').classList.remove('game-chat','collapsed');$('room-chat-slot').append($('chat'));if(keepChat){$('chat-messages').replaceChildren(...chatRows);$('chat-input').value=draft;chatUnread=unread;}for(const waiter of closedWaiters.splice(0))waiter.reject(Error('主机正在交接，请稍候'));}
 function renderChat(){
  const expanded=frame?chatOpen:!$('chat').classList.contains('collapsed');
  if(frame)frame.inert=chatOpen;pointerGuard?.sync();
@@ -292,7 +312,7 @@ function focusChat(){
  chatUnread=0;renderChat();$('chat-input').focus();
 }
 function focusGame(capture=false){
- if(!frame)return;pointerGuard?.request(capture);
+ if(!frame)return;if(capture)frame.contentWindow?.prepareTidalAudio?.();pointerGuard?.request(capture);
 }
 function blurChat({restore=true}={}){
  if(!frame){$('chat-input').blur();$('chat').classList.add('collapsed');renderChat();return;}
@@ -307,7 +327,7 @@ function addChat(m){
 }
 $('auth-form').onsubmit=async e=>{e.preventDefault();$('auth-submit').disabled=true;$('auth-error').textContent='';try{const body={username:$('username').value.trim(),password:$('password').value,...(registerMode?{name:$('display-name').value.trim()||$('username').value.trim()}:{} )};const data=await api(registerMode?'register':'login',{method:'POST',body});account=data.account;$('password').value='';await enterLobby();}catch(e){formError('auth-error',e.message);}finally{$('auth-submit').disabled=false;}};
 $('auth-toggle').onclick=()=>{registerMode=!registerMode;$('auth-error').textContent='';$('auth-form').querySelector('.auth-body').scrollTop=0;$('auth-submit').textContent=registerMode?'创建账号':'登录账号';$('auth-title').textContent=registerMode?'创建账号':'登录账号';$('auth-toggle').textContent=registerMode?'返回登录':'创建账号';$('name-label').classList.toggle('hidden',!registerMode);$('password').autocomplete=registerMode?'new-password':'current-password';};
-$('logout').onclick=async()=>{if(lobbyBusy||leaving)return;lobbyBusy=true;renderLobbyState();try{if(room)await leaveRoom();await api('logout',{method:'POST',body:{}});account=null;signal?.close();clearInterval(refreshTimer);$('logout').classList.add('hidden');$('account-name').textContent='';show('auth-view');}catch(e){toast(e.message);}finally{lobbyBusy=false;renderLobbyState();}};
+$('logout').onclick=async()=>{if(lobbyBusy||leaving)return;lobbyBusy=true;renderLobbyState();try{if(room)await leaveRoom();await api('logout',{method:'POST',body:{}});account=null;void gameAudioSession.close();careerUI.hide();signal?.close();clearInterval(refreshTimer);$('logout').classList.add('hidden');$('account-name').textContent='';show('auth-view');}catch(e){toast(e.message);}finally{lobbyBusy=false;renderLobbyState();}};
 $('refresh').onclick=()=>refresh().catch(e=>toast(e.message));
 async function skipMission(){
  if(!account||account.training?.status!=='pending')return;
@@ -336,14 +356,14 @@ function updateCreateFields(){
  const resume=!!createTarget;
  $('create-name-field').classList.toggle('hidden',resume);$('resume-name').classList.toggle('hidden',!resume);
  $('adventure-title').required=!resume;$('adventure-title').disabled=resume||createPending;
- if(resume){$('resume-name').replaceChildren(textElement('b',createTarget.title),textElement('small','第 '+(createTarget.dayIndex??1)+' 天 · 已有装备与进度保留'));}
- for(const id of ['dialog-close','create-cancel','create-submit','single-mode','multi-mode'])$(id).disabled=createPending;
+ if(resume){$('resume-name').replaceChildren(textElement('b',createTarget.title),textElement('small','第 '+(createTarget.dayIndex??1)+' 天 · 世界进度保留'));}
+ for(const id of ['dialog-close','create-cancel','create-submit','single-mode','multi-mode'])$(id).disabled=createPending;$('single-mode').disabled=createPending||!!createTarget&&createTarget.ownerId!==account.id;
 }
 function openCreate(item=null){
  if(lobbyBusy||leaving||room||createPending)return;
  createTarget=item;$('create-error').textContent='';$('multi-mode').checked=true;
  $('create-heading').textContent=item?'继续冒险':'新建冒险';$('create-submit').textContent=item?'开启房间':'创建房间';
- $('create-note').textContent=item?'队友可随时加入，不需要上次的人到齐。':'新冒险单独保存，已有进度保留。';
+ $('create-note').textContent=item?'继续同一份冒险，进度共同更新；队友随时可回。':'新冒险单独保存，已有进度保留。';
  if(!item)$('adventure-title').value='快乐办公室';
  updateCreateFields();$('create-dialog').showModal();$(item?'multi-mode':'adventure-title').focus();
 }
@@ -351,7 +371,7 @@ $('new-adventure').onclick=()=>openCreate();
 for(const id of ['dialog-close','create-cancel'])$(id).onclick=()=>{if(!createPending)$('create-dialog').close();};
 $('create-form').onsubmit=async e=>{
  e.preventDefault();if(createPending||lobbyBusy||leaving||room)return;
- const solo=$('single-mode').checked,title=$('adventure-title').value.trim();
+ const solo=$('single-mode').checked&&(!createTarget||createTarget.ownerId===account.id),title=$('adventure-title').value.trim();
  createPending=true;lobbyBusy=true;$('create-error').textContent='';updateCreateFields();renderLobbyState();
  try{
   if(!createTarget){const result=await api('adventures',{method:'POST',body:{title}});createTarget=result.adventure;}
@@ -371,7 +391,7 @@ for(const id of ['delete-cancel','delete-close'])$(id).onclick=()=>{if(!deletePe
 $('delete-dialog').addEventListener('cancel',e=>{if(deletePending)e.preventDefault();});
 $('delete-dialog').addEventListener('close',()=>{deleteTarget=null;});
 $('ready').onclick=()=>{const mine=room?.members.find(m=>m.peerId===self.peerId);if(mine)send({type:'ready',ready:!mine.ready});};
-$('start').onclick=async()=>{if(!room||!workerReady||workerFailed||leaving)return;$('start').disabled=true;try{await api('rooms/'+room.id+'/start',{method:'POST',body:{}});}catch(e){toast(e.message);}finally{roomUI();}};
+$('start').onclick=async()=>{if(!room||!workerReady||workerFailed||leaving)return;$('start').disabled=true;try{await api('rooms/'+room.id+'/start',{method:'POST',body:{epoch:room.epoch}});}catch(e){toast(e.message);}finally{roomUI();}};
 $('leave-room').onclick=()=>leaveRoom().catch(e=>toast(e.message));$('chat-toggle').onclick=()=>{$('chat').classList.contains('collapsed')?focusChat():blurChat();};
 $('mission-continue').onclick=()=>{$('mission-complete-dialog').close();pushPacket(JSON.stringify({type:'platform_mission_continue'}));focusGame(true);};
 $('mission-to-lobby').onclick=async()=>{for(const id of ['mission-continue','mission-to-lobby'])$(id).disabled=true;try{await leaveRoom();if(account&&!room&&lobbySnapshot.adventures.length===0)openCreate();}catch(error){$('mission-complete-detail').textContent=error.message;}finally{for(const id of ['mission-continue','mission-to-lobby'])$(id).disabled=false;}};
@@ -381,9 +401,12 @@ $('game-enter').onclick=()=>{if(workerFailed||roomExitSaved||leaving||!frameLoad
 $('chat-form').onsubmit=e=>{e.preventDefault();let submission;try{submission=chatSubmission($('chat-input').value);}catch{addChat({from:{name:'GM'},text:'指令未发送，请刷新网页后重试。'});return;}if(submission.message)send(submission.message);$('chat-input').value='';if(frame&&!submission.keepOpen)blurChat();};
 $('chat-input').onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();blurChat();}};$('chat-input').onfocus=()=>{if(frame&&!chatOpen)focusChat();};
 window.addEventListener('keydown',e=>{if(e.key==='Enter'&&room&&!['INPUT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName)){e.preventDefault();focusChat();}});
+document.addEventListener('visibilitychange',()=>{if(room)send({type:'host_candidate',capable:typeof Worker==='function',hidden:document.hidden});});
 window.addEventListener('resize',()=>{if(room)renderChat();});
-window.addEventListener('pagehide',()=>{if(room){navigator.sendBeacon('/api/platform/rooms/'+room.id+(room.ownerId===account.id?'/close':'/leave'),new Blob(['{}'],{type:'application/json'}));}signal?.close();});
+window.addEventListener('pagehide',()=>{void gameAudioSession.close();if(room&&!isRuntimeHost()){navigator.sendBeacon('/api/platform/rooms/'+room.id+'/leave',new Blob(['{}'],{type:'application/json'}));}signal?.close();});
 window.addEventListener('message',e=>{if(e.source===frame?.contentWindow&&e.data?.type==='tidal-loaded')$('game-loading').classList.add('hidden');});
 // Read-only diagnostics are useful for isolated browser regression and contain no credentials.
-window.tidalDiagnostics=()=>({room:room?{status:room.status,players:room.members.length,owner:room.ownerId===account?.id}:null,workerReady,revision,save:{...saveStatus},chat:{open:chatOpen,unread:chatUnread},nativeUI:{...nativeUI},pointer:pointerGuard?.diagnostics()??null,peers:[...peers.values()].map(p=>({state:p.pc?.connectionState??'unavailable',channel:p.channel?.readyState,transport:p.policy?.mode,error:p.error})),queuedPackets:queue.length,gameLoaded:!!frame&&!$('game-loading').classList.contains('hidden')?false:!!frame});
+window.tidalDiagnostics=()=>({room:room?{id:room.id,adventureId:room.adventureId,epoch:room.epoch,hostGeneration:room.hostGeneration,runtimeHost:isRuntimeHost(),status:room.status,players:room.members.length,owner:isRuntimeHost()}:null,workerReady,revision,save:{...saveStatus},chat:{open:chatOpen,unread:chatUnread},nativeUI:{...nativeUI},pointer:pointerGuard?.diagnostics()??null,peers:[...peers.values()].map(p=>({state:p.pc?.connectionState??'unavailable',channel:p.channel?.readyState,transport:p.policy?.mode,error:p.error})),queuedPackets:queue.length,gameLoaded:!!frame&&!$('game-loading').classList.contains('hidden')?false:!!frame});
+const careerUI=installCareerUI({api,current:()=>({account,room}),onChanged:()=>refresh(true)});
 try{const result=await api('me');account=result.account;if(account)await enterLobby();}catch{show('auth-view');}
+

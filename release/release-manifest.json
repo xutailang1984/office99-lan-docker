@@ -1,16 +1,13 @@
 {
   "schema": 1,
-  "version": "0.11.8",
+  "version": "0.17.0",
   "source": "verified-release",
-  "fileCount": 171,
+  "fileCount": 229,
+  "pckSha256": "76f7e0e249739427f3e29f0d9753b80f694fa502955feb476a44d4ed37bf3a89",
   "files": {
     ".dockerignore": {
       "bytes": 245,
       "sha256": "cf84b8e9cfef4d20c333ded8d7e201f8b0cb7275139a482159b71b9d369a5bc2"
-    },
-    "Dockerfile": {
-      "bytes": 1413,
-      "sha256": "18894eefb27e6b62498a394d7a36140680a0c058b9f015d274d7d1f2c95434ee"
     },
     "compose.yaml": {
       "bytes": 464,
@@ -20,17 +17,25 @@
       "bytes": 781,
       "sha256": "903660194f5194af2d0ded94d726e8cf127c236335905c4f38d2ce401453af87"
     },
+    "Dockerfile": {
+      "bytes": 1446,
+      "sha256": "f4e732ef699d394c8dfc009fc016f5c5a330c2668f35ff8b3804b7575a538190"
+    },
     "docs/DOCKER-DEPLOYMENT.md": {
-      "bytes": 4760,
-      "sha256": "510f7c3e1de124a2219f36c5d53e8029440b52b189253bcd7ac30a42f892910d"
+      "bytes": 5600,
+      "sha256": "a351467dac1929285af26999bc20d990ed2a61bfe970ebdfd79a2ccc1275da91"
     },
     "server/package-lock.json": {
       "bytes": 915,
-      "sha256": "08c9743f2705a7fc7373d882181a4e885e42fc88974d69cc05d45a10f1f4d015"
+      "sha256": "387094da08efc35beffa2949b1212afb8c98fc4a61255df921116a9648791dbc"
     },
     "server/package.json": {
       "bytes": 415,
-      "sha256": "e69d3736c4828d975915722c0ee8dfa66ec82e98917933510fec8acc8b57fb26"
+      "sha256": "10469e490b3145936dd221ebfc696991b010f743ff33d43288470e68f827dd39"
+    },
+    "server/platform/careers.mjs": {
+      "bytes": 5668,
+      "sha256": "4a3479b99ae404c9f3adc0d4dbf913305a076295ecb37faa00c86504d5868f9d"
     },
     "server/platform/checked-store.mjs": {
       "bytes": 5294,
@@ -53,80 +58,132 @@
       "sha256": "f2bfaeeb19400696ad032ba90b7cd25ea9041767ea079d981cb0a22cca03b3a4"
     },
     "server/platform/relay-router.mjs": {
-      "bytes": 5330,
-      "sha256": "476cd2676f3e4a4c38d95186c4d18559718b1785d15b9b5f383df113284d9593"
+      "bytes": 5405,
+      "sha256": "9a505c765209ff59a36064c3a196cca95854e37c88f519fa0629601e91817874"
     },
     "server/platform/service.mjs": {
-      "bytes": 36725,
-      "sha256": "1cacd180c317f6967ebf5e85fb0cf8ee9f642eb9392440660e76523e633eddd7"
+      "bytes": 55384,
+      "sha256": "31b568e4d024022d999664e5c899ce930a3aba724897675a99c3407885e24785"
     },
     "server/platform/storage-policy.mjs": {
       "bytes": 14882,
       "sha256": "7157baccebe189ceca554ccb9bedd3a8b4cbdf80d54cf8eb567662387c798ab1"
     },
     "server/server.mjs": {
-      "bytes": 45928,
-      "sha256": "d0cc194f3554513616cbb4c131a569769ca3596791d7f5e74c4907c0be135377"
+      "bytes": 46368,
+      "sha256": "b81d6f8787b4bbb1aa32fd4b3126aa96da4c5d95bd0bac2f2ff48c662cf64a7e"
+    },
+    "server/survival/assembly-config.mjs": {
+      "bytes": 9032,
+      "sha256": "209433f28ec2e9cdc1f9c9b122f2068e6086ca65ce1a1c600bd87d4eda2caec4"
+    },
+    "server/survival/career-state.mjs": {
+      "bytes": 9357,
+      "sha256": "972578ed08f8a2c3cf85e3723e877fa4a867915345096a90df8523a1ba773edd"
     },
     "server/survival/config.mjs": {
-      "bytes": 12928,
-      "sha256": "08d24a8e89badb6a16ae04c3eb75cbb9b6fe16e9744e9a1739f6604639265eb0"
+      "bytes": 13201,
+      "sha256": "95d325a61316bd15f8c65a17eb2957257fac30ff7225220db8fe7b32d8522f97"
+    },
+    "server/survival/crafting-config.mjs": {
+      "bytes": 6462,
+      "sha256": "aff8b02ea57f469d0bf1145136c8f252d104f320e593c646c91c76adf25be0b4"
+    },
+    "server/survival/crafting.mjs": {
+      "bytes": 10577,
+      "sha256": "ad5edc6720afb188cee7bde884b89885b4a2c9671d68dd6010c4c35d3fae8e51"
+    },
+    "server/survival/day-content-config.mjs": {
+      "bytes": 3703,
+      "sha256": "b8c5696ed0f8076aa9b7eb0d9d1010c5d29da2f49ab05f84e65f8c15b5c58188"
+    },
+    "server/survival/day-content.mjs": {
+      "bytes": 3727,
+      "sha256": "319fb9564813a2dcc4a6d3fa901020722bb843acb25ad30d1ec09b1387c0640b"
     },
     "server/survival/director-combat.mjs": {
-      "bytes": 14480,
-      "sha256": "9c22b404b67a723af954b7b4535991f699d5e2d086fc5fb939fb598532d11f59"
+      "bytes": 15008,
+      "sha256": "ec939304c40798c0df6f275ae525aaf141dcb7bee2375ba9adf162ef95919c6e"
     },
     "server/survival/director-config.mjs": {
-      "bytes": 10413,
-      "sha256": "0a28e134da1f2106ba9932e121153954807cda782a558e40747584c5096330dc"
+      "bytes": 11107,
+      "sha256": "3ad9a8d80c1c7361dd81fdc46f281f44893d022de834dd28782367b8adf1c3f2"
     },
     "server/survival/director.mjs": {
-      "bytes": 21997,
-      "sha256": "9ff07bac973146a7e5e81ffb8a9ac6241a152df76a9dbb8c6b714d4d819075b3"
+      "bytes": 24597,
+      "sha256": "14c6e709490d480fff704d106140c472f6f834a2a50dc3fbe1e308a8ab97efd0"
+    },
+    "server/survival/encounter-variety.mjs": {
+      "bytes": 4505,
+      "sha256": "bbfcdd550fb52b21fed0c08d3b7eb595847a087549db1a59e771f2fe46f35f7d"
     },
     "server/survival/enemy-aggro.mjs": {
-      "bytes": 8889,
-      "sha256": "6c068304acd97833e15dbd367084d82e0ad02cdf8e2bed6c07c3a58f4b1b7bd7"
+      "bytes": 8883,
+      "sha256": "444b6a92dc40be8a25dd18bb35424b1943f923cb040d83121d91549625a29e9d"
     },
     "server/survival/enemy-navigation.mjs": {
       "bytes": 7966,
       "sha256": "68123616bfa6f2818a4746fa8007186db7369836b67276cc32f61ce91333ff00"
     },
+    "server/survival/expedition-config.mjs": {
+      "bytes": 3657,
+      "sha256": "5aa46c595b62bda7b424b49622d959d0609a3604167045417c5ddbb70a0c8667"
+    },
+    "server/survival/expedition.mjs": {
+      "bytes": 5716,
+      "sha256": "7ebd95b73c903e1d28938c729ed578c35ce03169ef20c21e709fd4eee090aa15"
+    },
     "server/survival/exploration-config.mjs": {
-      "bytes": 3265,
-      "sha256": "49493b4ce4b130b4e87cbfd92e1b89b5f04c1083131d797347ff7010ab2e8c0f"
+      "bytes": 3555,
+      "sha256": "737b6b398ea16122352a6498b148e1e7028b1c3c5c9c627b4a16502901cdf59d"
     },
     "server/survival/exploration.mjs": {
-      "bytes": 23838,
-      "sha256": "423e00508a7c7b88ec337d5de14ccffbb5b1889903f4b5435266e68e3d105c39"
+      "bytes": 27557,
+      "sha256": "91f70455defd29922f503ffb5c22946b3ea794a770a1131f2593324365006a70"
     },
     "server/survival/fishing-experience.mjs": {
-      "bytes": 9470,
-      "sha256": "f10bafeb2f0576df3f6f289ea969b6fbc40fdaa9c48f1d2ed684246dc9dad1d6"
+      "bytes": 14919,
+      "sha256": "2ea1dba336924be561880bf814dd01bd8ed3f5acb2816e2d0e8094d6400477e5"
+    },
+    "server/survival/gear-growth.mjs": {
+      "bytes": 6665,
+      "sha256": "d8de2a7695b35ac2b38004c6e19707e32c5027c7eebb47df6fa8ffd323115504"
     },
     "server/survival/gm-resources.mjs": {
       "bytes": 4074,
       "sha256": "cc24d69b1b6f1600187dd30ddad26f302db1b83e31e24ac9822d10967bfc955a"
     },
     "server/survival/host-session.mjs": {
-      "bytes": 2654,
-      "sha256": "cc9ac5526f442c52f32db3fce88a390da6b7f7a58e826b5c3aa89254a8780ed9"
+      "bytes": 2765,
+      "sha256": "118dd1f3ec5ad6b5eb117526479358da4f0b6c820dc046478beec2d29cf6c83f"
     },
     "server/survival/member-progress.mjs": {
       "bytes": 6444,
       "sha256": "e2bc3a12be70f18d22b093a2f5b2fc45c7420f8162c3b16393a4acda6ee6abf7"
     },
     "server/survival/mission-mode.mjs": {
-      "bytes": 20013,
-      "sha256": "0b592ee98494cffcbe9a648ae5cd8920a6179672b3b437da8b67b320c796e1d4"
+      "bytes": 20282,
+      "sha256": "5de706984baff9ac8f7698ad1e22bca950ce9b6b6e2367b56b4deb31f333f2f3"
+    },
+    "server/survival/night-content-config.mjs": {
+      "bytes": 6926,
+      "sha256": "8cd572b7e774581c1317cc0270ea3ed9867bd2bf767f55c204ba3ef9bc7af3e4"
+    },
+    "server/survival/night-content.mjs": {
+      "bytes": 12116,
+      "sha256": "b3d6b9739514240842fd8f951d299468a4c23c3fba87c5e5958421fb7ccaf59d"
     },
     "server/survival/portable-id.mjs": {
       "bytes": 553,
       "sha256": "63b7f3d29fce061c11c76085d78b179de2d78765435d22ade20465c38021bfcc"
     },
+    "server/survival/risk-progression.mjs": {
+      "bytes": 1669,
+      "sha256": "603678d2edf757b1dd9263c25567056c8be980d38e8d75cad5f1585bc45f3abd"
+    },
     "server/survival/room-runtime.mjs": {
-      "bytes": 13251,
-      "sha256": "b2082bd2533230161fa21ec7e32001ec1f30d5891d6bb6acee579245faa20848"
+      "bytes": 16512,
+      "sha256": "6c8e0d51ccf57cecb3df76d47a02d3279611d14b1a24e8b8205be039950f9738"
     },
     "server/survival/save-store.mjs": {
       "bytes": 3481,
@@ -134,19 +191,35 @@
     },
     "server/survival/service.mjs": {
       "bytes": 16379,
-      "sha256": "b4cb08ab97e918ca7cd81b60d1fcd3cfcc4217aa6c194832b4ea188b5239f3f8"
+      "sha256": "25d6579db20f5c47abeaa606ba72c4ea92c13c355f8af366dec1b1f16ab4fd65"
+    },
+    "server/survival/social-activities.mjs": {
+      "bytes": 3179,
+      "sha256": "491b2d4ec0b9bab169b5bf2264be61e8e569202f5c1d5af9bf36e16066e7b943"
+    },
+    "server/survival/social-config.mjs": {
+      "bytes": 2480,
+      "sha256": "87f800988fe586529a8bb60c48f563ba9481482b409084eeeef2b180e83abff9"
+    },
+    "server/survival/social.mjs": {
+      "bytes": 16429,
+      "sha256": "edf1cdd988e4e0c473086011e583fc53861d20e026ebc4d42081f490aada290a"
     },
     "server/survival/state-wire.mjs": {
       "bytes": 3347,
       "sha256": "aa2371969da55119d3acecd97aaf284f76650e8372ac2431c53323d07f2e045a"
+    },
+    "server/survival/tactical-content.mjs": {
+      "bytes": 8560,
+      "sha256": "d155977c97567c9dd27ae6ccea3f694db6f00df176b988a064c1d5d5e0313713"
     },
     "server/survival/terrain-layout.mjs": {
       "bytes": 4097,
       "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
     },
     "server/survival/world.mjs": {
-      "bytes": 156479,
-      "sha256": "07281ebc6b43ab56c42a23069d7f5a00b3e5c4d1c04e4423798979eb2bacd93e"
+      "bytes": 165890,
+      "sha256": "cc5a53f59e13236b69be61a7d68fdc748f82e909ea2c95fbdc7f3240ea102da6"
     },
     "tools/build-docker-release.mjs": {
       "bytes": 7601,
@@ -155,14 +228,6 @@
     "tools/verify-docker-release.mjs": {
       "bytes": 5404,
       "sha256": "023f4080f20fe84385af224ce9dcf3d991a1fd556ba77b171897906dfa3f2c2e"
-    },
-    "web/audio/sfx/LICENSE-KENNEY.txt": {
-      "bytes": 608,
-      "sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db"
-    },
-    "web/audio/sfx/SOURCES.md": {
-      "bytes": 2953,
-      "sha256": "393bbd9cd5f86617c1509d9669e750390e40a344f3364c4054e2cca38e38e4b2"
     },
     "web/audio/sfx/breaks/glass_01.ogg": {
       "bytes": 7403,
@@ -300,9 +365,93 @@
       "bytes": 2259,
       "sha256": "30896e9e1556333f00aaca99f590a40d1997c24bb50734d5e1a141158a85c129"
     },
+    "web/audio/sfx/LICENSE-KENNEY.txt": {
+      "bytes": 608,
+      "sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db"
+    },
     "web/audio/sfx/manifest.json": {
-      "bytes": 7670,
-      "sha256": "0083650cbfc34d521b59c06c017ca9120898311bb23869e2fa217d30e159117c"
+      "bytes": 12062,
+      "sha256": "be3a72325cb14cd0974207d006557dd7c9b8f96e21db1c2d5862889ebf70e1e2"
+    },
+    "web/audio/sfx/office45/audition.html": {
+      "bytes": 3164,
+      "sha256": "aaa3fd034f7e81c1057e9925d4a2fb0c1aa5e81e0789558c7cfecde37849f62f"
+    },
+    "web/audio/sfx/office45/audition.wav": {
+      "bytes": 588524,
+      "sha256": "1d4db5bee12df44983f613a4be432690fd90b3431a5b2c8cf4124f1ff688a9ef"
+    },
+    "web/audio/sfx/office45/broadcast_01.wav": {
+      "bytes": 55724,
+      "sha256": "cffa944e0e8b99cc29b7b2eb2c939d83522e34ad7f175527ec0eea55b6b9ea4d"
+    },
+    "web/audio/sfx/office45/broadcast_02.wav": {
+      "bytes": 55724,
+      "sha256": "568d2e5108c2ac15a96c64ae73f68e03fdea893e6e8e04367b3c3bd4ddca984a"
+    },
+    "web/audio/sfx/office45/build.json": {
+      "bytes": 6253,
+      "sha256": "583477d5d016911aff10eed56e337fec77528d7227534167fee99efa82ad663e"
+    },
+    "web/audio/sfx/office45/coffee_share_01.wav": {
+      "bytes": 42284,
+      "sha256": "c4886967dc6e2a59ad3e1259ebd79f1c28c3e84c08b8b786f15d29152e597894"
+    },
+    "web/audio/sfx/office45/coffee_share_02.wav": {
+      "bytes": 42284,
+      "sha256": "0042050282fb98242ab3f3d8029e0212a2c181964c98010981a4f9c389ee16fe"
+    },
+    "web/audio/sfx/office45/duck_01.wav": {
+      "bytes": 49964,
+      "sha256": "d94b210590b90459672bed449d67824089a0970663c12d6daf1e2ae4704c6f1e"
+    },
+    "web/audio/sfx/office45/duck_02.wav": {
+      "bytes": 49964,
+      "sha256": "929637161562e925136d88ec3f8a55d01b7760175c969bc7c0ad31f2d6ff3bb7"
+    },
+    "web/audio/sfx/office45/highfive_01.wav": {
+      "bytes": 28844,
+      "sha256": "64a2423f5246698390c249fd94a54f09781a1a864608c737d7837a5ccb46521f"
+    },
+    "web/audio/sfx/office45/highfive_02.wav": {
+      "bytes": 28844,
+      "sha256": "ef452bc216ed64068b836d8421770b2cbef02d5691f17054dd6d5e3dc1b28fa9"
+    },
+    "web/audio/sfx/office45/motor_start_01.wav": {
+      "bytes": 81644,
+      "sha256": "2d8cce9ad57d118d2adc75bf37510d94f9928d47c6b81f768e774eccf7d01596"
+    },
+    "web/audio/sfx/office45/motor_start_02.wav": {
+      "bytes": 81644,
+      "sha256": "eeab4d541b3a8aa20cf52f45a405bae72f5b6ae5c7f8d6aad0d0a7a45897cf76"
+    },
+    "web/audio/sfx/office45/paper_throw_01.wav": {
+      "bytes": 35564,
+      "sha256": "f778dfe57c814605c5e87ae9bacbceeaa03f37cde7b30e77d60186a0aebd0167"
+    },
+    "web/audio/sfx/office45/paper_throw_02.wav": {
+      "bytes": 35564,
+      "sha256": "96e72fcf9b2afdd1bde31333e1ef7cdd4ad2294b504371eb7e9049eb1caa68b6"
+    },
+    "web/audio/sfx/office45/paper_wave_01.wav": {
+      "bytes": 74924,
+      "sha256": "387a01b83543c5b40b5dc4aaab5359befac53fbf0d5a7454f5dedaba0a4a1d33"
+    },
+    "web/audio/sfx/office45/paper_wave_02.wav": {
+      "bytes": 74924,
+      "sha256": "6d2b65a98eaed4cfa714351ccddee5b3c7572be57c3f6b3c8aa58840efcd1bfa"
+    },
+    "web/audio/sfx/office45/SOURCES.md": {
+      "bytes": 2337,
+      "sha256": "cd708ac2851a7b43231f3105cf8a5762d17223e62d50479cf71ee1b1aa87ff3f"
+    },
+    "web/audio/sfx/office45/stamp_01.wav": {
+      "bytes": 27884,
+      "sha256": "d7cac140251bd925ea43da6ee98cb955f7dc236dd823f0cb95dc3f2a0c4955cb"
+    },
+    "web/audio/sfx/office45/stamp_02.wav": {
+      "bytes": 27884,
+      "sha256": "e6fbe734c996e5ecdef603229f7637a7a2093c0bc0fa2b4a9a9da0b4d18c0f42"
     },
     "web/audio/sfx/reloads/magazine_pistol.wav": {
       "bytes": 141416,
@@ -327,6 +476,10 @@
     "web/audio/sfx/reloads/shotgun_shell_03.ogg": {
       "bytes": 6156,
       "sha256": "c1d2c4f9910d4529581ae56a9a9a01454c4619fbb7d6da7616221d8ec58cc0c4"
+    },
+    "web/audio/sfx/SOURCES.md": {
+      "bytes": 2953,
+      "sha256": "393bbd9cd5f86617c1509d9669e750390e40a344f3364c4054e2cca38e38e4b2"
     },
     "web/audio/sfx/weapon-build.json": {
       "bytes": 6766,
@@ -470,15 +623,15 @@
     },
     "web/index.html": {
       "bytes": 10441,
-      "sha256": "b6e48db74d33b6ed50e0b17b1048f0bfd481ad58c377a8c0be599079ead04bf6"
+      "sha256": "548ca159607160a05640529417f5ff2f08e38aa995d232dd0b834210969230e0"
     },
     "web/index.js": {
       "bytes": 279815,
       "sha256": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba"
     },
     "web/index.pck": {
-      "bytes": 9240632,
-      "sha256": "a6a169edeb1380c37ec9e476483ee10363350ce0e10be8c1844af5bd28ce44f5"
+      "bytes": 9654220,
+      "sha256": "76f7e0e249739427f3e29f0d9753b80f694fa502955feb476a44d4ed37bf3a89"
     },
     "web/index.png": {
       "bytes": 21443,
@@ -492,49 +645,53 @@
       "bytes": 175,
       "sha256": "a6e302069293159c9baa7ee2f7ff258a0b6d29614fae22f903e80123f3be54db"
     },
-    "web/platform/IslandSans.ttf": {
-      "bytes": 10589076,
-      "sha256": "c2b26e61020802aaf5ef11ee141d4e356daf9d33e61d4fcedda6d6da33a811c1"
-    },
     "web/platform/app.css": {
       "bytes": 22895,
       "sha256": "4dca6271d6915b84bdf0639e32c5b7016559c2b9b77e1c4e5b18fba25c175855"
     },
     "web/platform/app.mjs": {
-      "bytes": 47062,
-      "sha256": "ab1440768ffbf87e81bd357f92389309f20e53ede0a7cd1bd65e698dcee7f1fe"
+      "bytes": 52837,
+      "sha256": "cd895eac2d876585ea07126c4cbe3bd298d8f1d8d223d32afc8054751615cc2f"
     },
     "web/platform/balance.json": {
-      "bytes": 25128,
-      "sha256": "e677c47609b95353c8eaf046c77601c1746a96e2a5e98158073c63feda6f735c"
+      "bytes": 54874,
+      "sha256": "e5f80bac9fef60f906e938af3c8d217c9c61fcbf7afdb83f2be3b728eef30dbc"
+    },
+    "web/platform/browser-audio-session.mjs": {
+      "bytes": 1723,
+      "sha256": "75a1f541b4876853e1000a0765dfada2fc78dec26944c77b036dc0b737768162"
+    },
+    "web/platform/career-ui.mjs": {
+      "bytes": 3607,
+      "sha256": "93ec283ca2499a2cc16c0559c44a86cb06064aae2a9947f7d81cafa256429876"
     },
     "web/platform/checkpoint-store.mjs": {
       "bytes": 4240,
       "sha256": "023661d15b05eed8416679a5a84557519932b520349cb9ecaa33e2c387fb58f2"
+    },
+    "web/platform/collection-ui.mjs": {
+      "bytes": 3421,
+      "sha256": "2db3e188afd4002449d8b30e5ff16d283187175e0315b2dbf03e8064dda94fe8"
     },
     "web/platform/frame-state-cache.mjs": {
       "bytes": 4571,
       "sha256": "5036289661f43a6b226c22e05f58fecd235769ba829670ea9da94b3dff164930"
     },
     "web/platform/gm-client.mjs": {
-      "bytes": 1667,
-      "sha256": "afa7a9a9256d76ea4cad4b72ee1cd5fa1221c5b447a73dcb3a6b0c91550c9bcb"
+      "bytes": 1716,
+      "sha256": "9ebb4a6b56dea1e513dbf8810f66dbee7f509e02028999a924ddd362fb94266b"
     },
     "web/platform/gm-worker.mjs": {
       "bytes": 4145,
       "sha256": "36ec6dbfb95fd30f60555ce3f23e714babff693197cc020c90edb82b54ff60b3"
     },
     "web/platform/host-worker.mjs": {
-      "bytes": 3866,
-      "sha256": "eff2e3ab0a4d909a8f19550f8c5b427df8a7685fcc6a7997d690c7f8019c3862"
+      "bytes": 9436,
+      "sha256": "519758ad9c2b43d0e2c4f023b264037b9258624e056b7f11654b5ccda604c9fd"
     },
     "web/platform/icons/.gdignore": {
       "bytes": 1,
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
-    },
-    "web/platform/icons/LICENSE-feather": {
-      "bytes": 1082,
-      "sha256": "308028e93fcf84972523cdf6e616f73168546b4953895f516d01287f16fe7bee"
     },
     "web/platform/icons/arrow-left.svg": {
       "bytes": 261,
@@ -551,6 +708,10 @@
     "web/platform/icons/home.svg": {
       "bytes": 287,
       "sha256": "2b633ad9144db455c1cb08dd75f6e47a1cbbb0aaa747205012db3578830e0541"
+    },
+    "web/platform/icons/LICENSE-feather": {
+      "bytes": 1082,
+      "sha256": "308028e93fcf84972523cdf6e616f73168546b4953895f516d01287f16fe7bee"
     },
     "web/platform/icons/plus.svg": {
       "bytes": 263,
@@ -582,23 +743,27 @@
     },
     "web/platform/index.html": {
       "bytes": 10441,
-      "sha256": "b6e48db74d33b6ed50e0b17b1048f0bfd481ad58c377a8c0be599079ead04bf6"
+      "sha256": "548ca159607160a05640529417f5ff2f08e38aa995d232dd0b834210969230e0"
+    },
+    "web/platform/IslandSans.ttf": {
+      "bytes": 10589076,
+      "sha256": "c2b26e61020802aaf5ef11ee141d4e356daf9d33e61d4fcedda6d6da33a811c1"
     },
     "web/platform/link-policy.mjs": {
-      "bytes": 1193,
-      "sha256": "58a13497ffc3cc860396d340dd1bcb6c998e8cf10b86a7f92a83d4179ed0f34d"
+      "bytes": 1404,
+      "sha256": "99035191baadc2a6749b1ff1db4505e588cb9d44357a35ed49fc3f8f0944e179"
     },
     "web/platform/loading-ui.mjs": {
       "bytes": 3269,
       "sha256": "60d6b877fa8e45a94c2bcc634438f715176cf44acdd5e9844e36a8117dafdd37"
     },
     "web/platform/lobby-view.mjs": {
-      "bytes": 4986,
-      "sha256": "7cba351545aa0d7a74545c015b2ba58a698b230adccf8d76e5219b19f8f3f3fe"
+      "bytes": 4858,
+      "sha256": "62bfb720b045bdfdbcbd0af3389cb380c93186fd40ec74435fd907b5aeaaa58e"
     },
     "web/platform/local-host-save.mjs": {
-      "bytes": 5974,
-      "sha256": "eba83bfd43d4472e1ae2aaf9db0e6ca73d08897ca8aae07e0a40fa63e4360c68"
+      "bytes": 7588,
+      "sha256": "c47fd3ac5a26f3ac9eb4c77749c410f5e2b69df22b37d21f43aab74bcbe69f61"
     },
     "web/platform/office-lobby-background.png": {
       "bytes": 162854,
@@ -616,78 +781,145 @@
       "bytes": 1191,
       "sha256": "e21dccdb3cebcc30139405822f8d7afb339db48b866907868fafb7d4cff8699c"
     },
+    "web/platform/sim/assembly-config.mjs": {
+      "bytes": 9032,
+      "sha256": "209433f28ec2e9cdc1f9c9b122f2068e6086ca65ce1a1c600bd87d4eda2caec4"
+    },
+    "web/platform/sim/career-state.mjs": {
+      "bytes": 9357,
+      "sha256": "972578ed08f8a2c3cf85e3723e877fa4a867915345096a90df8523a1ba773edd"
+    },
+    "web/platform/sim/crafting-config.mjs": {
+      "bytes": 6462,
+      "sha256": "aff8b02ea57f469d0bf1145136c8f252d104f320e593c646c91c76adf25be0b4"
+    },
+    "web/platform/sim/crafting.mjs": {
+      "bytes": 10577,
+      "sha256": "ad5edc6720afb188cee7bde884b89885b4a2c9671d68dd6010c4c35d3fae8e51"
+    },
+    "web/platform/sim/day-content-config.mjs": {
+      "bytes": 3703,
+      "sha256": "b8c5696ed0f8076aa9b7eb0d9d1010c5d29da2f49ab05f84e65f8c15b5c58188"
+    },
+    "web/platform/sim/day-content.mjs": {
+      "bytes": 3727,
+      "sha256": "319fb9564813a2dcc4a6d3fa901020722bb843acb25ad30d1ec09b1387c0640b"
+    },
     "web/platform/sim/director-combat.mjs": {
-      "bytes": 14480,
-      "sha256": "9c22b404b67a723af954b7b4535991f699d5e2d086fc5fb939fb598532d11f59"
+      "bytes": 15008,
+      "sha256": "ec939304c40798c0df6f275ae525aaf141dcb7bee2375ba9adf162ef95919c6e"
     },
     "web/platform/sim/director-config.mjs": {
-      "bytes": 10413,
-      "sha256": "0a28e134da1f2106ba9932e121153954807cda782a558e40747584c5096330dc"
+      "bytes": 11107,
+      "sha256": "3ad9a8d80c1c7361dd81fdc46f281f44893d022de834dd28782367b8adf1c3f2"
     },
     "web/platform/sim/director.mjs": {
-      "bytes": 21997,
-      "sha256": "9ff07bac973146a7e5e81ffb8a9ac6241a152df76a9dbb8c6b714d4d819075b3"
+      "bytes": 24597,
+      "sha256": "14c6e709490d480fff704d106140c472f6f834a2a50dc3fbe1e308a8ab97efd0"
+    },
+    "web/platform/sim/encounter-variety.mjs": {
+      "bytes": 4505,
+      "sha256": "bbfcdd550fb52b21fed0c08d3b7eb595847a087549db1a59e771f2fe46f35f7d"
     },
     "web/platform/sim/enemy-aggro.mjs": {
-      "bytes": 8889,
-      "sha256": "6c068304acd97833e15dbd367084d82e0ad02cdf8e2bed6c07c3a58f4b1b7bd7"
+      "bytes": 8883,
+      "sha256": "444b6a92dc40be8a25dd18bb35424b1943f923cb040d83121d91549625a29e9d"
     },
     "web/platform/sim/enemy-navigation.mjs": {
       "bytes": 7966,
       "sha256": "68123616bfa6f2818a4746fa8007186db7369836b67276cc32f61ce91333ff00"
     },
+    "web/platform/sim/expedition-config.mjs": {
+      "bytes": 3657,
+      "sha256": "5aa46c595b62bda7b424b49622d959d0609a3604167045417c5ddbb70a0c8667"
+    },
+    "web/platform/sim/expedition.mjs": {
+      "bytes": 5716,
+      "sha256": "7ebd95b73c903e1d28938c729ed578c35ce03169ef20c21e709fd4eee090aa15"
+    },
     "web/platform/sim/exploration-config.mjs": {
-      "bytes": 3265,
-      "sha256": "49493b4ce4b130b4e87cbfd92e1b89b5f04c1083131d797347ff7010ab2e8c0f"
+      "bytes": 3555,
+      "sha256": "737b6b398ea16122352a6498b148e1e7028b1c3c5c9c627b4a16502901cdf59d"
     },
     "web/platform/sim/exploration.mjs": {
-      "bytes": 23838,
-      "sha256": "423e00508a7c7b88ec337d5de14ccffbb5b1889903f4b5435266e68e3d105c39"
+      "bytes": 27557,
+      "sha256": "91f70455defd29922f503ffb5c22946b3ea794a770a1131f2593324365006a70"
     },
     "web/platform/sim/fishing-experience.mjs": {
-      "bytes": 9470,
-      "sha256": "f10bafeb2f0576df3f6f289ea969b6fbc40fdaa9c48f1d2ed684246dc9dad1d6"
+      "bytes": 14919,
+      "sha256": "2ea1dba336924be561880bf814dd01bd8ed3f5acb2816e2d0e8094d6400477e5"
+    },
+    "web/platform/sim/gear-growth.mjs": {
+      "bytes": 6665,
+      "sha256": "d8de2a7695b35ac2b38004c6e19707e32c5027c7eebb47df6fa8ffd323115504"
     },
     "web/platform/sim/gm-resources.mjs": {
       "bytes": 4074,
       "sha256": "cc24d69b1b6f1600187dd30ddad26f302db1b83e31e24ac9822d10967bfc955a"
     },
     "web/platform/sim/host-session.mjs": {
-      "bytes": 2654,
-      "sha256": "cc9ac5526f442c52f32db3fce88a390da6b7f7a58e826b5c3aa89254a8780ed9"
+      "bytes": 2765,
+      "sha256": "118dd1f3ec5ad6b5eb117526479358da4f0b6c820dc046478beec2d29cf6c83f"
     },
     "web/platform/sim/member-progress.mjs": {
       "bytes": 6444,
       "sha256": "e2bc3a12be70f18d22b093a2f5b2fc45c7420f8162c3b16393a4acda6ee6abf7"
     },
     "web/platform/sim/mission-mode.mjs": {
-      "bytes": 20013,
-      "sha256": "0b592ee98494cffcbe9a648ae5cd8920a6179672b3b437da8b67b320c796e1d4"
+      "bytes": 20282,
+      "sha256": "5de706984baff9ac8f7698ad1e22bca950ce9b6b6e2367b56b4deb31f333f2f3"
+    },
+    "web/platform/sim/night-content-config.mjs": {
+      "bytes": 6926,
+      "sha256": "8cd572b7e774581c1317cc0270ea3ed9867bd2bf767f55c204ba3ef9bc7af3e4"
+    },
+    "web/platform/sim/night-content.mjs": {
+      "bytes": 12116,
+      "sha256": "b3d6b9739514240842fd8f951d299468a4c23c3fba87c5e5958421fb7ccaf59d"
     },
     "web/platform/sim/portable-id.mjs": {
       "bytes": 553,
       "sha256": "63b7f3d29fce061c11c76085d78b179de2d78765435d22ade20465c38021bfcc"
     },
+    "web/platform/sim/risk-progression.mjs": {
+      "bytes": 1669,
+      "sha256": "603678d2edf757b1dd9263c25567056c8be980d38e8d75cad5f1585bc45f3abd"
+    },
     "web/platform/sim/room-runtime.mjs": {
-      "bytes": 13251,
-      "sha256": "b2082bd2533230161fa21ec7e32001ec1f30d5891d6bb6acee579245faa20848"
+      "bytes": 16512,
+      "sha256": "6c8e0d51ccf57cecb3df76d47a02d3279611d14b1a24e8b8205be039950f9738"
+    },
+    "web/platform/sim/social-activities.mjs": {
+      "bytes": 3179,
+      "sha256": "491b2d4ec0b9bab169b5bf2264be61e8e569202f5c1d5af9bf36e16066e7b943"
+    },
+    "web/platform/sim/social-config.mjs": {
+      "bytes": 2480,
+      "sha256": "87f800988fe586529a8bb60c48f563ba9481482b409084eeeef2b180e83abff9"
+    },
+    "web/platform/sim/social.mjs": {
+      "bytes": 16429,
+      "sha256": "edf1cdd988e4e0c473086011e583fc53861d20e026ebc4d42081f490aada290a"
     },
     "web/platform/sim/state-wire.mjs": {
       "bytes": 3347,
       "sha256": "aa2371969da55119d3acecd97aaf284f76650e8372ac2431c53323d07f2e045a"
+    },
+    "web/platform/sim/tactical-content.mjs": {
+      "bytes": 8560,
+      "sha256": "d155977c97567c9dd27ae6ccea3f694db6f00df176b988a064c1d5d5e0313713"
     },
     "web/platform/sim/terrain-layout.mjs": {
       "bytes": 4097,
       "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
     },
     "web/platform/sim/world.mjs": {
-      "bytes": 156479,
-      "sha256": "07281ebc6b43ab56c42a23069d7f5a00b3e5c4d1c04e4423798979eb2bacd93e"
+      "bytes": 165890,
+      "sha256": "cc5a53f59e13236b69be61a7d68fdc748f82e909ea2c95fbdc7f3240ea102da6"
     },
     "web/play.html": {
-      "bytes": 12445,
-      "sha256": "4551da32829fc6382fc3d5822c42f06ba1496a79e097adf8e621d4d9ee944124"
+      "bytes": 14368,
+      "sha256": "6a74bcb8f34844daf2063db291686b0e18025bad837c1571d10f996b64749380"
     }
-  },
-  "pckSha256": "a6a169edeb1380c37ec9e476483ee10363350ce0e10be8c1844af5bd28ce44f5"
+  }
 }

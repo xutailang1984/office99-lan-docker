@@ -456,7 +456,14 @@ export async function createGameServer(options = {}) {
     configPath: options.survivalConfigPath ?? path.join(ROOT, '..', 'client', 'survival', 'balance.json'),
     savePolicy: 'continuous',
   }) : null;
-  const platform = (options.platform ?? !testLegacyModes) ? await (await import('./platform/service.mjs')).createPlatformService({dataDir:options.platformDataDir??path.join(path.dirname(saveFile),'platform')}) : null;
+  const economyVersion = options.economyVersion ?? Number(process.env.OFFICE99_ECONOMY_VERSION || 0);
+  // The published export supplies the same expanded rules used by the host.
+  // Alpha P1 starts in its own data directory; old data remains recoverable.
+  const platform = (options.platform ?? !testLegacyModes) ? await (await import('./platform/service.mjs')).createPlatformService({
+    dataDir:options.platformDataDir??path.join(path.dirname(saveFile),economyVersion===1?'platform-p1':'platform'),
+    economyVersion,
+    ...(economyVersion===1?{config:JSON.parse(await readFile(path.join(webRoot,'platform','balance.json'),'utf8'))}:{}),
+  }) : null;
   const httpServer = http.createServer(async (request, response) => {
     response.setHeader('X-Content-Type-Options', 'nosniff');
     if(request.socket.encrypted||/^(localhost|127\.\d+\.\d+\.\d+|\[::1\])(?::\d+)?$/i.test(request.headers.host??''))response.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
@@ -494,7 +501,7 @@ export async function createGameServer(options = {}) {
       const survivalStatus = survival?.status() ?? null;
       const ready = !closed && (!survivalStatus || survivalStatus.ready) && (!platformStatus || platformStatus.ready);
       response.setHeader('Content-Type', MIME['.json']);
-      response.end(JSON.stringify({ ok: ready, service: 'voxel-fishing', build: '0.11.8', pid: process.pid, ready, players: players.size + (survivalStatus?.players ?? 0), classicPlayers: players.size, maxPlayers: testLegacyModes ? maxPlayers : 8, mode: testLegacyModes ? 'isolated-legacy-test' : 'latest-only', legacyEnabled: testLegacyModes, survival: survivalStatus, platform: platformStatus }));
+      response.end(JSON.stringify({ ok: ready, service: 'voxel-fishing', build: '0.17.0', pid: process.pid, ready, players: players.size + (survivalStatus?.players ?? 0), classicPlayers: players.size, maxPlayers: testLegacyModes ? maxPlayers : 8, mode: testLegacyModes ? 'isolated-legacy-test' : 'latest-only', legacyEnabled: testLegacyModes, survival: survivalStatus, platform: platformStatus }));
       return;
     }
     if (closed) { response.writeHead(503); response.end(); return; }

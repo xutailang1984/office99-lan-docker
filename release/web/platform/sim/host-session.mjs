@@ -25,6 +25,7 @@ export class HostSession {
     if(this.closed||this.runtime.stopping)return false;
     if(!message||typeof message!=='object')return false;
     if(message.type==='room')this.runtime.setRoom(message.room);
+    else if(message.type==='careers')this.runtime.setCareers(message.careerBindings??[],message.economyEpoch);
     else if(message.type==='member_resets'){
       if(message.roomId!==this.runtime.room.id||message.epoch!==this.runtime.room.epoch)return false;
       this.runtime.applyMemberResets(message.memberResets,message.memberResetVersion);

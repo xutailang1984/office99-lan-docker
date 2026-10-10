@@ -4,9 +4,9 @@ import {checkpointKey,pack,latest,CHECKPOINT_SCHEMA} from './checkpoint-store.mj
 // and at most one preserved divergent checkpoint. Transaction completion is
 // the local ACK. Platform revision and local sequence never share a counter.
 export class LocalHostSave {
-  constructor({store,room,remote,writeRemote,onStatus=()=>{},onResets=()=>{},now=()=>Date.now(),writer}){
+  constructor({store,room,remote,writeRemote,onStatus=()=>{},onResets=()=>{},now=()=>Date.now(),writer,storageAccountId=room.ownerId,authoritative=false}){
     this.store=store;this.room=room;this.remote=remote;this.writeRemote=writeRemote;this.onStatus=onStatus;this.onResets=onResets;this.now=now;
-    this.writer=writer;this.key=checkpointKey(room.ownerId,room.adventureId);this.job=null;this.lastAttempt=-Infinity;this.stopped=false;this.localRevision=0;this.remoteRevision=remote.revision;this.backupError=null;
+    this.writer=writer;this.storageAccountId=storageAccountId;this.authoritative=authoritative;this.key=checkpointKey(storageAccountId,room.adventureId);this.job=null;this.lastAttempt=-Infinity;this.stopped=false;this.localRevision=0;this.remoteRevision=remote.revision;this.backupError=null;
   }
   owned(record){if(!record||record.writer!==this.writer||record.epoch!==this.room.epoch)throw Error('房主已变更，请回大厅重新进入');return record;}
   status(record,error=this.backupError){this.localRevision=latest(record)?.slot.sequence??0;this.remoteRevision=record.remoteRevision;if(!this.stopped)this.onStatus({localRevision:this.localRevision,remoteRevision:this.remoteRevision,backupPending:this.localRevision>record.backedLocalRevision,error});}
@@ -18,7 +18,8 @@ export class LocalHostSave {
       const sameHead=old&&old.remoteRevision===this.remote.revision;
       const acknowledged=pending&&this.remote.head?.hostEpoch===pending.body.hostEpoch&&this.remote.head?.saveSeq===pending.body.saveSeq;
       const sameWorld=!this.remote.state||local?.state.worldId===this.remote.state.worldId;
-      const compatible=old?.schema===CHECKPOINT_SCHEMA&&sameWorld&&(sameHead||acknowledged)&&local?.slot.sequence>=(acknowledged?pending.localRevision:old.backedLocalRevision??0);
+      const sameEconomy=(local?.state.economyEpoch??0)===(this.remote.state?.economyEpoch??0)&&(local?.state.economyVersion??0)===(this.remote.state?.economyVersion??0);
+      const compatible=!this.authoritative&&old?.schema===CHECKPOINT_SCHEMA&&sameWorld&&sameEconomy&&(sameHead||acknowledged)&&local?.slot.sequence>=(acknowledged?pending.localRevision:old.backedLocalRevision??0);
       chosen=compatible&&local?local.state:this.remote.state;
       if(compatible&&local&&local.slot.sequence>(old.backedLocalRevision??0))notice='已接上本机保存的进度。';
       const diverged=local&&!compatible&&local.slot.sequence>(old.backedLocalRevision??0);
@@ -27,7 +28,7 @@ export class LocalHostSave {
       const sequence=local?.slot.sequence??0;
       const slots=compatible&&local?old.slots.filter(s=>s&&Number.isSafeInteger(s.sequence)&&s.sequence<=local.slot.sequence).slice(-2):chosen?[pack(chosen,sequence+1)]:[];
       const last=latest({slots})?.slot.sequence??0;
-      return {schema:CHECKPOINT_SCHEMA,ownerId:this.room.ownerId,adventureId:this.room.adventureId,epoch:this.room.epoch,writer:this.writer,slots,remoteRevision:this.remote.revision,saveSeq:0,pending:null,backedLocalRevision:compatible?(acknowledged?pending.localRevision:old.backedLocalRevision):last,conflict:diverged?local.slot:old?.conflict??null};
+      return {schema:CHECKPOINT_SCHEMA,ownerId:this.storageAccountId,adventureOwnerId:this.room.ownerId,adventureId:this.room.adventureId,epoch:this.room.epoch,writer:this.writer,slots,remoteRevision:this.remote.revision,saveSeq:0,pending:null,backedLocalRevision:compatible?(acknowledged?pending.localRevision:old.backedLocalRevision):last,conflict:diverged?local.slot:old?.conflict??null};
     });
     this.status(record);return {state:chosen,notice};
   }
@@ -74,4 +75,17 @@ export class LocalHostSave {
     const r=this.owned(await this.store.read(this.key));if((latest(r)?.slot.sequence??0)>r.backedLocalRevision)throw Error('进度仍在备份，请重试');
   }
   stop(){this.stopped=true;}
+  async pendingHandoff(){return this.owned(await this.store.read(this.key)).handoff??null;}
+  async handoff(state,settlements,writeHandoff){
+    await this.flush();
+    let record=this.owned(await this.store.read(this.key));
+    // Keep the exact handoff request across an unknown ACK. A retry cannot
+    // export the same assets with a fresh sequence or resume the old world.
+    if(!record.handoff){record=await this.store.update(this.key,old=>{const r=this.owned(old);if(!r.handoff)r.handoff={roomId:this.room.id,hostEpoch:this.room.epoch,baseRevision:r.remoteRevision,saveSeq:++r.saveSeq,economyEpoch:state.economyEpoch??0,state:structuredClone(state),settlements:structuredClone(settlements)};return r;});}
+    return await writeHandoff(record.handoff);
+  }
+  async acceptHandoff(state,ack){
+    const record=await this.store.update(this.key,old=>{const r=this.owned(old);if(!r.handoff||ack.saveSeq!==r.handoff.saveSeq||ack.revision!==r.handoff.baseRevision+1)throw Error('个人物资结算回执无效');const sequence=(latest(r)?.slot.sequence??0)+1;r.slots=[pack(state,sequence)];r.remoteRevision=ack.revision;r.backedLocalRevision=sequence;r.pending=null;r.handoff=null;return r;});
+    this.backupError=null;this.status(record);
+  }
 }

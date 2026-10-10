@@ -1,5 +1,6 @@
 // Target decisions use the authoritative game clock. Private, bounded memory is
 // saved beside the world, never copied into public enemy snapshots.
+import {isBoss} from './night-content-config.mjs';
 import {practiceEnemyInside} from './mission-mode.mjs';
 export const AGGRO_RULES=Object.freeze({scanSeconds:.2,holdSeconds:1,switchRatio:1.25,switchMargin:.1,damageScale:40,halfLife:6,memorySeconds:18,lastSeenSeconds:2,maxAttackers:10,nightRange:12,bossRange:8,nightSeconds:4,bossSeconds:3,nightTravel:8,bossTravel:6,routeSeconds:2});
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -90,15 +91,15 @@ export class EnemyAggro {
  inWindow(e,target,r){
   if(!e.night)return this.inside(e,target);
   if(!r.engagement)return true;
-  const budget=e.definitionId==='boss_crab'?AGGRO_RULES.bossTravel:AGGRO_RULES.nightTravel;
-  const targetRange=e.definitionId==='boss_crab'?AGGRO_RULES.bossRange:AGGRO_RULES.nightRange;
+  const budget=isBoss(e)?AGGRO_RULES.bossTravel:AGGRO_RULES.nightTravel;
+  const targetRange=isBoss(e)?AGGRO_RULES.bossRange:AGGRO_RULES.nightRange;
   return dist(target,r.engagement)<=targetRange&&dist(e,r.engagement)<=budget;
  }
  endEngagement(r){
   r.engagement=null;r.targetId=null;r.scanAt=0;r.routeUntil=this.w.s.time+AGGRO_RULES.routeSeconds;
  }
  select(e){
-  const w=this.w,now=w.s.time,r=this.state(e),boss=e.definitionId==='boss_crab',definition=w.enemyDefinition(e);
+  const w=this.w,now=w.s.time,r=this.state(e),boss=isBoss(e),definition=w.enemyDefinition(e);
   if(now>=this.pruneAt){this.prune();this.pruneAt=now+1;}
   this.memory(r);
   if(this.returnGate(e))return null;

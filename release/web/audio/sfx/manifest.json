@@ -3,8 +3,15 @@
   "voice_limit": 32,
   "cues": {
     "pistol": {
-      "near": ["weapons/pistol_near_01.wav", "weapons/pistol_near_02.wav", "weapons/pistol_near_03.wav"],
-      "far": ["weapons/pistol_far_01.wav", "weapons/pistol_far_02.wav"],
+      "near": [
+        "weapons/pistol_near_01.wav",
+        "weapons/pistol_near_02.wav",
+        "weapons/pistol_near_03.wav"
+      ],
+      "far": [
+        "weapons/pistol_far_01.wav",
+        "weapons/pistol_far_02.wav"
+      ],
       "gain": 0.82,
       "pitch_min": 0.985,
       "pitch_max": 1.015,
@@ -12,8 +19,15 @@
       "cooldown_ms": 45
     },
     "smg": {
-      "near": ["weapons/smg_near_01.wav", "weapons/smg_near_02.wav", "weapons/smg_near_03.wav"],
-      "far": ["weapons/smg_far_01.wav", "weapons/smg_far_02.wav"],
+      "near": [
+        "weapons/smg_near_01.wav",
+        "weapons/smg_near_02.wav",
+        "weapons/smg_near_03.wav"
+      ],
+      "far": [
+        "weapons/smg_far_01.wav",
+        "weapons/smg_far_02.wav"
+      ],
       "gain": 0.65,
       "pitch_min": 0.99,
       "pitch_max": 1.02,
@@ -21,8 +35,15 @@
       "cooldown_ms": 40
     },
     "carbine": {
-      "near": ["weapons/carbine_near_01.wav", "weapons/carbine_near_02.wav", "weapons/carbine_near_03.wav"],
-      "far": ["weapons/carbine_far_01.wav", "weapons/carbine_far_02.wav"],
+      "near": [
+        "weapons/carbine_near_01.wav",
+        "weapons/carbine_near_02.wav",
+        "weapons/carbine_near_03.wav"
+      ],
+      "far": [
+        "weapons/carbine_far_01.wav",
+        "weapons/carbine_far_02.wav"
+      ],
       "gain": 0.76,
       "pitch_min": 0.985,
       "pitch_max": 1.015,
@@ -30,8 +51,15 @@
       "cooldown_ms": 45
     },
     "lmg": {
-      "near": ["weapons/lmg_near_01.wav", "weapons/lmg_near_02.wav", "weapons/lmg_near_03.wav"],
-      "far": ["weapons/lmg_far_01.wav", "weapons/lmg_far_02.wav"],
+      "near": [
+        "weapons/lmg_near_01.wav",
+        "weapons/lmg_near_02.wav",
+        "weapons/lmg_near_03.wav"
+      ],
+      "far": [
+        "weapons/lmg_far_01.wav",
+        "weapons/lmg_far_02.wav"
+      ],
       "gain": 0.76,
       "pitch_min": 0.985,
       "pitch_max": 1.012,
@@ -39,8 +67,15 @@
       "cooldown_ms": 40
     },
     "shotgun": {
-      "near": ["weapons/shotgun_near_01.wav", "weapons/shotgun_near_02.wav", "weapons/shotgun_near_03.wav"],
-      "far": ["weapons/shotgun_far_01.wav", "weapons/shotgun_far_02.wav"],
+      "near": [
+        "weapons/shotgun_near_01.wav",
+        "weapons/shotgun_near_02.wav",
+        "weapons/shotgun_near_03.wav"
+      ],
+      "far": [
+        "weapons/shotgun_far_01.wav",
+        "weapons/shotgun_far_02.wav"
+      ],
       "gain": 0.84,
       "pitch_min": 0.98,
       "pitch_max": 1.015,
@@ -48,8 +83,15 @@
       "cooldown_ms": 90
     },
     "rifle": {
-      "near": ["weapons/rifle_near_01.wav", "weapons/rifle_near_02.wav", "weapons/rifle_near_03.wav"],
-      "far": ["weapons/rifle_far_01.wav", "weapons/rifle_far_02.wav"],
+      "near": [
+        "weapons/rifle_near_01.wav",
+        "weapons/rifle_near_02.wav",
+        "weapons/rifle_near_03.wav"
+      ],
+      "far": [
+        "weapons/rifle_far_01.wav",
+        "weapons/rifle_far_02.wav"
+      ],
       "gain": 0.86,
       "pitch_min": 0.99,
       "pitch_max": 1.01,
@@ -57,13 +99,17 @@
       "cooldown_ms": 120
     },
     "reload_pistol": {
-      "near": ["reloads/magazine_pistol.wav"],
+      "near": [
+        "reloads/magazine_pistol.wav"
+      ],
       "gain": 0.58,
       "priority": 64,
       "cooldown_ms": 120
     },
     "reload_smg": {
-      "near": ["reloads/magazine_rifle.wav"],
+      "near": [
+        "reloads/magazine_rifle.wav"
+      ],
       "gain": 0.48,
       "pitch_min": 1.08,
       "pitch_max": 1.12,
@@ -71,13 +117,17 @@
       "cooldown_ms": 120
     },
     "reload_carbine": {
-      "near": ["reloads/magazine_rifle.wav"],
+      "near": [
+        "reloads/magazine_rifle.wav"
+      ],
       "gain": 0.56,
       "priority": 64,
       "cooldown_ms": 120
     },
     "reload_lmg": {
-      "near": ["reloads/magazine_rifle.wav"],
+      "near": [
+        "reloads/magazine_rifle.wav"
+      ],
       "gain": 0.62,
       "pitch_min": 0.82,
       "pitch_max": 0.86,
@@ -85,7 +135,9 @@
       "cooldown_ms": 120
     },
     "reload_rifle": {
-      "near": ["reloads/magazine_rifle.wav"],
+      "near": [
+        "reloads/magazine_rifle.wav"
+      ],
       "gain": 0.58,
       "pitch_min": 0.9,
       "pitch_max": 0.94,
@@ -93,13 +145,19 @@
       "cooldown_ms": 120
     },
     "reload_shotgun": {
-      "near": ["reloads/shotgun_pump.wav"],
+      "near": [
+        "reloads/shotgun_pump.wav"
+      ],
       "gain": 0.66,
       "priority": 70,
       "cooldown_ms": 150
     },
     "reload_insert_shotgun": {
-      "near": ["reloads/shotgun_shell_01.ogg", "reloads/shotgun_shell_02.ogg", "reloads/shotgun_shell_03.ogg"],
+      "near": [
+        "reloads/shotgun_shell_01.ogg",
+        "reloads/shotgun_shell_02.ogg",
+        "reloads/shotgun_shell_03.ogg"
+      ],
       "gain": 0.42,
       "pitch_min": 0.96,
       "pitch_max": 1.04,
@@ -107,7 +165,11 @@
       "cooldown_ms": 80
     },
     "impact_wood": {
-      "near": ["impacts/wood_01.ogg", "impacts/wood_02.ogg", "impacts/wood_03.ogg"],
+      "near": [
+        "impacts/wood_01.ogg",
+        "impacts/wood_02.ogg",
+        "impacts/wood_03.ogg"
+      ],
       "gain": 0.66,
       "pitch_min": 0.92,
       "pitch_max": 1.08,
@@ -115,7 +177,11 @@
       "cooldown_ms": 45
     },
     "impact_barricade": {
-      "near": ["impacts/wood_01.ogg", "impacts/wood_02.ogg", "impacts/wood_03.ogg"],
+      "near": [
+        "impacts/wood_01.ogg",
+        "impacts/wood_02.ogg",
+        "impacts/wood_03.ogg"
+      ],
       "gain": 0.6,
       "pitch_min": 1.13,
       "pitch_max": 1.2,
@@ -123,7 +189,11 @@
       "cooldown_ms": 45
     },
     "impact_partition": {
-      "near": ["impacts/metal_01.ogg", "impacts/metal_02.ogg", "impacts/metal_03.ogg"],
+      "near": [
+        "impacts/metal_01.ogg",
+        "impacts/metal_02.ogg",
+        "impacts/metal_03.ogg"
+      ],
       "gain": 0.54,
       "pitch_min": 0.78,
       "pitch_max": 0.86,
@@ -131,7 +201,11 @@
       "cooldown_ms": 45
     },
     "impact_copier": {
-      "near": ["impacts/metal_01.ogg", "impacts/metal_02.ogg", "impacts/metal_03.ogg"],
+      "near": [
+        "impacts/metal_01.ogg",
+        "impacts/metal_02.ogg",
+        "impacts/metal_03.ogg"
+      ],
       "gain": 0.52,
       "pitch_min": 1.14,
       "pitch_max": 1.22,
@@ -139,7 +213,11 @@
       "cooldown_ms": 55
     },
     "charge_copier": {
-      "near": ["interactions/archive_open_01.wav", "interactions/archive_open_02.wav", "interactions/archive_open_03.wav"],
+      "near": [
+        "interactions/archive_open_01.wav",
+        "interactions/archive_open_02.wav",
+        "interactions/archive_open_03.wav"
+      ],
       "gain": 0.48,
       "pitch_min": 1.22,
       "pitch_max": 1.3,
@@ -147,7 +225,11 @@
       "cooldown_ms": 180
     },
     "impact_metal": {
-      "near": ["impacts/metal_01.ogg", "impacts/metal_02.ogg", "impacts/metal_03.ogg"],
+      "near": [
+        "impacts/metal_01.ogg",
+        "impacts/metal_02.ogg",
+        "impacts/metal_03.ogg"
+      ],
       "gain": 0.62,
       "pitch_min": 0.95,
       "pitch_max": 1.07,
@@ -155,7 +237,11 @@
       "cooldown_ms": 45
     },
     "impact_hard": {
-      "near": ["impacts/hard_01.ogg", "impacts/hard_02.ogg", "impacts/hard_03.ogg"],
+      "near": [
+        "impacts/hard_01.ogg",
+        "impacts/hard_02.ogg",
+        "impacts/hard_03.ogg"
+      ],
       "gain": 0.58,
       "pitch_min": 0.92,
       "pitch_max": 1.06,
@@ -163,7 +249,10 @@
       "cooldown_ms": 45
     },
     "impact_glass": {
-      "near": ["impacts/glass_01.wav", "impacts/glass_02.wav"],
+      "near": [
+        "impacts/glass_01.wav",
+        "impacts/glass_02.wav"
+      ],
       "gain": 0.68,
       "pitch_min": 0.97,
       "pitch_max": 1.03,
@@ -171,7 +260,10 @@
       "cooldown_ms": 55
     },
     "impact_creature": {
-      "near": ["impacts/enemy_body_01.wav", "impacts/enemy_body_02.wav"],
+      "near": [
+        "impacts/enemy_body_01.wav",
+        "impacts/enemy_body_02.wav"
+      ],
       "gain": 0.74,
       "pitch_min": 0.96,
       "pitch_max": 1.04,
@@ -179,7 +271,10 @@
       "cooldown_ms": 55
     },
     "impact_armor": {
-      "near": ["impacts/enemy_armor_01.wav", "impacts/enemy_armor_02.wav"],
+      "near": [
+        "impacts/enemy_armor_01.wav",
+        "impacts/enemy_armor_02.wav"
+      ],
       "gain": 0.76,
       "pitch_min": 0.97,
       "pitch_max": 1.04,
@@ -187,7 +282,10 @@
       "cooldown_ms": 55
     },
     "impact_weak": {
-      "near": ["impacts/enemy_weak_01.wav", "impacts/enemy_weak_02.wav"],
+      "near": [
+        "impacts/enemy_weak_01.wav",
+        "impacts/enemy_weak_02.wav"
+      ],
       "gain": 0.78,
       "pitch_min": 0.98,
       "pitch_max": 1.04,
@@ -195,7 +293,11 @@
       "cooldown_ms": 60
     },
     "break_wood": {
-      "near": ["breaks/wood_01.ogg", "breaks/wood_02.ogg", "breaks/wood_03.ogg"],
+      "near": [
+        "breaks/wood_01.ogg",
+        "breaks/wood_02.ogg",
+        "breaks/wood_03.ogg"
+      ],
       "gain": 0.72,
       "pitch_min": 0.92,
       "pitch_max": 1.05,
@@ -203,7 +305,11 @@
       "cooldown_ms": 90
     },
     "break_barricade": {
-      "near": ["breaks/wood_01.ogg", "breaks/wood_02.ogg", "breaks/wood_03.ogg"],
+      "near": [
+        "breaks/wood_01.ogg",
+        "breaks/wood_02.ogg",
+        "breaks/wood_03.ogg"
+      ],
       "gain": 0.66,
       "pitch_min": 1.1,
       "pitch_max": 1.18,
@@ -211,7 +317,11 @@
       "cooldown_ms": 90
     },
     "break_partition": {
-      "near": ["breaks/metal_01.ogg", "breaks/metal_02.ogg", "breaks/metal_03.ogg"],
+      "near": [
+        "breaks/metal_01.ogg",
+        "breaks/metal_02.ogg",
+        "breaks/metal_03.ogg"
+      ],
       "gain": 0.63,
       "pitch_min": 0.76,
       "pitch_max": 0.84,
@@ -219,7 +329,11 @@
       "cooldown_ms": 90
     },
     "break_copier": {
-      "near": ["breaks/metal_01.ogg", "breaks/metal_02.ogg", "breaks/metal_03.ogg"],
+      "near": [
+        "breaks/metal_01.ogg",
+        "breaks/metal_02.ogg",
+        "breaks/metal_03.ogg"
+      ],
       "gain": 0.66,
       "pitch_min": 1.14,
       "pitch_max": 1.22,
@@ -227,7 +341,11 @@
       "cooldown_ms": 110
     },
     "break_metal": {
-      "near": ["breaks/metal_01.ogg", "breaks/metal_02.ogg", "breaks/metal_03.ogg"],
+      "near": [
+        "breaks/metal_01.ogg",
+        "breaks/metal_02.ogg",
+        "breaks/metal_03.ogg"
+      ],
       "gain": 0.7,
       "pitch_min": 0.94,
       "pitch_max": 1.04,
@@ -235,7 +353,11 @@
       "cooldown_ms": 90
     },
     "break_glass": {
-      "near": ["breaks/glass_01.ogg", "breaks/glass_02.ogg", "breaks/glass_03.ogg"],
+      "near": [
+        "breaks/glass_01.ogg",
+        "breaks/glass_02.ogg",
+        "breaks/glass_03.ogg"
+      ],
       "gain": 0.62,
       "pitch_min": 0.96,
       "pitch_max": 1.04,
@@ -243,7 +365,11 @@
       "cooldown_ms": 90
     },
     "archive_rummage": {
-      "near": ["interactions/archive_rummage_01.wav", "interactions/archive_rummage_02.wav", "interactions/archive_rummage_03.wav"],
+      "near": [
+        "interactions/archive_rummage_01.wav",
+        "interactions/archive_rummage_02.wav",
+        "interactions/archive_rummage_03.wav"
+      ],
       "gain": 0.46,
       "pitch_min": 0.97,
       "pitch_max": 1.03,
@@ -251,12 +377,167 @@
       "cooldown_ms": 260
     },
     "archive_open": {
-      "near": ["interactions/archive_open_01.wav", "interactions/archive_open_02.wav", "interactions/archive_open_03.wav"],
+      "near": [
+        "interactions/archive_open_01.wav",
+        "interactions/archive_open_02.wav",
+        "interactions/archive_open_03.wav"
+      ],
       "gain": 0.58,
       "pitch_min": 0.96,
       "pitch_max": 1.03,
       "priority": 54,
       "cooldown_ms": 180
+    },
+    "motor_start": {
+      "near": [
+        "office45/motor_start_01.wav",
+        "office45/motor_start_02.wav"
+      ],
+      "gain": 0.58,
+      "priority": 64,
+      "cooldown_ms": 300,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015
+    },
+    "paper_wave": {
+      "near": [
+        "office45/paper_wave_01.wav",
+        "office45/paper_wave_02.wav"
+      ],
+      "gain": 0.6,
+      "priority": 66,
+      "cooldown_ms": 260,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015
+    },
+    "broadcast": {
+      "near": [
+        "office45/broadcast_01.wav",
+        "office45/broadcast_02.wav"
+      ],
+      "gain": 0.42,
+      "priority": 54,
+      "cooldown_ms": 550,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015
+    },
+    "coffee_share": {
+      "near": [
+        "office45/coffee_share_01.wav",
+        "office45/coffee_share_02.wav"
+      ],
+      "gain": 0.42,
+      "priority": 48,
+      "cooldown_ms": 450,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015
+    },
+    "highfive": {
+      "near": [
+        "office45/highfive_01.wav",
+        "office45/highfive_02.wav"
+      ],
+      "gain": 0.45,
+      "priority": 48,
+      "cooldown_ms": 400,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015
+    },
+    "paper_throw": {
+      "near": [
+        "office45/paper_throw_01.wav",
+        "office45/paper_throw_02.wav"
+      ],
+      "gain": 0.35,
+      "priority": 40,
+      "cooldown_ms": 180,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015
+    },
+    "stamp": {
+      "near": [
+        "office45/stamp_01.wav",
+        "office45/stamp_02.wav"
+      ],
+      "gain": 0.4,
+      "priority": 43,
+      "cooldown_ms": 240,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015
+    },
+    "duck": {
+      "near": [
+        "office45/duck_01.wav",
+        "office45/duck_02.wav"
+      ],
+      "gain": 0.36,
+      "priority": 42,
+      "cooldown_ms": 650,
+      "pitch_min": 0.985,
+      "pitch_max": 1.015
+    },
+    "doublebarrel": {
+      "near": [
+        "weapons/shotgun_near_01.wav",
+        "weapons/shotgun_near_02.wav",
+        "weapons/shotgun_near_03.wav"
+      ],
+      "far": [
+        "weapons/shotgun_far_01.wav",
+        "weapons/shotgun_far_02.wav"
+      ],
+      "gain": 0.88,
+      "pitch_min": 0.94,
+      "pitch_max": 0.97,
+      "priority": 88,
+      "cooldown_ms": 100
+    },
+    "dmr": {
+      "near": [
+        "weapons/rifle_near_01.wav",
+        "weapons/rifle_near_02.wav",
+        "weapons/rifle_near_03.wav"
+      ],
+      "far": [
+        "weapons/rifle_far_01.wav",
+        "weapons/rifle_far_02.wav"
+      ],
+      "gain": 0.76,
+      "pitch_min": 1.05,
+      "pitch_max": 1.08,
+      "priority": 90,
+      "cooldown_ms": 100
+    },
+    "reload_doublebarrel": {
+      "near": [
+        "reloads/shotgun_pump.wav"
+      ],
+      "gain": 0.58,
+      "priority": 70,
+      "cooldown_ms": 150,
+      "pitch_min": 1.03,
+      "pitch_max": 1.06
+    },
+    "reload_dmr": {
+      "near": [
+        "reloads/magazine_rifle.wav"
+      ],
+      "gain": 0.56,
+      "priority": 64,
+      "cooldown_ms": 120,
+      "pitch_min": 0.98,
+      "pitch_max": 1.02
+    },
+    "net_close": {
+      "near": [
+        "office45/paper_throw_01.wav",
+        "office45/paper_throw_02.wav"
+      ],
+      "gain": 0.45,
+      "priority": 48,
+      "cooldown_ms": 200,
+      "pitch_min": 0.75,
+      "pitch_max": 0.8
     }
   }
 }

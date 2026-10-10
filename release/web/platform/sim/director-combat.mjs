@@ -1,3 +1,5 @@
+import {updateTacticalDeployables} from './tactical-content.mjs';
+import {isBoss} from './night-content-config.mjs';
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const direction=yaw=>({x:-Math.sin(yaw),z:-Math.cos(yaw)});
 const living=p=>p?.lifeState==='ALIVE';
@@ -48,7 +50,7 @@ export function updateDirectedEnemy(d,e,dt) {
     const target=d.target(e);
     if(e.attackKind==='dash') {e.state='CHARGE';e.chargeRemaining=def.dash_distance;e.chargeHit=[];e.attackZone=null;return true;}
     if(e.attackKind==='heal') {
-      if(target?.hp>0&&target.definitionId!=='boss_crab'&&dist(e,target)<=def.heal_range&&w.lineVisible(e,target)){const amount=Math.min(def.heal_amount,target.maxHp-target.hp);target.hp+=amount;target.revision++;w.event('EnemyHeal',{actorId:e.id,targetId:target.id,amount,position:pos(target)},e.id);}
+      if(target?.hp>0&&!isBoss(target)&&dist(e,target)<=def.heal_range&&w.lineVisible(e,target)){const amount=Math.min(def.heal_amount,target.maxHp-target.hp);target.hp+=amount;target.revision++;w.event('EnemyHeal',{actorId:e.id,targetId:target.id,amount,position:pos(target)},e.id);}
       e.healAt=w.s.time+def.heal_cooldown;
     }else if(e.attackKind==='slow_bolt'){
       if(Object.keys(w.s.projectiles).length<d.c.budgets.maxProjectiles){const from={x:e.x,y:e.y+.85,z:e.z},delta={x:e.lockX-from.x,y:e.lockY-from.y,z:e.lockZ-from.z},length=Math.hypot(delta.x,delta.y,delta.z)||1,id=w.id('projectile');w.s.projectiles[id]={id,...from,vx:delta.x/length*def.projectile_speed,vy:delta.y/length*def.projectile_speed,vz:delta.z/length*def.projectile_speed,radius:def.projectile_radius,damage:def.damage*(e.damageMultiplier??1),actorId:e.id,definitionId:'slow_bolt',slowSeconds:def.slow_seconds,life:4,practiceZone:e.practiceZone??null};}
@@ -74,7 +76,7 @@ export function updateDirectedEnemy(d,e,dt) {
   let target=w.enemyRouteTarget(e,w.selectEnemyTarget(e));
   if(e.role==='medic'&&w.s.time>=(e.healAt??0)&&w.s.time>=(e.healScanAt??0)){
     e.healScanAt=w.s.time+.5;
-    const friend=Object.values(w.s.enemies).filter(other=>other.id!==e.id&&other.definitionId!=='boss_crab'&&other.source===e.source&&other.hp>0&&other.hp<other.maxHp&&w.aggro.inside(e,other)&&dist(e,other)<=def.heal_range&&w.lineVisible(e,other)).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+    const friend=Object.values(w.s.enemies).filter(other=>other.id!==e.id&&!isBoss(other)&&other.source===e.source&&other.hp>0&&other.hp<other.maxHp&&w.aggro.inside(e,other)&&dist(e,other)<=def.heal_range&&w.lineVisible(e,other)).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
     if(friend){e.targetId=friend.id;e.state='WINDUP';e.phaseRemaining=def.heal_windup;e.attackKind='heal';e.attackRadius=def.heal_range;zone(w,e,'circle',{radius:def.heal_range});return true;}
   }
   if(!target){w.patrolEnemy(e,def,dt);return true;}
@@ -155,15 +157,17 @@ export function prepareDirectedDamage(d) {
   for(const hit of w.damageQueue){
     const p=w.s.players[hit.actorId],target=w.s.enemies[hit.target],playerTarget=w.s.players[hit.target];
     if(p){if(d.has(p,'precision')&&hit.weak)hit.damage*=d.effect(p,'precision');if(d.has(p,'brawler')&&['knife','fist'].includes(hit.weaponId))hit.damage*=d.effect(p,'brawler');}
-    if(target?.role==='shield'){
-      const actor=p??w.s.turrets[hit.actorId];if(actor){const v=direction(target.yaw),distance=dist(actor,target)||1;if(((actor.x-target.x)*v.x+(actor.z-target.z)*v.z)/distance>.35){hit.damage*=w.defs.creatures[target.definitionId].front_multiplier;hit.shielded=true;}}
+    if(target?.role==='shield'||target?.definitionId==='clip_crab'&&target.state==='WINDUP'){
+      const actor=p??w.s.turrets[hit.actorId];if(actor){const v=direction(target.yaw),distance=dist(actor,target)||1;if(((actor.x-target.x)*v.x+(actor.z-target.z)*v.z)/distance>.35){hit.damage*=target.definitionId==='clip_crab'?.4:w.defs.creatures[target.definitionId].front_multiplier;hit.shielded=true;}}
     }
     if(playerTarget&&w.inScene(playerTarget)&&living(playerTarget)&&(playerTarget.joinProtectionUntil??0)<=w.s.time&&Number.isFinite(hit.slowSeconds))playerTarget.slowUntil=Math.max(playerTarget.slowUntil??0,w.s.time+Math.min(2,hit.slowSeconds));
+    if(['building','turret'].some(kind=>kind==='building'?w.s.buildings[hit.target]:w.s.turrets[hit.target])&&w.s.fortressMode==='defense'&&Object.values(w.s.turrets).some(q=>q.hp>0))hit.damage*=.8;
     hit.damage=Math.max(0,hit.damage);
   }
 }
 
 export function updateDeployables(d,dt) {
-  const w=d.w;d.s.deployables=d.s.deployables.filter(x=>x.expiresAt>w.s.time);
+  const w=d.w;const before=d.s.deployables.length;d.s.deployables=d.s.deployables.filter(x=>x.expiresAt>w.s.time&&x.hp!==0);if(before!==d.s.deployables.length&&w.navGeometry)w.navGeometry.tick=-1;
+  updateTacticalDeployables(d);
   for(const zone of d.s.deployables)if(zone.kind==='slow')for(const p of w.scenePlayers())if(living(p)&&(!zone.practiceZone||w.aggro.inside({source:'practice',practiceZone:zone.practiceZone},p))&&dist(p,zone)<=zone.radius&&p.y<=zone.y+.5&&(p.joinProtectionUntil??0)<=w.s.time&&w.lineVisible(zone,p))p.slowUntil=Math.max(p.slowUntil??0,w.s.time+.3);
 }

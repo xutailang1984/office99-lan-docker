@@ -1,11 +1,23 @@
+import {riskCost,nightCore} from './risk-progression.mjs';
+import {DAY_PROPS} from './day-content-config.mjs';
 import {attachExploration} from './exploration.mjs';
+import {attachCrafting} from './crafting.mjs';
+import {ATTACHMENT_BY_ID,validAttachment} from './assembly-config.mjs';
+import {MODULE_BY_ID} from './crafting-config.mjs';
+import {extendCraftingConfig,effectiveRod} from './crafting-config.mjs';
+import {dayEncounterBudget,nightEncounterBudget,nodeMaterialLoot,zoneRisk} from './expedition-config.mjs';
+import {effectiveWeapon,gearAfterShot,gearAfterHit,updateGearGrowth,gearEnemySpeed,gearPiercingHit} from './gear-growth.mjs';
 import {extendExplorationConfig} from './exploration-config.mjs';
 import {initializeFishing,beginReeling,updateWaiting,updateReeling} from './fishing-experience.mjs';
 import {extendDirectorConfig} from './director-config.mjs';
+import {extendNightContentConfig,isBoss} from './night-content-config.mjs';
+import {bossHitProfile,bossAttackRange,recordNightContentHit,nightContentSpeed} from './night-content.mjs';
+import {attachSocial} from './social.mjs';
 import {attachDirector,DirectorError} from './director.mjs';
 import {EnemyAggro} from './enemy-aggro.mjs';
 import {MissionError,initializeMission,missionCommand,missionEvent,missionWork,missionStep,missionPublic,placeForStage,practiceEnemyInside,PRACTICE_CREATURE_CAP,practiceCreatureLoad} from './mission-mode.mjs';
 import {EnemyNavigation} from './enemy-navigation.mjs';
+import {nightSegment} from './encounter-variety.mjs';
 import { randomUUID } from './portable-id.mjs';
 import { terrainHeight, rawTerrainHeight, footprintBase, TERRAIN_GRID, BUILDING_SLOTS, ROCKS, PONDS } from './terrain-layout.mjs';
 
@@ -13,11 +25,13 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const finite = (v, fallback = 0) => Number.isFinite(v) ? v : fallback;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const live = p => p.lifeState === 'ALIVE';
+const clearGearState=p=>Object.assign(p,{gearFocusSeconds:0,gearWalkDistance:0,gearWalkPosition:null,gearBurstCount:0,gearBurstAt:-100,gearHeatShots:0,gearHeatItem:null,gearLastShotAt:-100,gearSuppress:null});
 const UNARMED_DEFAULTS=Object.freeze({"id":"fist","damage":8,"range":1.25,"arc_deg":60,"cooldown_seconds":0.6,"windup_seconds":0.16});
 const recycleLoot = def => ['catch','loot','material'].includes(def?.kind);
 const safe = phase => ['PREP', 'RECOVERY', 'COMPLETE'].includes(phase);
 const errorText = { NOT_SELLABLE:'借用品或此物品不能出售', CONFIRM_EQUIPPED:'请确认卖出已装备物品', OUT_OF_RANGE:'距离太远', WRONG_PHASE:'当前阶段不能执行', NOT_ALIVE:'当前不能行动', NO_CAPACITY:'背包或容器已满', NO_FUNDS:'共享资源不足', NOT_FOUND:'目标不存在', STALE_REVISION:'目标已经变化，请重试', BUSY:'目标正在使用或操作尚未完成', PRACTICE_CAP:'先打倒几只练习怪，再钓鱼', NO_AMMO:'没有对应备用弹药', INVALID_TARGET:'目标或参数无效', REQUEST_EXPIRED:'旧请求已处理，不会重复执行', HOST_ONLY:'仅房主可以执行', ROOM_FULL:'持久角色槽已占用' };
 class GameError extends Error { constructor(code) { super(errorText[code] ?? code); this.code = code; } }
+Object.assign(errorText,{NO_MATERIALS:'随身材料不足',CRAFT_ONLY:'请到制作台制作',ALREADY_MODDED:'这件装备已改装',INVALID_MODULE:'模块不匹配',CONFIRM_REPLACE:'请确认替换旧模块'});
 const requireThat = (condition, code) => { if (!condition) throw new GameError(code); };
 function rayBox(origin, direction, box, maximum) {
   let near = 0, far = maximum;
@@ -36,7 +50,7 @@ const unit = vector => { const length=Math.hypot(vector.x,vector.y,vector.z)||1;
 
 export class SurvivalWorld {
   constructor(config, saved = null, options = {}) {
-    config=extendExplorationConfig(extendDirectorConfig(config));
+    config=extendNightContentConfig(extendCraftingConfig(extendExplorationConfig(extendDirectorConfig(config))));
     this.onlineRoster = options.onlineRoster === true;
     this.mode = options.mode === 'mission' ? 'mission' : 'adventure';
     this.c = config; this.terrainConfig = this.mode === 'mission' ? {...config,level:{...config.level,training_pond:true}} : config;
@@ -52,7 +66,10 @@ export class SurvivalWorld {
     this.s.nextPlayerSlotId=Math.max(Number.isSafeInteger(this.s.nextPlayerSlotId)&&this.s.nextPlayerSlotId>0?this.s.nextPlayerSlotId:1,...historicalSlots.map(slot=>slot+1));
     for (const p of Object.values(this.s.players)) { this.migrateLife(p); p.connected = false; p.disconnectedAt = null; p.input = {}; p.inputAt = -100; this.cancelWork(p); p.reload = null;p.velocity={x:0,y:0,z:0};p.moveSpeed=0;p.action??='idle';p.actionSeq??=0;p.actionStartedAt??=this.s.time;p.actionDuration??=0;p.joinProtectionUntil??=0;p.lastProtectionAt??=-100;if(this.onlineRoster){this.cancelFishing(p,'重新连接后再抛竿');p.meleePending=null;p.jumpQueued=false;p.action='idle';p.actionDuration=0;} }
     this.s.hostId = null; this.s.paused = true;if(!this.s.destructibles){this.generateDestructibles();this.requestSave=true;}this.migrateCoreState();this.clearNewStationContainers();this.applyPlayerClearance(this.planPlayerClearance());this.assertInvariants();this.aggro=new EnemyAggro(this);attachDirector(this,{saved:!!saved});attachExploration(this,{saved:!!saved});
+    for(const p of Object.values(this.s.players))clearGearState(p);
+    attachCrafting(this,requireThat);
     if(this.mode==='mission'&&!saved)initializeMission(this,options.missionStart);
+    attachSocial(this);
   }
   // Active-room membership is separate from historical account records.
   inScene(p) { return !!p && (!this.onlineRoster || p.connected === true); }
@@ -197,7 +214,7 @@ export class SurvivalWorld {
     return cached.solids=parts;
   }
   generateDestructibles() {
-    this.s.destructibles={};const types=this.c.destructibles.types,archive=types.find(type=>type.id==='archive_cabinet'),partition=types.find(type=>type.id==='partition_panel'),copier=types.find(type=>type.id==='copier_shell'),ordinary=types.filter(type=>!['archive_cabinet','partition_panel','copier_shell'].includes(type.id));
+    this.s.destructibles={};const types=this.c.destructibles.types,archive=types.find(type=>type.id==='archive_cabinet'),partition=types.find(type=>type.id==='partition_panel'),copier=types.find(type=>type.id==='copier_shell'),ordinary=types.filter(type=>!['archive_cabinet','partition_panel','copier_shell',...DAY_PROPS.map(d=>d.id)].includes(type.id));
     // A new day can begin while teammates are already outside the camp.
     // Reserve their footprints, including downed players and retained fish,
     // so new solid scenery cannot appear around an existing body.
@@ -208,6 +225,7 @@ export class SurvivalWorld {
       const zone=zones[i%zones.length],point=this.choosePoint(zone,Math.min(16,zone.radius??16),[...Object.values(this.s.destructibles),...occupied],3.5,16,'props',this.c.cycle.low_water_y);
       create(archive,point,{zoneId:zone.id,opened:false,resolution:null,lootContainerId:null});
     }
+    for(const d of DAY_PROPS){const definition=types.find(t=>t.id===d.id),zone=zones.find(z=>z.id===d.zone);for(let i=0;i<definition.count;i++){const point=this.choosePoint(zone,Math.min(16,zone.radius??16),[...Object.values(this.s.destructibles),...occupied],3.5,16,'props',this.c.cycle.low_water_y);create(definition,point,{zoneId:zone.id,opened:false,resolution:null,lootContainerId:null});}}
     let ordinaryIndex=0;
     for(const definition of ordinary)for(let count=0;count<definition.count;count++){
       const i=ordinaryIndex++,footprint=Math.hypot(definition.size.x,definition.size.z)/2;let point=null;
@@ -267,15 +285,15 @@ export class SurvivalWorld {
   }
   propMaterial(prop) { return prop?.material??(['barrel','archive_cabinet','copier_shell','equipment'].includes(prop?.kind)?'metal':'wood'); }
   copierWeakHit(prop,hit) {
-    if(prop?.kind!=='copier_shell'||!['pistol','smg','carbine','lmg','shotgun','rifle'].includes(hit.weaponId))return false;
+    if(prop?.kind!=='copier_shell'||!['pistol','smg','carbine','lmg','shotgun','rifle','doublebarrel','dmr'].includes(hit.weaponId))return false;
     const at=hit.position;
     if(!at||![at.x,at.y,at.z].every(Number.isFinite))return false;
     const yaw=prop.yaw??0,dx=at.x-prop.x,dz=at.z-prop.z,localX=dx*Math.cos(yaw)-dz*Math.sin(yaw),localZ=dx*Math.sin(yaw)+dz*Math.cos(yaw),height=at.y-prop.y;
     return Math.abs(localX)<=prop.size.x*.13&&height>=prop.size.y*.64&&height<=prop.size.y*.80&&localZ<=-prop.size.z*.46&&localZ>=-prop.size.z*.58;
   }
   resolveArchiveLoot(prop,resolution,actorId=null) {
-    if(prop.kind!=='archive_cabinet'||prop.resolution)return prop.lootContainerId?this.s.containers[prop.lootContainerId]??null:null;
-    const config=this.c.destructibles.archive,table=resolution==='searched'?config.searched_rewards:config.smashed_rewards,index=resolution==='searched'?prop.seed%table.length:(prop.seed%10<7?0:Math.min(1,table.length-1)),rewards=table[index];
+    if((prop.kind!=='archive_cabinet'&&!this.c.destructibles.salvage?.[prop.kind])||prop.resolution)return prop.lootContainerId?this.s.containers[prop.lootContainerId]??null:null;
+    const config=this.c.destructibles.archive,table=resolution==='searched'?config.searched_rewards:config.smashed_rewards,index=resolution==='searched'?prop.seed%table.length:(prop.seed%10<7?0:Math.min(1,table.length-1)),parts={salvage:['trigger_unit','barrel_unit'],hunt:['optic_unit','spool_unit'],supply:['float_unit','seal_unit']},bonus=resolution==='searched'?parts[prop.zoneId]?.[prop.seed%2]:null,profile=this.c.destructibles.salvage?.[prop.kind],rewards=profile?(resolution==='searched'?[{definitionId:profile.part,quantity:2},{definitionId:'scrap',quantity:1}]:[{definitionId:'scrap',quantity:2}]):[...table[index],...(bonus?[{definitionId:bonus,quantity:1}]:[])];
     const forward={x:-Math.sin(prop.yaw),z:-Math.cos(prop.yaw)},x=prop.x+forward.x*.9,z=prop.z+forward.z*.9,y=this.ground(x,z),container=this.createContainer('loot',Math.max(2,rewards.length),{x,y,z,source:'archive',createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});
     for(const reward of rewards)this.addItems(container,reward.definitionId,reward.quantity);
     this.containerContent(container);Object.assign(prop,{resolution,opened:resolution==='searched',lootContainerId:container.id});prop.revision++;
@@ -286,8 +304,8 @@ export class SurvivalWorld {
     if(this.navGeometry)this.navGeometry.tick=-1;
     if(prop.broken)return;
     const worker=this.s.players[prop.lockedBy];if(worker?.work?.targetId===prop.id)this.cancelWork(worker);delete prop.lockedBy;
-    if(prop.kind==='archive_cabinet'){
-      const actor=this.s.players[hit.actorId];if(actor&&!['pistol','smg','carbine','lmg','shotgun','rifle'].includes(hit.weaponId))this.alertNoise(actor,'archive_break');
+    if(prop.kind==='archive_cabinet'||this.c.destructibles.salvage?.[prop.kind]){
+      const actor=this.s.players[hit.actorId];if(actor&&!['pistol','smg','carbine','lmg','shotgun','rifle','doublebarrel','dmr'].includes(hit.weaponId))this.alertNoise(actor,'archive_break');
       this.resolveArchiveLoot(prop,'smashed',hit.actorId);prop.broken=true;prop.hp=0;prop.revision++;
       this.event('Destroyed',{targetId:prop.id,kind:prop.kind,material:this.propMaterial(prop),position:{x:prop.x,y:prop.y,z:prop.z},seed:prop.seed,resolution:prop.resolution,lootContainerId:prop.lootContainerId??null,actorId:hit.actorId,weaponId:hit.weaponId??null,shotId:hit.shotId??null},prop.id);this.requestSave=true;return;
     }
@@ -308,7 +326,7 @@ export class SurvivalWorld {
   drainEvents() { const events=this.events;this.events=[];return events; }
   location(id) { return this.c.level.locations.find(x=>x.id===id); }
   staticWorld() { const l=this.c.level,terminals=l.terminals.map(t=>({...t,y:this.ground(t.x,t.z)}));
-    if(this.mode==='mission')for(const [kind,ids,z] of [['weapon',['pistol','smg','carbine','shotgun','rifle','lmg'],14],['rod',['rod_basic','rod_light','rod_pro','rod_heavy','rod_magnet'],20]])for(let i=0;i<ids.length;i++){
+    if(this.mode==='mission')for(const [kind,ids,z] of [['weapon',this.c.weapons.map(d=>d.id),14],['rod',this.c.rods.map(d=>d.id),20]])for(let i=0;i<ids.length;i++){
       const definitionId=ids[i],x=(i-(ids.length-1)/2)*3;
       terminals.push({id:`training_${definitionId}`,type:'training',kind,definitionId,label:this.defs.items[definitionId].name,x,y:this.ground(x,z),z});
     }
@@ -340,7 +358,7 @@ export class SurvivalWorld {
       Object.assign(enemy,point);enemy.revision++;this.requestSave=true;
       if(homeMoved){enemy.homeX=point.x;enemy.homeZ=point.z;}
       if(['WINDUP','CHARGE','burrow_windup'].includes(enemy.state)){enemy.state='RECOVER';enemy.phaseRemaining=Math.max(enemy.phaseRemaining??0,.5);enemy.weak=false;}
-      enemy.attackZone=null;enemy.chargeRemaining=0;enemy.chargeHit=[];enemy.targetId=null;
+      enemy.attackZone=null;enemy.chargeRemaining=0;enemy.chargeHit=[];enemy.targetId=null;enemy.comboNext=null;enemy.stampPrevious=null;enemy.continueStamp=false;
       for(const key of ['lockX','lockY','lockZ','rescuePosition','hitVelocity'])delete enemy[key];
       enemy.stuckTime=0;enemy.patrolBlocked=0;
       const aggro=this.s.enemyAggro?.[enemy.id];
@@ -348,12 +366,12 @@ export class SurvivalWorld {
     }
   }
   catalog() { return {items:this.c.items,weapons:this.c.weapons,rods:this.c.rods,buildings:this.c.buildings,destructibles:this.c.destructibles,fortress:this.c.fortress,fishing:this.c.fishing,player:this.c.player,cycle:this.c.cycle,construction:this.c.construction,recovery:this.c.recovery,weaponUpgrade:this.c.weapon_upgrade,melee:this.c.melee,unarmed:this.c.unarmed??UNARMED_DEFAULTS}; }
-  dangerZones() { return this.c.encounters.danger_zones.map(zone=>({...zone,...this.location(zone.id)})); }
+  dangerZones() { return this.c.encounters.danger_zones.map(zone=>({...zone,...this.location(zone.id),...zoneRisk(zone.id)})); }
   nearestZone(point) { return this.dangerZones().sort((a,b)=>dist(point,a)-dist(point,b))[0]; }
   containerContent(container) { const hasContent=container.itemIds.length>0||(container.recoverableC??0)>0||(container.recoverableM??0)>0;container.hasContent=hasContent;container.state=hasContent?'available':'depleted';return hasContent; }
   migrateCoreState() {
     const legacyRecovery=this.s.phase==='RECOVERY'&&this.s.recovery&&!Number.isFinite(this.s.recovery.duration);
-    this.s.failureStreak??=0;
+    this.s.failureStreak??=0;this.s.fortressMode??='output';requireThat(['output','defense','control'].includes(this.s.fortressMode),'INVALID_TARGET');
     this.s.pressureDay=Math.max(1,(this.s.statistics.daysSurvived??0)+1);this.s.turrets??={};
     for(const slot of this.c.fortress.slots)this.s.turrets[slot.id]??={...slot,y:this.ground(slot.x,slot.z),definitionId:'fortress_turret',faction:'camp',level:0,hp:0,maxHp:0,ammo:0,capacity:0,yaw:0,targetId:null,shotSeq:0,fireAt:0,revision:1};
     this.s.night.playerCount??=this.s.lockedPlayerCount;this.s.night.pressureDay??=this.s.pressureDay;
@@ -379,19 +397,20 @@ export class SurvivalWorld {
   }
   recoveryDuration() { return Math.min(this.c.recovery.max_day_seconds,this.c.recovery.day_seconds+Math.max(0,(this.s.failureStreak??1)-1)*this.c.recovery.streak_extra_seconds); }
   nightPressure(count) { return this.c.encounters.night_pressure.find(row=>count<=row.players)??this.c.encounters.night_pressure.at(-1); }
-  difficultyFor(count,pressureDay=Math.max(1,this.s.statistics.daysSurvived+1)) { const c=this.c.encounters.nightly_boss,row=this.nightPressure(count);return {pressureDay,nightPlayers:count,aliveCap:Math.min(row.alive_cap,this.c.encounters.night_alive_cap),spawnInterval:row.spawn_interval,bossHp:Math.ceil(c.base_hp*Math.min(c.hp_growth_cap,1+c.hp_daily_growth*(pressureDay-1))*(1+this.c.waves[3].boss_hp_player_factor*(count-1)))}; }
+  difficultyFor(count,pressureDay=Math.max(1,this.s.statistics.daysSurvived+1)) { const c=this.c.encounters.nightly_boss,row=this.nightPressure(count),budget=nightEncounterBudget(count);return {pressureDay,nightPlayers:count,aliveCap:Math.min(row.alive_cap,budget.aliveCap,this.c.encounters.night_alive_cap),spawnInterval:row.spawn_interval,bossHp:Math.ceil(c.base_hp*Math.min(c.hp_growth_cap,1+c.hp_daily_growth*(pressureDay-1))*budget.bossFactor)}; }
   publicDifficulty() { const n=this.s.night;if(this.s.phase==='NIGHT')return {scope:'locked',pressureDay:n.pressureDay,nightPlayers:n.playerCount,aliveCap:n.aliveCap,spawnInterval:n.spawnInterval,bossHp:n.bossHp??this.s.enemies[n.bossId]?.maxHp??null};return {scope:'next',...this.difficultyFor(Math.max(1,Object.values(this.s.players).filter(p=>p.connected).length))}; }
   clockRate() { const c=this.c.cycle;return {PREP:120/this.phaseDuration('PREP'),DAY:600/this.phaseDuration('DAY'),RETURN:120/this.phaseDuration('RETURN'),NIGHT:600/this.phaseDuration('NIGHT'),RECOVERY:720/((this.s.recovery?.duration??this.recoveryDuration())-(this.s.recovery?.clockOffset??0))}[this.s.phase]??0; }
   alignClock(phase) { if(!this.s.calendar||phase==='RECOVERY'||phase==='COMPLETE')return;const minute={PREP:360,DAY:480,RETURN:1080,NIGHT:1200}[phase],current=this.s.calendar.minutes%1440,delta=(minute-current+1440)%1440;if(delta<1435)this.s.calendar.minutes+=delta; }
   publicClock() { const minutes=this.s.calendar.minutes,dayMinutes=((minutes%1440)+1440)%1440,hour=dayMinutes/60;return {day:Math.floor(minutes/1440)+1,hour:Math.floor(hour),minute:Math.floor(dayMinutes%60),period:hour>=5&&hour<8?'dawn':hour>=8&&hour<18?'day':hour>=18&&hour<20?'dusk':'night',progress:dayMinutes/1440,protected:this.s.phase==='RECOVERY'}; }
   createContainer(type,slots,extra={}) { const value={id:this.id('container'),type,slotLimit:slots,itemIds:[],revision:1,...extra};this.s.containers[value.id]=value;return value; }
-  createItem(definitionId,quantity,container,extra={}) { const def=this.defs.items[definitionId]; requireThat(def&&quantity>0&&quantity<=def.stack,'INVALID_TARGET');requireThat(container.itemIds.length<container.slotLimit,'NO_CAPACITY');const item={id:this.id('item'),definitionId,quantity,level:1,magazineAmmo:0,containerId:container.id,revision:1,...extra};this.s.items[item.id]=item;container.itemIds.push(item.id);container.revision++;return item; }
+  createItem(definitionId,quantity,container,extra={}) { const def=this.defs.items[definitionId]; requireThat(def&&quantity>0&&quantity<=def.stack,'INVALID_TARGET');requireThat(container.itemIds.length<container.slotLimit,'NO_CAPACITY');const item={id:'item-'+randomUUID(),definitionId,quantity,level:1,magazineAmmo:0,containerId:container.id,revision:1,...extra};this.s.items[item.id]=item;container.itemIds.push(item.id);container.revision++;return item; }
   removeItem(item) { const container=this.s.containers[item.containerId];if(container){container.itemIds=container.itemIds.filter(id=>id!==item.id);container.revision++;}delete this.s.items[item.id]; }
   moveItem(item,to,quantity=item.quantity) {
     const from=this.s.containers[item.containerId],def=this.defs.items[item.definitionId];
     if(from.id===to.id)return 0;
     requireThat(!item.lockedBy,'BUSY');
     requireThat(!item.loanOwnerSlotId||to.ownerSlotId===item.loanOwnerSlotId,'INVALID_TARGET');
+    requireThat(!item.loanOwnerSlotId||to.type!=='personal_storage','INVALID_TARGET');
     if(to.type.startsWith('equip_')) { requireThat(def.kind===to.type.slice(6),'INVALID_TARGET');requireThat(to.itemIds.length===0,'NO_CAPACITY'); }
     let remaining=Math.min(item.quantity,Math.max(1,Math.floor(finite(quantity,item.quantity)))),moved=0;
     for(const id of to.itemIds) { const stack=this.s.items[id];if(stack.definitionId!==item.definitionId||def.stack===1||stack.loanOwnerSlotId!==item.loanOwnerSlotId||stack.lockedBy)continue;const count=Math.min(remaining,def.stack-stack.quantity);stack.quantity+=count;stack.revision++;remaining-=count;item.quantity-=count;moved+=count;if(!remaining)break; }
@@ -427,7 +446,7 @@ export class SurvivalWorld {
   }
   count(p,definitionId) { return this.bag(p).itemIds.reduce((n,id)=>n+(this.s.items[id].definitionId===definitionId&&!this.s.items[id].lockedBy?this.s.items[id].quantity:0),0); }
   consume(p,definitionId,quantity) { requireThat(this.count(p,definitionId)>=quantity,'NO_AMMO');for(const id of [...this.bag(p).itemIds]){const item=this.s.items[id];if(item.definitionId!==definitionId||item.lockedBy)continue;const n=Math.min(item.quantity,quantity);item.quantity-=n;item.revision++;quantity-=n;if(!item.quantity)this.removeItem(item);if(!quantity)break;} }
-  allocate(name,tokenHash) {
+  allocate(name,tokenHash,{career=false}={}) {
     requireThat(this.s.phase!=='COMPLETE','WRONG_PHASE');requireThat(Object.values(this.s.players).filter(p=>!this.onlineRoster||p.connected).length<this.c.baseline.max_players,'ROOM_FULL');
     const slotId=this.s.nextPlayerSlotId,id=`player-${slotId}`;requireThat(Number.isSafeInteger(slotId)&&slotId>0&&slotId<Number.MAX_SAFE_INTEGER&&!this.s.players[id],'ROOM_FULL');const spawn=this.joinSpawn(slotId);this.s.nextPlayerSlotId=slotId+1;
     const memberGeneration=typeof tokenHash==='string'&&tokenHash.startsWith('account:')?(this.s.memberResetEpochs?.[tokenHash.slice(8)]??0):0;
@@ -435,7 +454,9 @@ export class SurvivalWorld {
     for(const slot of ['weapon','rod','melee'])equipment[slot]=this.createContainer(`equip_${slot}`,1,{ownerSlotId:slotId}).id;
     const p={id,slotId,name,tokenHash,memberGeneration,connected:true,ready:false,lifeState:'ALIVE',...spawn,yaw:0,pitch:0,hp:this.c.player.max_hp,stamina:this.c.player.stamina_max,oxygen:this.c.player.oxygen_seconds,swimming:false,crouching:false,sprinting:false,inputAck:0,input:{},inputAt:-100,respawnRemaining:0,downedRemaining:0,downedHp:0,downedBleedRate:this.c.player.downed_hp/this.c.player.downed_seconds,selfReviveReadyIn:0,downedGraceRemaining:0,downsThisDay:0,downsDayIndex:this.s.dayIndex,revivesUsed:0,heldSlot:'weapon',quickItemDefinitionId:null,equipment,backpackId:bag.id,requestHighWater:0,requestCache:[],reload:null,work:null,fishing:null,vy:0,damageAt:-100,staminaUsedAt:-100,equipUntil:0,fireAt:0,meleeAt:0,disconnectedAt:null};
     Object.assign(p,{velocity:{x:0,y:0,z:0},moveSpeed:0,grounded:true,action:'idle',actionSeq:0,actionStartedAt:this.s.time,actionDuration:0,joinProtectionUntil:this.s.time+3,lastProtectionAt:this.s.time});this.s.players[id]=p;
-    if(memberGeneration>0){
+    if(career){
+      p.wallet={credits:0,materials:0,reservedCredits:0,reservedMaterials:0,revision:1};
+    }else if(memberGeneration>0){
       for(const definitionId of this.c.economy.free_recovery_tools){const def=this.defs.items[definitionId];this.createItem(definitionId,1,this.s.containers[equipment[def.kind]],{loanOwnerSlotId:slotId});}
       p.heldSlot='rod';
     }else{
@@ -446,7 +467,7 @@ export class SurvivalWorld {
     }
     if(!this.s.hostId)this.s.hostId=id;this.s.paused=false;this.requestSave=true;if(this.mode==='mission')placeForStage(this,p);this.event('Spawned',{kind:'player',id,position:{x:p.x,y:p.y,z:p.z},joinProtectionSeconds:3});if(this.mode!=='mission'&&['DAY','RETURN','NIGHT'].includes(this.s.phase))this.event('Notice',{code:'JOIN_NEXT_DAY_SCALING',actorId:id,message:'队友已加入！下个白天补充物资，夜晚调整敌人',lockedPlayerCount:this.s.lockedPlayerCount,nightPlayerCount:this.s.night.playerCount});return p;
   }
-  connect(p,name) { const disconnected=!p.connected;p.connected=true;p.disconnectedAt=null;p.name=name;p.input={};p.inputAt=-100;p.velocity={x:0,y:0,z:0};p.moveSpeed=0;if(!this.s.hostId)this.s.hostId=p.id;this.s.paused=false;this.migrateLife(p);if(p.lifeState==='DEAD_WAIT'&&p.respawnRemaining<=0&&!['NIGHT','COMPLETE'].includes(this.s.phase))this.respawn(p);this.applyPlayerClearance(this.planPlayerClearance([p]));if(disconnected&&live(p)&&this.s.phase!=='COMPLETE'&&this.s.time-(p.lastProtectionAt??-100)>=30){p.joinProtectionUntil=this.s.time+3;p.lastProtectionAt=this.s.time;} }
+  connect(p,name) { clearGearState(p);const disconnected=!p.connected;p.connected=true;p.disconnectedAt=null;p.name=name;p.input={};p.inputAt=-100;p.velocity={x:0,y:0,z:0};p.moveSpeed=0;if(!this.s.hostId)this.s.hostId=p.id;this.s.paused=false;this.migrateLife(p);if(p.lifeState==='DEAD_WAIT'&&p.respawnRemaining<=0&&!['NIGHT','COMPLETE'].includes(this.s.phase))this.respawn(p);this.applyPlayerClearance(this.planPlayerClearance([p]));if(disconnected&&live(p)&&this.s.phase!=='COMPLETE'&&this.s.time-(p.lastProtectionAt??-100)>=30){p.joinProtectionUntil=this.s.time+3;p.lastProtectionAt=this.s.time;} }
   disconnect(p) { this.cancelRescueFor(p);p.connected=false;p.input={};p.disconnectedAt=this.onlineRoster?null:this.s.time;this.cancelWork(p);this.cancelFishing(p,'连接中断');if(this.onlineRoster){p.reload=null;p.meleePending=null;p.jumpQueued=false;p.velocity={x:0,y:0,z:0};p.moveSpeed=0;p.action='idle';p.actionDuration=0;}if(this.s.hostId===p.id)this.s.hostId=Object.values(this.s.players).find(x=>x.connected)?.id??null;this.s.paused=!Object.values(this.s.players).some(x=>x.connected);this.requestSave=true; }
   input(p,data) {
     if(!Number.isSafeInteger(data.seq)||data.seq<=p.inputAck)return;
@@ -494,13 +515,23 @@ export class SurvivalWorld {
     if(command==='UseBandage'){requireThat(p.hp<c.player.max_hp,'INVALID_TARGET');requireThat(this.count(p,'bandage')>0,'NO_AMMO');this.beginWork(p,{kind:'Bandage',duration:this.defs.items.bandage.use_seconds,targetId:p.id,automatic:true});return;}
     if(command==='Pickup'){this.pickup(p,targetId,payload,expectedRevision);return;}
     if(command==='Search'){requireThat(['PREP','DAY','RETURN','RECOVERY'].includes(s.phase),'WRONG_PHASE');const node=s.nodes[targetId];requireThat(node&&node.state!=='depleted','NOT_FOUND');requireThat(s.waterY-node.y<=.6,'INVALID_TARGET');requireThat(dist(p,node)<=c.player.interact_distance,'OUT_OF_RANGE');this.checkTargetRevision(node,expectedRevision);this.beginWork(p,{kind:'Search',duration:1,targetId});return;}
-    if(command==='SearchArchive'){requireThat(['PREP','DAY','RETURN','RECOVERY'].includes(s.phase),'WRONG_PHASE');const prop=s.destructibles?.[targetId];requireThat(prop?.kind==='archive_cabinet'&&!prop.broken&&!prop.opened&&!prop.resolution,'NOT_FOUND');requireThat(s.waterY-prop.y<=.6,'INVALID_TARGET');requireThat(dist(p,prop)<=c.player.interact_distance,'OUT_OF_RANGE');this.checkTargetRevision(prop,expectedRevision);this.beginWork(p,{kind:'SearchArchive',duration:c.destructibles.archive.search_seconds,targetId});return;}
+    if(command==='SearchArchive'){requireThat(['PREP','DAY','RETURN','RECOVERY'].includes(s.phase),'WRONG_PHASE');const prop=s.destructibles?.[targetId];requireThat((prop?.kind==='archive_cabinet'||this.c.destructibles.salvage?.[prop?.kind])&&!prop.broken&&!prop.opened&&!prop.resolution,'NOT_FOUND');requireThat(s.waterY-prop.y<=.6,'INVALID_TARGET');requireThat(dist(p,prop)<=c.player.interact_distance,'OUT_OF_RANGE');this.checkTargetRevision(prop,expectedRevision);this.beginWork(p,{kind:'SearchArchive',duration:c.destructibles.salvage?.[prop.kind]?.seconds??c.destructibles.archive.search_seconds,targetId});return;}
     if(command==='Transfer'){this.transfer(p,payload,expectedRevision);return;}
+    if(command==='Donate'){
+      requireThat(p.wallet&&this.terminal(p,'storage',payload.stationId),'OUT_OF_RANGE');
+      const credits=payload.credits??0,materials=payload.materials??0;
+      requireThat(Number.isSafeInteger(credits)&&credits>=0&&Number.isSafeInteger(materials)&&materials>=0&&credits+materials>0,'INVALID_TARGET');
+      this.checkFunds(credits,materials,p.wallet);requireThat(Number.isSafeInteger(s.bank.credits+credits)&&Number.isSafeInteger(s.bank.materials+materials),'INVALID_TARGET');
+      p.wallet.credits-=credits;p.wallet.materials-=materials;p.wallet.revision++;s.bank.credits+=credits;s.bank.materials+=materials;s.bank.revision++;
+      this.director?.record('deposit',{id:`${p.id}:donate:${p.requestHighWater}`,materials});
+      this.event('TransactionResult',{kind:'Donate',actorId:p.id,credits,materials});return;
+    }
     if(command==='Deposit'){this.deposit(p,targetId,payload);return;}
     if(command==='Sell')return this.sell(p,payload,expectedRevision);
     if(command==='Buy'){this.buy(p,payload);return;}
     if(command==='ClaimTool'){this.claimTool(p,payload.definitionId,payload.stationId);return;}
     if(['InstallTurret','UpgradeTurret','ReloadTurret','RepairTurret'].includes(command)){this.turretWork(p,command,targetId,expectedRevision);return;}
+    if(command==='FortressMode'){const turret=s.turrets[targetId];requireThat(turret?.hp>0&&dist(p,turret)<=c.player.interact_distance,'OUT_OF_RANGE');requireThat(s.phase!=='NIGHT'&&s.buildings.core.hp>0&&!p.work&&!turret.lockedBy,'BUSY');requireThat(['output','defense','control'].includes(payload.modeId),'INVALID_TARGET');s.fortressMode=payload.modeId;turret.revision++;this.requestSave=true;return;}
     if(command==='ToggleGate'){
       const b=s.buildings[targetId??'G01'];requireThat(b?.definitionId==='gate'&&b.hp>0,'INVALID_TARGET');requireThat(dist(p,b)<=c.player.interact_distance,'OUT_OF_RANGE');
       requireThat(payload.open===undefined||typeof payload.open==='boolean','INVALID_TARGET');
@@ -515,7 +546,7 @@ export class SurvivalWorld {
     if(['Repair','Rebuild','Upgrade'].includes(command)){requireThat(s.phase!=='COMPLETE'&&(s.phase!=='RECOVERY'||s.recovery?.coreReady||s.buildings.core.hp>0),'WRONG_PHASE');const b=s.buildings[targetId],item=s.items[targetId];this.checkTargetRevision(b??item,expectedRevision);
       let costC=0,costM=0,duration=c.construction.upgrade_seconds;
       if(b){requireThat(dist(p,b)<=c.player.interact_distance,'OUT_OF_RANGE');const def=this.defs.buildings[b.definitionId];if(command==='Repair'){requireThat(b.hp>0&&b.hp<b.maxHp,'INVALID_TARGET');costM=c.construction.repair_m;duration=c.construction.repair_seconds;}else if(command==='Rebuild'){requireThat(b.hp===0&&b.definitionId!=='core','INVALID_TARGET');costM=c.construction.rebuild_m;duration=c.construction.rebuild_seconds;}else {requireThat(b.level===1&&b.hp>0,'INVALID_TARGET');costC=def.upgrade_c;costM=def.upgrade_m;}}
-      else {requireThat(s.phase!=='NIGHT','WRONG_PHASE');requireThat(command==='Upgrade'&&this.own(p,item)&&this.defs.weapons[item.definitionId]&&item.level<c.weapon_upgrade.max_level,'INVALID_TARGET');requireThat(this.terminal(p,'upgrade',payload.stationId),'OUT_OF_RANGE');costC=c.weapon_upgrade.cost_c;costM=c.weapon_upgrade.cost_m;}
+      else {requireThat(s.phase!=='NIGHT','WRONG_PHASE');requireThat(command==='Upgrade'&&this.own(p,item)&&this.defs.weapons[item.definitionId]&&item.level<c.weapon_upgrade.max_level,'INVALID_TARGET');requireThat(this.terminal(p,'upgrade',payload.stationId),'OUT_OF_RANGE');costC=c.weapon_upgrade.cost_c;costM=c.weapon_upgrade.cost_m;for(const row of riskCost(item.definitionId,{improvement:true}))requireThat(this.count(p,row.definitionId)>=row.quantity,'NO_MATERIALS');}
       this.beginWork(p,{kind:command,targetId,duration,costC,costM,...(!b?{stationId:payload.stationId??null}:{})});return;}
     throw new GameError('INVALID_TARGET');
   }
@@ -523,18 +554,18 @@ export class SurvivalWorld {
     const item=payload.itemId?this.s.items[payload.itemId]:null;
     if(item){requireThat(this.own(p,item)&&!item.lockedBy,'INVALID_TARGET');const kind=this.defs.items[item.definitionId].kind;requireThat(['weapon','rod','melee'].includes(kind),'INVALID_TARGET');const target=this.s.containers[p.equipment[kind]],old=this.s.items[target.itemIds[0]],from=this.s.containers[item.containerId];if(old&&old.id!==item.id){requireThat(from.id===p.backpackId,'INVALID_TARGET');target.itemIds=[];from.itemIds=from.itemIds.filter(id=>id!==item.id);old.containerId=from.id;from.itemIds.push(old.id);item.containerId=target.id;target.itemIds.push(item.id);old.revision++;item.revision++;target.revision++;from.revision++;}else if(!old)requireThat(this.moveItem(item,target)>0,'NO_CAPACITY');p.heldSlot=kind;}
     else {requireThat(['weapon','rod','melee','quick'].includes(payload.slot),'INVALID_TARGET');p.heldSlot=payload.slot;}
-    this.cancelWork(p);this.cancelFishing(p,'切换装备');p.reload=null;p.input.fire=false;p.input.ads=false;p.meleePending=null;p.quickUseUntil=0;const equipSeconds=this.defs.weapons[this.equipped(p)?.definitionId]?.equip_seconds??.35;p.equipUntil=this.s.time+equipSeconds;this.setAction(p,'equip',equipSeconds);
+    this.cancelWork(p);this.cancelFishing(p,'切换装备');p.reload=null;p.input.fire=false;p.input.ads=false;p.meleePending=null;p.quickUseUntil=0;const equipSeconds=this.weaponStats(p)?.equip_seconds??.35;p.equipUntil=this.s.time+equipSeconds;this.setAction(p,'equip',equipSeconds);
   }
   transfer(p,payload,expected) {
     const item=this.s.items[payload.itemId],to=this.s.containers[payload.toContainerId],from=this.s.containers[item?.containerId];requireThat(item&&to&&from,'NOT_FOUND');this.checkTargetRevision(item,expected);
-    const accessible=container=>this.carriedContainer(p,container.id)||(container.type==='storage'&&this.staticWorld().terminals.some(t=>t.type==='storage'&&t.containerId===container.id&&(!payload.stationId||t.id===payload.stationId)&&dist(p,t)<=this.c.player.interact_distance));
+    const accessible=container=>this.carriedContainer(p,container.id)||this.staticWorld().terminals.some(t=>t.type==='storage'&&(!payload.stationId||t.id===payload.stationId)&&dist(p,t)<=this.c.player.interact_distance&&((container.type==='storage'&&t.containerId===container.id)||(container.type==='personal_storage'&&container.id===p.vaultId)));
     requireThat(accessible(from)&&accessible(to),'OUT_OF_RANGE');
     requireThat(this.moveItem(item,to,payload.quantity)>0,'NO_CAPACITY');
   }
   pickup(p,targetId,payload={},expected) {
     const entity=this.s.enemies[targetId];
     requireThat(!entity,'INVALID_TARGET');
-    const container=this.s.containers[targetId];requireThat(container&&!['backpack','storage'].includes(container.type)&&!container.type.startsWith('equip_'),'INVALID_TARGET');requireThat(dist(p,container)<=this.c.player.pickup_distance,'OUT_OF_RANGE');this.checkTargetRevision(container,expected);
+    const container=this.s.containers[targetId];requireThat(container&&!['backpack','storage','personal_storage'].includes(container.type)&&!container.type.startsWith('equip_'),'INVALID_TARGET');requireThat(dist(p,container)<=this.c.player.pickup_distance,'OUT_OF_RANGE');this.checkTargetRevision(container,expected);
     requireThat(this.containerContent(container),'NOT_FOUND');
     let count=0;
     for(const id of [...container.itemIds]){if(payload.itemId&&id!==payload.itemId)continue;const item=this.s.items[id];if(item.loanOwnerSlotId&&item.loanOwnerSlotId!==p.slotId)continue;count+=this.moveItem(item,this.bag(p),payload.quantity);}
@@ -544,8 +575,8 @@ export class SurvivalWorld {
     if(targetId){const box=this.s.containers[targetId];requireThat(box?.type==='recovery','INVALID_TARGET');requireThat(dist(p,box)<=this.c.player.interact_distance,'OUT_OF_RANGE');requireThat((box.recoverableC??0)>0||(box.recoverableM??0)>0,'NOT_FOUND');this.s.bank.credits+=box.recoverableC??0;this.s.bank.materials+=box.recoverableM??0;box.recoverableC=0;box.recoverableM=0;box.revision++;this.containerContent(box);this.s.bank.revision++;return;}
     requireThat(this.s.phase!=='COMPLETE','WRONG_PHASE');requireThat(this.terminal(p,'recycle',payload.stationId),'OUT_OF_RANGE');
     let credits=0,materials=0;
-    for(const id of [...this.bag(p).itemIds]){const item=this.s.items[id],def=this.defs.items[item.definitionId];if(!recycleLoot(def)||item.lockedBy||item.loanOwnerSlotId||(!def.sell_c&&!def.deposit_m))continue;credits+=(def.sell_c??0)*item.quantity;materials+=(def.deposit_m??0)*item.quantity;this.removeItem(item);}
-    this.s.bank.credits+=credits;this.s.bank.materials+=materials;this.s.bank.revision++;this.event('TransactionResult',{kind:'Deposit',credits,materials,actorId:p.id});
+    for(const id of [...this.bag(p).itemIds]){const item=this.s.items[id],def=this.defs.items[item.definitionId];if(!recycleLoot(def)||def.crafting_material||item.lockedBy||item.loanOwnerSlotId||(!def.sell_c&&!def.deposit_m))continue;credits+=(def.sell_c??0)*item.quantity;materials+=(def.deposit_m??0)*item.quantity;this.removeItem(item);}
+    const wallet=p.wallet??this.s.bank;wallet.credits+=credits;wallet.materials+=materials;wallet.revision++;this.event('TransactionResult',{kind:'Deposit',credits,materials,actorId:p.id});
   }
   saleQuote(item,quantity) {
     const def=this.defs.items[item.definitionId];
@@ -573,7 +604,7 @@ export class SurvivalWorld {
     const equipped=item.containerId!==p.backpackId;
     requireThat(!equipped||payload.confirmEquipped===true,'CONFIRM_EQUIPPED');
     const quote=this.saleQuote(item,quantity);requireThat(quote,'NOT_SELLABLE');
-    const bank=this.s.bank;requireThat(Number.isSafeInteger(bank.credits+quote.credits)&&Number.isSafeInteger(bank.materials+quote.materials),'INVALID_TARGET');
+    const bank=p.wallet??this.s.bank;requireThat(Number.isSafeInteger(bank.credits+quote.credits)&&Number.isSafeInteger(bank.materials+quote.materials),'INVALID_TARGET');
     const definitionId=item.definitionId,itemId=item.id;
     if(quantity===item.quantity)this.removeItem(item);
     else {item.quantity-=quantity;item.revision++;this.s.containers[item.containerId].revision++;}
@@ -582,13 +613,13 @@ export class SurvivalWorld {
     this.event('TransactionResult',{kind:'Sell',actorId:p.id,itemId,definitionId,quantity,...quote});
     return {itemId,definitionId,quantity,...quote};
   }
-  checkFunds(credits,materials) { const bank=this.s.bank;requireThat(bank.credits-bank.reservedCredits>=credits&&bank.materials-bank.reservedMaterials>=materials,'NO_FUNDS'); }
+  checkFunds(credits,materials,bank=this.s.bank) { requireThat(bank.credits-bank.reservedCredits>=credits&&bank.materials-bank.reservedMaterials>=materials,'NO_FUNDS'); }
   buy(p,payload) {
-    requireThat(!['NIGHT','COMPLETE'].includes(this.s.phase),'WRONG_PHASE');requireThat(this.terminal(p,'shop',payload.stationId),'OUT_OF_RANGE');const def=this.defs.items[payload.definitionId];requireThat(def&&Number.isFinite(def.buy_c)&&def.id!=='knife','INVALID_TARGET');const quantity=def.buy_quantity??1;this.checkFunds(def.buy_c,def.buy_m??0);
+    requireThat(!['NIGHT','COMPLETE'].includes(this.s.phase),'WRONG_PHASE');requireThat(this.terminal(p,'shop',payload.stationId),'OUT_OF_RANGE');const def=this.defs.items[payload.definitionId];requireThat(def&&Number.isFinite(def.buy_c)&&def.id!=='knife','INVALID_TARGET');const quantity=def.buy_quantity??1;const bank=p.wallet??this.s.bank;this.checkFunds(def.buy_c,def.buy_m??0,bank);
     const equipId=p.equipment[def.kind],equip=equipId?this.s.containers[equipId]:null,old=equip?this.s.items[equip.itemIds[0]]:null;
     if(equip&&(!old||payload.replace===true)){if(old)requireThat(this.canFit(this.bag(p),old.definitionId,1)&&!old.lockedBy,'NO_CAPACITY');if(old)this.moveItem(old,this.bag(p));this.createItem(def.id,1,equip);}
     else {requireThat(this.canFit(this.bag(p),def.id,quantity),'NO_CAPACITY');this.addItems(this.bag(p),def.id,quantity);}
-    this.s.bank.credits-=def.buy_c;this.s.bank.materials-=def.buy_m??0;this.s.bank.revision++;this.event('TransactionResult',{kind:'Buy',definitionId:def.id,actorId:p.id});
+    bank.credits-=def.buy_c;bank.materials-=def.buy_m??0;bank.revision++;this.event('TransactionResult',{kind:'Buy',definitionId:def.id,actorId:p.id});
   }
   claimTool(p,definitionId,stationId=null) {
     requireThat(this.s.phase!=='COMPLETE'&&this.terminal(p,'shop',stationId),'OUT_OF_RANGE');requireThat(this.c.economy.free_recovery_tools.includes(definitionId),'INVALID_TARGET');const kind=this.defs.items[definitionId].kind,container=this.s.containers[p.equipment[kind]];
@@ -597,6 +628,7 @@ export class SurvivalWorld {
     for(const item of oldLoans)this.removeItem(item);
     this.createItem(definitionId,1,occupied.length?this.bag(p):container,{loanOwnerSlotId:p.slotId});
   }
+  attackObject(id) {return this.s.buildings[id]??this.s.turrets[id]??this.s.destructibles?.[id]??this.s.director?.deployables.find(q=>q.id===id&&q.kind==='cover'&&q.hp>0&&q.expiresAt>this.s.time);}
   workTarget(work) { return this.s.buildings[work.targetId]??this.s.turrets?.[work.targetId]??this.s.items[work.targetId]??this.s.nodes[work.targetId]??this.s.destructibles?.[work.targetId]??this.s.players[work.targetId]??this.s.recovery?.debris.find(x=>x.id===work.targetId); }
   turretWork(p,kind,targetId,expected) {
     const target=this.s.turrets[targetId],c=this.c.fortress;requireThat(target,'NOT_FOUND');requireThat(dist(p,target)<=this.c.player.interact_distance,'OUT_OF_RANGE');this.checkTargetRevision(target,expected);requireThat(this.s.buildings.core.hp>0,'WRONG_PHASE');
@@ -606,14 +638,14 @@ export class SurvivalWorld {
     this.beginWork(p,{kind,targetId,duration:cost.seconds,costC:cost.credits,costM:cost.materials,firstInstall,startLevel:target.level});
   }
   beginWork(p,work) {
-    requireThat(!p.work,'BUSY');const target=this.workTarget(work);requireThat(target&&!target.lockedBy,'BUSY');this.checkFunds(work.costC??0,work.costM??0);
+    requireThat(!p.work,'BUSY');const target=this.workTarget(work);requireThat(target&&!target.lockedBy,'BUSY');const personalFunds=!!p.wallet&&work.kind==='Upgrade'&&!!target.definitionId&&!!this.defs.weapons[target.definitionId];const bank=personalFunds?p.wallet:this.s.bank;this.checkFunds(work.costC??0,work.costM??0,bank);
     this.cancelFishing(p,'开始交互');p.reload=null;target.lockedBy=p.id;
-    this.s.bank.reservedCredits+=work.costC??0;this.s.bank.reservedMaterials+=work.costM??0;
-    p.work={...work,progress:0,startX:p.x,startZ:p.z,startDamageAt:p.damageAt,startHitSeq:p.hitSeq??0,startedAt:this.s.time};this.setAction(p,'interact',work.duration,{workKind:work.kind,targetId:work.targetId});if(work.kind==='Search')this.alertNoise(p,'search');if(work.kind==='SearchArchive')this.alertNoise(p,'archive_search');
+    bank.reservedCredits+=work.costC??0;bank.reservedMaterials+=work.costM??0;
+    p.work={...work,personalFunds,progress:0,startX:p.x,startZ:p.z,startDamageAt:p.damageAt,startHitSeq:p.hitSeq??0,startedAt:this.s.time};this.setAction(p,'interact',work.duration,{workKind:work.kind,targetId:work.targetId});if(work.kind==='Search')this.alertNoise(p,'search');if(work.kind==='SearchArchive')this.alertNoise(p,'archive_search');
   }
   cancelWork(p) {
     const work=p.work;if(!work)return;const target=this.workTarget(work);if(target?.lockedBy===p.id)delete target.lockedBy;
-    this.s.bank.reservedCredits=Math.max(0,this.s.bank.reservedCredits-(work.costC??0));this.s.bank.reservedMaterials=Math.max(0,this.s.bank.reservedMaterials-(work.costM??0));p.work=null;if(p.action==='interact')this.setAction(p,'idle');
+    const bank=work.personalFunds?p.wallet:this.s.bank;bank.reservedCredits=Math.max(0,bank.reservedCredits-(work.costC??0));bank.reservedMaterials=Math.max(0,bank.reservedMaterials-(work.costM??0));p.work=null;if(p.action==='interact')this.setAction(p,'idle');
   }
   updateWork(p,dt) {
     const work=p.work;if(!work)return;const target=this.workTarget(work);
@@ -626,13 +658,16 @@ export class SurvivalWorld {
     const kind=work.kind,again=kind==='Repair'||kind==='RepairTurret';
     if(kind==='Revive'&&target.lifeState!=='DOWNED'){this.cancelWork(p);return;}
     if(kind==='Bandage'&&(this.count(p,'bandage')<1||p.hp>=this.c.player.max_hp)){this.cancelWork(p);return;}
+    const riskIngredients=kind==='Upgrade'&&this.defs.weapons[target.definitionId]?riskCost(target.definitionId,{improvement:true}):[];
+    if(riskIngredients.some(row=>this.count(p,row.definitionId)<row.quantity)){this.cancelWork(p);this.event('Notice',{actorId:p.id,message:'缺少机芯，请先去对应外勤区收集'});return;}
     const activating=kind==='RecoveryWork'&&target.id==='core'?[target,...this.s.recovery.destroyedSockets.map(id=>this.s.buildings[id])]:['Rebuild','InstallTurret'].includes(kind)?[target]:[];
     const clearance=activating.length?this.previewPlayerClearance(activating.map(entity=>({entity,changes:{hp:Math.max(1,entity.hp)}}))):[];
     if(!clearance){this.cancelWork(p);this.event('Notice',{code:'CLEAR_BUILDING_SPACE',message:'建筑旁没有安全落脚位置，请队员让开后重试',actorId:p.id,targetId:target.id});return;}
-    this.s.bank.credits-=work.costC??0;this.s.bank.materials-=work.costM??0;this.s.bank.revision++;
+    for(const row of riskIngredients)this.consume(p,row.definitionId,row.quantity);
+    const bank=work.personalFunds?p.wallet:this.s.bank;bank.credits-=work.costC??0;bank.materials-=work.costM??0;bank.revision++;
     this.cancelWork(p);
     if(kind==='Bandage'){this.consume(p,'bandage',1);p.hp=Math.min(this.c.player.max_hp,p.hp+this.defs.items.bandage.heal);}
-    if(kind==='Search'){if(!target.containerId){const container=this.createContainer('loot',4,{x:target.x,y:target.y,z:target.z,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});this.addItems(container,'scrap',this.c.encounters.scrap_per_node);if(target.kind==='treasure')this.addItems(container,'treasure',1);target.containerId=container.id;}target.state='depleted';target.revision++;try{this.pickup(p,target.containerId);}catch(error){if(!(error instanceof GameError))throw error;} }
+    if(kind==='Search'){if(!target.containerId){const container=this.createContainer('loot',8,{x:target.x,y:target.y,z:target.z,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});for(const [definitionId,quantity]of nodeMaterialLoot(target.zoneId,target.kind))this.addItems(container,definitionId,quantity);target.containerId=container.id;}target.state='depleted';target.revision++;try{this.pickup(p,target.containerId);}catch(error){if(!(error instanceof GameError))throw error;} }
     if(kind==='SearchArchive'){const container=this.resolveArchiveLoot(target,'searched',p.id);if(container)try{this.pickup(p,container.id);}catch(error){if(!(error instanceof GameError))throw error;}}
     if(kind==='Repair')target.hp=Math.min(target.maxHp,target.hp+this.c.construction.repair_hp);
     if(this.mode==='mission')missionWork(this,kind,target.id);
@@ -650,7 +685,7 @@ export class SurvivalWorld {
   }
   cast(p,poolId,payload) {
     requireThat(!p.carryingId,'BUSY');
-    this.requireAction(p);requireThat(!p.fishing&&!p.work,'BUSY');const rod=this.equipped(p,'rod'),def=this.defs.rods[rod?.definitionId],pool=this.s.pools[poolId];requireThat(def&&!rod.lockedBy&&p.heldSlot==='rod','INVALID_TARGET');
+    this.requireAction(p);requireThat(!p.fishing&&!p.work,'BUSY');const rod=this.equipped(p,'rod'),def=effectiveRod(this.defs.rods[rod?.definitionId],rod),pool=this.s.pools[poolId];requireThat(def&&!rod.lockedBy&&p.heldSlot==='rod','INVALID_TARGET');
     const explicit=payload.x!==undefined||payload.z!==undefined,x=explicit?payload.x:pool?.x,z=explicit?payload.z:pool?.z,power=payload.power??1;
     requireThat(Number.isFinite(x)&&Number.isFinite(z)&&Number.isFinite(power)&&power>=0&&power<=1,'INVALID_TARGET');
     requireThat(this.s.waterY-this.ground(p.x,p.z)<=.6&&p.y<=this.ground(p.x,p.z)+.15,'INVALID_TARGET');
@@ -669,15 +704,15 @@ export class SurvivalWorld {
     p.fishing={id:this.id('line'),poolId:pool?.id??null,source:salvage?'magnet':'sea',power,state:'CAST',progress:0,tension:this.c.fishing.tension_start,remaining:castSeconds,elapsed:0,x,y:this.s.waterY,z,rodId:rod.id,creature:salvage?null:creature,catch_kind:salvage?'salvage':'creature',catch_resistance:salvage?loot.resistance:this.defs.creatures[creature].resistance,...(salvage?{loot_definition_id:loot.definitionId,loot_quantity:loot.quantity}:{}),breakTime:0,struggling:false};initializeFishing(p.fishing,p,def);p.reload=null;this.setAction(p,'cast',castSeconds,{lineId:p.fishing.id,poolId:p.fishing.poolId,position:target,power});this.event('FishingChanged',{state:'CAST',actorId:p.id,lineId:p.fishing.id,definitionId:rod.definitionId,catch_kind:p.fishing.catch_kind,position:target,power},p.id);
   }
   beginFishingReel(p) {
-    const f=p.fishing,def=this.defs.rods[this.s.items[f.rodId]?.definitionId];
-    Object.assign(f,{state:'REEL',elapsed:0,remaining:def.reel_timeout_seconds??this.c.fishing.timeout_seconds,progress:this.c.fishing.progress_start,tension:this.c.fishing.tension_start,breakTime:0});
+    const f=p.fishing,rod=this.s.items[f.rodId],def=effectiveRod(this.defs.rods[rod?.definitionId],rod);
+    f.remainingBeforeHook=f.remaining;Object.assign(f,{state:'REEL',elapsed:0,remaining:def.reel_timeout_seconds??this.c.fishing.timeout_seconds,progress:this.c.fishing.progress_start,tension:this.c.fishing.tension_start,breakTime:0});
     beginReeling(f,p,def);this.setAction(p,'hook',.35,{lineId:f.id});
   }
   activeMagnetCount(p) { return Object.values(this.s.containers).filter(c=>c.source==='magnet'&&c.ownerSlotId===p.slotId&&c.itemIds.length>0).length; }
   activeFishingCount(p) { return Object.values(this.s.enemies).filter(e=>e.source==='fishing'&&e.ownerId===p.id&&e.hp>0).length; }
   cancelFishing(p,reason) { if(p.fishing){p.fishing=null;if(['cast','hook','land','reel'].includes(p.action))this.setAction(p,'idle');this.event('FishingChanged',{state:'CANCEL',reason,actorId:p.id},p.id);} }
   updateFishing(p,dt) {
-    const f=p.fishing;if(!f)return;const rod=this.s.items[f.rodId],def=this.defs.rods[rod?.definitionId];
+    const f=p.fishing;if(!f)return;const rod=this.s.items[f.rodId],def=effectiveRod(this.defs.rods[rod?.definitionId],rod);
     if(!live(p)||p.swimming||p.heldSlot!=='rod'||!def||this.equipped(p,'rod')?.id!==f.rodId||rod.lockedBy||Math.hypot(p.x-f.x,p.z-f.z)>def.cast_range+3||this.s.phase==='COMPLETE'||this.ground(f.x,f.z)>=this.s.waterY-.05){this.cancelFishing(p,'鱼线失效');return;}f.y=this.s.waterY;
     f.elapsed+=dt;f.remaining-=dt;
     if(f.state==='CAST'&&f.remaining<=0){f.state='WAIT';const min=def.bite_wait_min??this.c.fishing.bite_wait_min,max=def.bite_wait_max??this.c.fishing.bite_wait_max;f.remaining=min+this.rng('fish')*(max-min);}
@@ -714,12 +749,16 @@ export class SurvivalWorld {
         this.createItem(f.loot_definition_id,f.loot_quantity,box);this.containerContent(box);p.fishing=null;p.pendingMagnetCatch=null;this.requestSave=true;
         this.event('FishingChanged',{state:'LANDED',actorId:p.id,lootContainerId:box.id,definitionId:f.loot_definition_id,quantity:f.loot_quantity,catch_kind:'salvage',source:'magnet',position},p.id);return;
       }
-      const enemy=this.spawnEnemy(f.creature,landing.x,landing.z,false);enemy.source='fishing';enemy.ownerId=p.id;enemy.hp=enemy.maxHp=this.c.fishing.open_water.hp[f.creature];enemy.attackRadius=this.c.fishing.open_water.attack_range;enemy.state='STUNNED';enemy.phaseRemaining=this.c.fishing.spawn_stun_seconds;enemy.landed=true;this.s.statistics.fishLanded++;this.exploration?.landed(enemy,p,f);p.fishing=null;this.event('FishingChanged',{state:'LANDED',actorId:p.id,enemyId:enemy.id,definitionId:enemy.definitionId,source:enemy.source,position:{x:enemy.x,y:enemy.y,z:enemy.z}},p.id);
+      const spare=this.c.fishing.open_water.max_alive_per_player-this.activeFishingCount(p),practiceSpare=this.mode==='mission'?PRACTICE_CREATURE_CAP-practiceCreatureLoad(this)+1:2,batch=f.special?1:Math.max(1,Math.min(f.netBatch??1,spare,practiceSpare));
+      const landed=[];for(let index=0;index<batch;index++){let point=landing;if(index){try{point=this.choosePoint(landing,1.6,[...Object.values(this.s.enemies),...this.scenePlayers()],.7,0,'fish',this.s.waterY); }catch{break;}if(this.blocked(point.x,this.ground(point.x,point.z),point.z,.35)||this.s.waterY-this.ground(point.x,point.z)>.6)break;}
+      const enemy=this.spawnEnemy(f.creature,point.x,point.z,false);enemy.source='fishing';enemy.ownerId=p.id;enemy.hp=enemy.maxHp=this.c.fishing.open_water.hp[f.creature];enemy.attackRadius=this.c.fishing.open_water.attack_range;enemy.state='STUNNED';enemy.phaseRemaining=this.c.fishing.spawn_stun_seconds;enemy.landed=true;this.s.statistics.fishLanded++;if(!index)this.exploration?.landed(enemy,p,f);landed.push(enemy);}
+      p.fishing=null;for(const enemy of landed)this.event('FishingChanged',{state:'LANDED',actorId:p.id,enemyId:enemy.id,definitionId:enemy.definitionId,source:enemy.source,batch:landed.length,position:{x:enemy.x,y:enemy.y,z:enemy.z}},p.id);
     }
   }
   boxes(includeCore=true) {
     this.staticBoxes??=[...ROCKS.map(r=>({id:r.id,x0:r.x-r.width/2,x1:r.x+r.width/2,z0:r.z-r.depth/2,z1:r.z+r.depth/2,y0:this.ground(r.x,r.z),y1:this.ground(r.x,r.z)+r.height})),...this.staticWorld().terminals.map(t=>({id:t.id,x0:t.x-.825,x1:t.x+.825,z0:t.z-.5,z1:t.z+.5,y0:t.y,y1:t.y+(t.type==='training'?.96:1.1)}))];
     const boxes=this.staticBoxes.slice();
+    for(const q of this.s.director?.deployables??[])if(q.kind==='cover'&&q.hp>0&&q.expiresAt>this.s.time)boxes.push({id:q.id,x0:q.x-1,x1:q.x+1,z0:q.z-.14,z1:q.z+.14,y0:q.y,y1:q.y+1.4});
     for(const turret of Object.values(this.s.turrets??{}))if(turret.hp>0)for(const part of this.c.fortress.collision)boxes.push({id:turret.id,x0:turret.x+part.x-part.width/2,x1:turret.x+part.x+part.width/2,y0:turret.y+part.y-part.height/2,y1:turret.y+part.y+part.height/2,z0:turret.z+part.z-part.depth/2,z1:turret.z+part.z+part.depth/2});
     for(const prop of Object.values(this.s.destructibles??{}))if(!prop.broken&&prop.hp>0)boxes.push(...this.propSolidBoxes(prop));
     for(const b of Object.values(this.s.buildings)){
@@ -771,7 +810,7 @@ export class SurvivalWorld {
     let best=null;
     for(const box of this.boxes()){if(box.id===ignoreId)continue;const t=rayBox(origin,direction,box,maximum);if(t!==null&&(!best||t<best.distance)){
       const position={x:origin.x+direction.x*t,y:origin.y+direction.y*t,z:origin.z+direction.z*t},faces=[];for(const axis of ['x','y','z'])for(const side of [0,1])faces.push({distance:Math.abs(position[axis]-box[`${axis}${side}`]),normal:{x:0,y:0,z:0,[axis]:side?1:-1}});faces.sort((a,b)=>a.distance-b.distance);
-      const building=this.s.buildings[box.id],prop=this.s.destructibles?.[box.id];best={id:box.id,distance:t,position,normal:t<1e-6?{x:-direction.x,y:-direction.y,z:-direction.z}:faces[0].normal,surface:building?.definitionId??(prop?this.propMaterial(prop):this.s.turrets?.[box.id]?'turret':box.id.startsWith('rock_')?'rock':this.staticWorld().terminals.some(t=>t.id===box.id)?'terminal':'unknown')};
+      const building=this.s.buildings[box.id],prop=this.s.destructibles?.[box.id];best={id:box.id,distance:t,position,normal:t<1e-6?{x:-direction.x,y:-direction.y,z:-direction.z}:faces[0].normal,surface:building?.definitionId??(this.attackObject(box.id)?.kind==='cover'?'metal':prop?this.propMaterial(prop):this.s.turrets?.[box.id]?'turret':box.id.startsWith('rock_')?'rock':this.staticWorld().terminals.some(t=>t.id===box.id)?'terminal':'unknown')};
     }}
     const step=.45,limit=best?.distance??maximum;
     for(let t=.01;t<=limit;t=Math.min(limit,t+step)){const x=origin.x+direction.x*t,z=origin.z+direction.z*t;if(origin.y+direction.y*t<this.ground(x,z)+.02){let low=Math.max(0,t-step),high=t;for(let i=0;i<12;i++){const mid=(low+high)/2,mx=origin.x+direction.x*mid,mz=origin.z+direction.z*mid;if(origin.y+direction.y*mid<this.ground(mx,mz)+.02)high=mid;else low=mid;}const distance=high,position={x:origin.x+direction.x*distance,y:origin.y+direction.y*distance,z:origin.z+direction.z*distance},epsilon=.04;const normal=unit({x:(this.ground(position.x-epsilon,position.z)-this.ground(position.x+epsilon,position.z))/(2*epsilon),y:1,z:(this.ground(position.x,position.z-epsilon)-this.ground(position.x,position.z+epsilon))/(2*epsilon)});best={id:'terrain',distance,position,normal,surface:'terrain'};break;}if(t===limit)break;}
@@ -789,6 +828,7 @@ export class SurvivalWorld {
     return false;
   }
   updatePlayer(p,dt) {
+    if(!live(p))clearGearState(p);
     if(!this.inScene(p))return;
     const previousPosition={x:p.x,y:p.y,z:p.z};p.velocity={x:0,y:0,z:0};p.moveSpeed=0;
     if(!live(p)){p.sprinting=false;p.meleePending=null;}
@@ -803,44 +843,48 @@ export class SurvivalWorld {
     if(!p.swimming&&this.s.waterY>this.ground(p.x,p.z))speed*=.7;
     speed*=this.director?.moveFactor(p)??1;
     if(p.carryingId)speed*=this.c.exploration.carrySpeed;
-    if(!p.swimming&&p.heldSlot==='weapon')speed*=this.defs.weapons[this.equipped(p)?.definitionId]?.move_multiplier??1;
+    if(!p.swimming&&p.heldSlot==='weapon')speed*=this.weaponStats(p)?.move_multiplier??1;
     this.move(p,(input.dx??0)*scale*speed,(input.dz??0)*scale*speed,dt,this.c.player.capsule_radius);
     const ground=this.ground(p.x,p.z);
     if(p.swimming){p.y=Math.max(ground,this.s.waterY-1.15);p.vy=0;p.oxygen=Math.max(0,p.oxygen-dt);if(p.oxygen<=0)this.damageQueue.push({target:p.id,damage:this.c.player.drowning_dps*dt,actorId:'water'});}
     else {p.oxygen=Math.min(this.c.player.oxygen_seconds,p.oxygen+this.c.player.oxygen_seconds/2*dt);if(!p.carryingId&&p.jumpQueued&&p.y<=ground+.05){p.vy=Math.sqrt(2*11*this.c.player.jump_height);this.setAction(p,'jump',.3);}p.vy-=11*dt;p.y=Math.max(ground,p.y+p.vy*dt);if(p.y<=ground)p.vy=0;}
     p.jumpQueued=false;
     p.velocity={x:(p.x-previousPosition.x)/dt,y:(p.y-previousPosition.y)/dt,z:(p.z-previousPosition.z)/dt};p.moveSpeed=Math.hypot(p.velocity.x,p.velocity.z);p.grounded=!p.swimming&&p.y<=ground+.05;
+    updateGearGrowth(this,p,dt);
     if(p.sprinting){p.stamina=Math.max(0,p.stamina-this.c.player.sprint_drain*(this.director?.sprintFactor(p)??1)*dt);p.staminaUsedAt=this.s.time;}
     else if(this.s.time-p.staminaUsedAt>=this.c.player.regen_delay)p.stamina=Math.min(this.c.player.stamina_max,p.stamina+this.c.player.stamina_regen*dt);
     this.updateReload(p,dt);this.updateFishing(p,dt);this.updateWork(p,dt);
-    if(input.fire&&!p.carryingId&&!p.work&&!p.swimming&&this.s.time>=p.equipUntil){try{if((!this.equipped(p)||p.heldSlot==='melee')&&this.s.time>=p.meleeAt)this.melee(p,p.yaw,p.pitch);else if(p.heldSlot==='weapon'&&this.s.time>=p.fireAt&&!p.reload&&this.defs.weapons[this.equipped(p)?.definitionId]?.fire_mode!=='semi')this.fire(p,p.yaw,p.pitch,!!input.ads);}catch(error){if(!(error instanceof GameError))throw error;}}
+    if(input.fire&&!p.carryingId&&!p.work&&!p.swimming&&this.s.time>=p.equipUntil){try{if((!this.equipped(p)||p.heldSlot==='melee')&&this.s.time>=p.meleeAt)this.melee(p,p.yaw,p.pitch);else if(p.heldSlot==='weapon'&&this.s.time>=p.fireAt&&!p.reload&&this.weaponStats(p)?.fire_mode!=='semi')this.fire(p,p.yaw,p.pitch,!!input.ads);}catch(error){if(!(error instanceof GameError))throw error;}}
     if(p.meleePending&&p.meleePending.at<=this.s.time){const pending=p.meleePending;p.meleePending=null;this.resolveMelee(p,pending);}
   }
+  weaponStats(p) {const item=this.equipped(p,'weapon');return effectiveWeapon(this.defs.weapons[item?.definitionId],item,p,this.s.time);}
   reload(p) {
     requireThat(!p.carryingId,'BUSY');
-    const item=this.equipped(p,'weapon'),def=this.defs.weapons[item?.definitionId];requireThat(p.heldSlot==='weapon'&&def&&!item.lockedBy&&!p.work,'INVALID_TARGET');requireThat(item.magazineAmmo<def.magazine&&!p.reload,'BUSY');requireThat(this.mode==='mission'||this.count(p,def.ammo)>0,'NO_AMMO');
+    const item=this.equipped(p,'weapon'),def=this.weaponStats(p);requireThat(p.heldSlot==='weapon'&&def&&!item.lockedBy&&!p.work,'INVALID_TARGET');requireThat(item.magazineAmmo<def.magazine&&!p.reload,'BUSY');requireThat(this.mode==='mission'||this.count(p,def.ammo)>0,'NO_AMMO');
     const multiplier=item.level>1?this.c.weapon_upgrade.reload_multiplier:1;
-    p.reload={itemId:item.id,remaining:((def.reload_start_seconds??0)+def.reload_seconds)*multiplier*(this.director?.reloadFactor(p)??1),loaded:0};this.setAction(p,'reload',p.reload.remaining,{definitionId:def.id});
+    p.reload={itemId:item.id,remaining:((def.reload_start_seconds??0)+def.reload_seconds)*multiplier*(this.director?.reloadFactor(p)??1),loaded:0};p.reload.duration=p.reload.remaining;this.setAction(p,'reload',p.reload.remaining,{definitionId:def.id});
   }
   updateReload(p,dt) {
-    const reload=p.reload;if(!reload)return;const item=this.s.items[reload.itemId],def=this.defs.weapons[item?.definitionId];if(!item||this.equipped(p)?.id!==item.id||p.swimming){p.reload=null;return;}reload.remaining-=dt;if(reload.remaining>0)return;
+    const reload=p.reload;if(!reload)return;const item=this.s.items[reload.itemId],def=effectiveWeapon(this.defs.weapons[item?.definitionId],item,p,this.s.time);if(!item||this.equipped(p)?.id!==item.id||p.swimming){p.reload=null;return;}reload.remaining-=dt;
+    if(def.id==='doublebarrel'){const progress=1-reload.remaining/(reload.duration??def.reload_seconds);reload.beats??=[];for(const [beat,at] of [['shells',.35],['close',.88]])if(progress>=at&&!reload.beats.includes(beat)){reload.beats.push(beat);this.event('ReloadBeat',{actorId:p.id,weaponId:def.id,beat},p.id);}}
+    if(reload.remaining>0)return;
     const count=Math.min(this.mode==='mission'?def.magazine:this.count(p,def.ammo),def.magazine-item.magazineAmmo,def.id==='shotgun'?1:Infinity);
     if(count){if(this.mode!=='mission')this.consume(p,def.ammo,count);item.magazineAmmo+=count;item.revision++;reload.loaded+=count;this.setAction(p,def.id==='shotgun'?'reload_insert':'reload_complete',def.id==='shotgun'?.15:.1,{definitionId:def.id,loaded:count,magazineAmmo:item.magazineAmmo});}
     if(def.id==='shotgun'&&item.magazineAmmo<def.magazine&&(this.mode==='mission'||this.count(p,def.ammo)>0))reload.remaining+=def.reload_seconds*(item.level>1?this.c.weapon_upgrade.reload_multiplier:1)*(this.director?.reloadFactor(p)??1);else p.reload=null;
   }
   fire(p,yaw,pitch,ads=false) {
     requireThat(!p.carryingId,'BUSY');
-    this.requireAction(p);requireThat(!p.work&&!p.fishing&&!p.sprinting&&p.heldSlot==='weapon','BUSY');const item=this.equipped(p),def=this.defs.weapons[item?.definitionId];requireThat(def&&!item.lockedBy,'INVALID_TARGET');requireThat(this.s.time>=p.equipUntil&&this.s.time>=p.fireAt,'BUSY');
+    this.requireAction(p);requireThat(!p.work&&!p.fishing&&!p.sprinting&&p.heldSlot==='weapon','BUSY');const item=this.equipped(p),def=effectiveWeapon(this.defs.weapons[item?.definitionId],item,p,this.s.time);requireThat(def&&!item.lockedBy,'INVALID_TARGET');requireThat(this.s.time>=p.equipUntil&&this.s.time>=p.fireAt,'BUSY');
     if(p.reload){requireThat(def.id==='shotgun'&&item.magazineAmmo>0,'BUSY');p.reload=null;}
     if(item.magazineAmmo<1){try{this.reload(p);}catch(error){if(!(error instanceof GameError))throw error;}throw new GameError('NO_AMMO');}
     item.magazineAmmo--;item.revision++;p.fireAt=this.s.time+60/def.rpm;this.s.statistics.shotsFired++;p.joinProtectionUntil=0;this.alertNoise(p,'shot');const shotId=this.id('shot');this.setAction(p,'fire',Math.min(.24,60/def.rpm),{shotId,definitionId:def.id,pelletCount:def.pellets});
     ads=ads&&p.input.ads===true&&this.s.time-(p.adsSince??this.s.time)>=(def.ads_seconds??.15);
     const camera={x:p.x,y:p.y+(p.crouching?1.05:this.c.player.camera_height),z:p.z},muzzle={x:p.x,y:p.y+(p.crouching?.85:1.05),z:p.z};
     const candidates=[...Object.values(this.s.enemies),...(this.s.friendlyFire?this.scenePlayers().filter(other=>other.id!==p.id&&other.lifeState!=='DEAD_WAIT'):[])];
-    const center=target=>({x:target.x,y:target.y+(target.lifeState?(target.lifeState==='DOWNED'?.42:1.1):target.definitionId==='boss_crab'?1:.65),z:target.z});
+    const center=target=>({x:target.x,y:target.y+(target.lifeState?(target.lifeState==='DOWNED'?.42:1.1):this.defs.creatures[target.definitionId]?.hit_height??(isBoss(target)?1:.65)),z:target.z});
     const radius=target=>target.lifeState?.55:target.radius;
     for(let pellet=0;pellet<def.pellets;pellet++){
-      const spread=((ads?def.ads_spread_deg:def.hip_spread_deg)+(def.move_spread_deg??0)*clamp((p.moveSpeed??0)/2,0,1))*(p.crouching?.75:1)*Math.PI/180;
+      const spread=((ads?def.ads_spread_deg:def.hip_spread_deg)+(def.move_spread_deg??0)*clamp((p.moveSpeed??0)/2,0,1))*(p.crouching?.75:1)*(1+((def.moving_spread_multiplier??1)-1)*clamp((p.moveSpeed??0)/2,0,1))*Math.PI/180;
       const cameraDirection=aim(yaw+(this.rng('combat')*2-1)*spread,clamp(pitch+(this.rng('combat')*2-1)*spread,-1.5,1.5)),cameraBlock=this.rayBlock(camera,cameraDirection,def.range_end);let aimDistance=cameraBlock?.distance??def.range_end;
       for(const candidate of candidates){if(candidate.hp<=0&&candidate.lifeState!=='DOWNED')continue;const distance=raySphere(camera,cameraDirection,center(candidate),radius(candidate),aimDistance);if(distance!==null)aimDistance=Math.min(aimDistance,distance);}
       const aimPoint={x:camera.x+cameraDirection.x*aimDistance,y:camera.y+cameraDirection.y*aimDistance,z:camera.z+cameraDirection.z*aimDistance},direction=unit({x:aimPoint.x-muzzle.x,y:aimPoint.y-muzzle.y,z:aimPoint.z-muzzle.z});
@@ -849,11 +893,16 @@ export class SurvivalWorld {
       if(!target&&blocker&&this.s.destructibles?.[blocker.id])target=this.s.destructibles[blocker.id];
       const propTarget=target&&this.s.destructibles?.[target.id],to={x:muzzle.x+direction.x*closest,y:muzzle.y+direction.y*closest,z:muzzle.z+direction.z*closest};let surface=propTarget?this.propMaterial(propTarget):target?(target.lifeState?'player':'creature'):blocker?.surface??'air',normal=target&&!propTarget?unit({x:to.x-center(target).x,y:to.y-center(target).y,z:to.z-center(target).z}):blocker?.normal??{x:0,y:0,z:0},weak=false;
       if(target){const falloff=closest<=def.range_full?1:1-(1-def.range_end_multiplier)*clamp((closest-def.range_full)/(def.range_end-def.range_full),0,1);let multiplier=item.level>1?this.c.weapon_upgrade.damage_multiplier:1;
-        if(target.definitionId==='boss_crab'){const forward=aim(target.yaw,0),back=(p.x-target.x)*forward.x+(p.z-target.z)*forward.z<0;weak=target.weak&&back;multiplier*=weak?this.defs.creatures.boss_crab.weak_multiplier:this.defs.creatures.boss_crab.armor_multiplier;}
-        this.damageQueue.push({target:target.id,damage:Math.max(1,Math.floor(def.damage*falloff*multiplier)),actorId:p.id,weaponId:def.id,shotId,direction,position:to,weak,pelletHits:1});}
+        if(isBoss(target)){const profile=bossHitProfile(this,target,p);weak=profile.weak;multiplier*=profile.multiplier;}
+        const damage=Math.max(1,Math.floor(def.damage*falloff*multiplier*(propTarget&&item.moduleId==='shotgun_breach'?1.8:1)));
+        this.damageQueue.push({target:target.id,damage,actorId:p.id,itemId:item.id,weaponId:def.id,shotId,direction,position:to,weak,pelletHits:1,moduleId:item.moduleId??null,closePelletHits:closest<=6?1:0});
+        const pierced=gearPiercingHit(this,p,item,{target,from:muzzle,direction,distance:closest,maximum:def.range_end,shotId,damage});
+        if(pierced){this.damageQueue.push(pierced);this.event('GearPierced',{actorId:p.id,shotId,weapon:def.id,from:to,to:pierced.position,targetId:pierced.target},p.id);}
+      }
       const payload={actorId:p.id,shotId,weapon:def.id,weaponId:def.id,definitionId:def.id,from:muzzle,to,targetId:target?.id??blocker?.id??null,surface,normal,pellet,pelletCount:def.pellets,recoilPitch:def.recoil_pitch_deg,recoilYaw:(this.rng('combat')*2-1)*def.recoil_yaw_deg};this.event('Shot',payload,p.id);
       if((!target||propTarget)&&surface!=='air')this.event('Impact',{...payload,position:to},blocker.id);
     }
+    gearAfterShot(this,p,item,def);
   }
   melee(p,yaw,pitch) {
     requireThat(!p.carryingId,'BUSY');
@@ -875,16 +924,16 @@ export class SurvivalWorld {
     const def={damage:pending.damage??fallback.damage,range:pending.range??fallback.range,arc_deg:pending.arc_deg??fallback.arc_deg};
     const direction=aim(pending.yaw,0),candidates=[...Object.values(this.s.enemies),...Object.values(this.s.destructibles??{}).filter(prop=>!prop.broken),...(this.s.friendlyFire?this.scenePlayers().filter(q=>q.id!==p.id&&q.lifeState!=='DEAD_WAIT'):[])];let selected=null,nearest=Infinity;
     for(const target of candidates){const d=dist(p,target);if(d>def.range||d>=nearest||target.hp<=0&&target.lifeState!=='DOWNED')continue;const cosine=((target.x-p.x)*direction.x+(target.z-p.z)*direction.z)/Math.max(.01,d);if(cosine<Math.cos(def.arc_deg*Math.PI/360)||Math.abs(target.y-p.y)>2||!this.lineVisible(p,target))continue;nearest=d;selected=target;}
-    if(selected){let multiplier=1,weak=false;if(selected.definitionId==='boss_crab'){const forward=aim(selected.yaw,0),back=(p.x-selected.x)*forward.x+(p.z-selected.z)*forward.z<0;weak=selected.weak&&back;multiplier=weak?this.defs.creatures.boss_crab.weak_multiplier:this.defs.creatures.boss_crab.armor_multiplier;}this.damageQueue.push({target:selected.id,damage:Math.max(1,Math.floor(def.damage*multiplier)),actorId:p.id,weaponId:definitionId,shotId:pending.shotId,direction:unit({x:selected.x-p.x,y:0,z:selected.z-p.z}),weak});}
+    if(selected){let multiplier=1,weak=false;if(isBoss(selected)){const profile=bossHitProfile(this,selected,p);weak=profile.weak;multiplier=profile.multiplier;}this.damageQueue.push({target:selected.id,damage:Math.max(1,Math.floor(def.damage*multiplier)),actorId:p.id,weaponId:definitionId,shotId:pending.shotId,direction:unit({x:selected.x-p.x,y:0,z:selected.z-p.z}),weak});}
     const surface=selected?(this.s.destructibles?.[selected.id]?this.propMaterial(selected):selected.lifeState?'player':'creature'):'air',from={x:p.x,y:p.y+1,z:p.z},to=selected?{x:selected.x,y:selected.y+.6,z:selected.z}:{x:p.x+direction.x*def.range,y:p.y+1,z:p.z+direction.z*def.range};
     this.event('Shot',{actorId:p.id,shotId:pending.shotId,weapon:definitionId,weaponId:definitionId,definitionId,targetId:selected?.id??null,pellet:0,pelletCount:1,from,to,surface},p.id);
     if(selected&&this.s.destructibles?.[selected.id])this.event('Impact',{actorId:p.id,shotId:pending.shotId,weapon:definitionId,weaponId:definitionId,targetId:selected.id,from,to,position:to,surface,normal:unit({x:p.x-selected.x,y:0,z:p.z-selected.z}),pellet:0,pelletCount:1},selected.id);
   }
   reactToHit(enemy,hit,direction) {
-    if(enemy.definitionId==='boss_crab')return;
+    recordNightContentHit(this,enemy,hit);if(isBoss(enemy))return;
     const elite=this.defs.creatures[enemy.definitionId].tier==='elite',shielded=hit.shielded===true;
     if(this.s.time>=(enemy.staggerResistUntil??0)){enemy.hitStunRemaining=elite?.06:.12;enemy.staggerResistUntil=this.s.time+(elite?1.1:.7);}
-    if(!hit.shotId||enemy.lastImpulseShotId!==hit.shotId){const factor=(hit.weaponId==='shotgun'?3.6:hit.weaponId==='knife'?2.5:2)*(elite?.4:1)*(shielded?.25:1);enemy.hitVelocity={x:direction.x*factor,z:direction.z*factor};enemy.lastImpulseShotId=hit.shotId??null;}
+    if(!hit.shotId||enemy.lastImpulseShotId!==hit.shotId){const factor=(['shotgun','doublebarrel'].includes(hit.weaponId)?3.6:hit.weaponId==='knife'?2.5:2)*(elite?.4:1)*(shielded?.25:1);enemy.hitVelocity={x:direction.x*factor,z:direction.z*factor};enemy.lastImpulseShotId=hit.shotId??null;}
     if(elite&&this.s.time>=(enemy.poiseResistUntil??0)){
       enemy.poiseDamage=(this.s.time-(enemy.poiseAt??-100)>2?0:enemy.poiseDamage??0)+Math.max(0,hit.actualDamage??hit.damage);enemy.poiseAt=this.s.time;
       if(enemy.poiseDamage>=Math.max(18,enemy.maxHp*.2)&&['WINDUP','CHARGE'].includes(enemy.state)){
@@ -900,37 +949,39 @@ export class SurvivalWorld {
   }
   updateTurrets() {
     if(this.s.paused||this.s.phase==='COMPLETE'||this.s.buildings.core.hp<=0)return;
-    const config=this.c.fortress,enemyCenter=e=>({x:e.x,y:e.y+(e.definitionId==='boss_crab'?1:.65),z:e.z});
+    const config=this.c.fortress,enemyCenter=e=>({x:e.x,y:e.y+(this.defs.creatures[e.definitionId]?.hit_height??(isBoss(e)?1:.65)),z:e.z});
     for(const turret of Object.values(this.s.turrets)){if(turret.hp<=0||turret.level===0||turret.ammo<=0||turret.lockedBy){turret.targetId=null;continue;}if(this.s.time<turret.fireAt){if(!this.s.enemies[turret.targetId])turret.targetId=null;continue;}turret.targetId=null;
-      const from={x:turret.x,y:turret.y+config.muzzleHeight,z:turret.z},candidates=Object.values(this.s.enemies).filter(e=>e.hp>0&&['wild','night'].includes(e.source)&&dist(turret,e)<=config.range).sort((a,b)=>(a.definitionId==='boss_crab'?1:0)-(b.definitionId==='boss_crab'?1:0)||dist(turret,a)-dist(turret,b));
+      const from={x:turret.x,y:turret.y+config.muzzleHeight,z:turret.z},candidates=Object.values(this.s.enemies).filter(e=>e.hp>0&&['wild','night'].includes(e.source)&&dist(turret,e)<=config.range).sort((a,b)=>(isBoss(a)?1:0)-(isBoss(b)?1:0)||dist(turret,a)-dist(turret,b));
       for(const enemy of candidates){const center=enemyCenter(enemy),vector={x:center.x-from.x,y:center.y-from.y,z:center.z-from.z},length=Math.hypot(vector.x,vector.y,vector.z),direction=unit(vector),distance=raySphere(from,direction,center,enemy.radius,length)??length;if(this.rayBlock(from,direction,distance,turret.id))continue;
         // A friendly body or an angler's living catch blocks a clear firing lane.
         const obstructed=[...this.scenePlayers().filter(p=>p.lifeState!=='DEAD_WAIT'),...Object.values(this.s.enemies).filter(e=>e.id!==enemy.id&&e.hp>0)].some(entity=>raySphere(from,direction,entity.lifeState?{x:entity.x,y:entity.y+(entity.lifeState==='DOWNED'?.42:1.1),z:entity.z}:enemyCenter(entity),entity.lifeState?.55:entity.radius,distance-.01)!==null);if(obstructed)continue;
         turret.targetId=enemy.id;turret.yaw=Math.atan2(-vector.x,-vector.z);turret.ammo--;turret.revision++;turret.shotSeq++;turret.fireAt=this.s.time+config.shotInterval;const shotId=this.id('turret-shot'),to={x:from.x+direction.x*distance,y:from.y+direction.y*distance,z:from.z+direction.z*distance};let multiplier=1,weak=false;
-        if(enemy.definitionId==='boss_crab'){const forward=aim(enemy.yaw,0);weak=enemy.weak&&((turret.x-enemy.x)*forward.x+(turret.z-enemy.z)*forward.z<0);multiplier=weak?this.defs.creatures.boss_crab.weak_multiplier:this.defs.creatures.boss_crab.armor_multiplier;}
-        const damage=Math.max(1,Math.floor(config.levels[turret.level-1].damage*multiplier));this.damageQueue.push({target:enemy.id,actorId:turret.id,weaponId:'fortress_turret',damage,shotId,direction,position:to,weak});
+        if(isBoss(enemy)){const profile=bossHitProfile(this,enemy,turret);weak=profile.weak;multiplier=profile.multiplier;}
+        const damage=Math.max(1,Math.floor(config.levels[turret.level-1].damage*multiplier*(this.s.fortressMode==='output'?1:this.s.fortressMode==='defense'?.7:.75)));this.damageQueue.push({target:enemy.id,actorId:turret.id,weaponId:'fortress_turret',damage,shotId,direction,position:to,weak});if(this.s.fortressMode==='control'&&!isBoss(enemy)){enemy.fortressSlowUntil=Math.max(enemy.fortressSlowUntil??0,this.s.time+1.1);}
         this.event('Shot',{actorId:turret.id,shotId,shotSeq:turret.shotSeq,weapon:'fortress_turret',weaponId:'fortress_turret',definitionId:'fortress_turret',from,to,targetId:enemy.id,surface:'creature',normal:unit({x:to.x-center.x,y:to.y-center.y,z:to.z-center.z}),pellet:0,pelletCount:1},turret.id);break;
       }
     }
   }
   resolveDamage() {
     const queued=this.damageQueue;this.damageQueue=[];const pending=[],groups=new Map();
-    for(const hit of queued){const prop=this.s.destructibles?.[hit.target],weak=this.copierWeakHit(prop,hit),adjusted=prop?.kind==='copier_shell'?{...hit,damage:hit.damage*(weak?3:1),weak}:hit,key=hit.shotId?`${hit.shotId}:${hit.target}`:null;if(key&&groups.has(key)){const group=groups.get(key);group.damage+=adjusted.damage;group.pelletHits=(group.pelletHits??1)+(adjusted.pelletHits??1);if(weak&&!group.weak){group.weak=true;group.position=adjusted.position;}}else {const group={...adjusted};pending.push(group);if(key)groups.set(key,group);}}
-    for(const hit of pending){const target=this.s.players[hit.target]??this.s.enemies[hit.target]??this.s.buildings[hit.target]??this.s.turrets[hit.target]??this.s.destructibles?.[hit.target];if(!target||(target.lifeState&&!this.inScene(target))||target.hp<=0&&target.lifeState!=='DOWNED')continue;
-      const actor=this.s.players[hit.actorId]??this.s.enemies[hit.actorId]??this.s.turrets[hit.actorId],direction=unit(hit.direction??{x:target.x-(actor?.x??target.x),y:0,z:target.z-(actor?.z??target.z)}),targetKind=target.lifeState?'player':this.s.enemies[target.id]?'enemy':this.s.turrets[target.id]?'turret':this.s.destructibles?.[target.id]?'prop':'building';
+    for(const hit of queued){const prop=this.s.destructibles?.[hit.target],weak=this.copierWeakHit(prop,hit),adjusted=prop?.kind==='copier_shell'?{...hit,damage:hit.damage*(weak?3:1),weak}:hit,key=hit.shotId?`${hit.shotId}:${hit.target}`:null;if(key&&groups.has(key)){const group=groups.get(key);group.damage+=adjusted.damage;group.pelletHits=(group.pelletHits??1)+(adjusted.pelletHits??1);group.closePelletHits=(group.closePelletHits??0)+(adjusted.closePelletHits??0);if(weak&&!group.weak){group.weak=true;group.position=adjusted.position;}}else {const group={...adjusted};pending.push(group);if(key)groups.set(key,group);}}
+    for(const hit of pending){const target=this.s.players[hit.target]??this.s.enemies[hit.target]??this.attackObject(hit.target);if(!target||(target.lifeState&&!this.inScene(target))||target.hp<=0&&target.lifeState!=='DOWNED')continue;
+      const actor=this.s.players[hit.actorId]??this.s.enemies[hit.actorId]??this.s.turrets[hit.actorId],direction=unit(hit.direction??{x:target.x-(actor?.x??target.x),y:0,z:target.z-(actor?.z??target.z)}),targetKind=target.lifeState?'player':target.kind==='cover'?'cover':this.s.enemies[target.id]?'enemy':this.s.turrets[target.id]?'turret':this.s.destructibles?.[target.id]?'prop':'building';
       if(actor?.source==='practice'&&(targetKind!=='player'||!practiceEnemyInside(actor,target)))continue;
-      const feedback={actorId:hit.actorId,targetId:target.id,targetKind,definitionId:target.definitionId??target.kind??'player',weaponId:hit.weaponId??actor?.definitionId??null,shotId:hit.shotId??null,direction,weak:hit.weak===true,shielded:hit.shielded===true,pelletHits:hit.pelletHits??1,position:hit.position??{x:target.x,y:target.y+(target.definitionId==='boss_crab'?1:.65),z:target.z}};
+      const feedback={actorId:hit.actorId,targetId:target.id,targetKind,definitionId:target.definitionId??target.kind??'player',weaponId:hit.weaponId??actor?.definitionId??null,shotId:hit.shotId??null,direction,weak:hit.weak===true,shielded:hit.shielded===true,pelletHits:hit.pelletHits??1,position:hit.position??{x:target.x,y:target.y+(this.defs.creatures[target.definitionId]?.hit_height??(isBoss(target)?1:.65)),z:target.z}};
       if(target.kind==='copier_shell'&&hit.weak&&!target.armed){target.armed=true;target.revision++;this.event('CopierArmed',{targetId:target.id,position:feedback.position,actorId:hit.actorId},target.id);this.requestSave=true;}
       if(target.lifeState){if(target.lifeState==='DEAD_WAIT')continue;if(this.s.players[hit.actorId]&&!this.s.friendlyFire)continue;if((target.joinProtectionUntil??0)>this.s.time||(target.lifeState==='DOWNED'&&(target.downedGraceRemaining??0)>0)){this.event('Hit',{...feedback,damage:0,killed:false,protected:true},target.id);continue;}target.damageAt=this.s.time;this.cancelRescueFor(target);this.cancelWork(target);this.cancelFishing(target,'受到伤害');if(target.lifeState==='DOWNED'){this.migrateLife(target);target.downedHp=Math.max(0,target.downedHp-hit.damage);target.selfReviveReadyIn=this.c.player.self_revive_quiet_seconds;target.hitSeq=(target.hitSeq??0)+1;target.hitAt=this.s.time;target.lastHitDirection=direction;target.downedRemaining=target.downedHp/target.downedBleedRate;this.setAction(target,'hurt',.18);this.event('Hit',{...feedback,damage:hit.damage,killed:target.downedHp<=0,hitSeq:target.hitSeq,hp:target.downedHp,maxHp:this.c.player.downed_hp,downed:true},target.id);if(target.downedHp<=0)this.die(target);continue;}this.setAction(target,'hurt',.15);}
       const hpBefore=target.hp;target.hp=Math.max(0,target.hp-hit.damage);target.revision=(target.revision??0)+1;target.hitSeq=(target.hitSeq??0)+1;target.hitAt=this.s.time;target.lastHitDirection=direction;
+      if(targetKind==='enemy')gearAfterHit(this,target,hit);
       if(targetKind==='enemy')this.aggro.damage(target,actor,Math.max(0,hpBefore-target.hp));
-      if(targetKind==='enemy'){target.lastHitShielded=hit.shielded===true;target.lastHitHeavy=['shotgun','rifle','knife'].includes(hit.weaponId);}
+      if(targetKind==='enemy'){target.lastHitShielded=hit.shielded===true;target.lastHitHeavy=['shotgun','rifle','doublebarrel','dmr','knife'].includes(hit.weaponId);}
       if(target.hp>0&&targetKind==='enemy'&&(this.s.players[hit.actorId]||this.s.turrets[hit.actorId]))this.reactToHit(target,{...hit,actualDamage:Math.max(0,hpBefore-target.hp)},direction);
       this.event('Hit',{...feedback,damage:hit.damage,killed:target.hp<=0,killingWeaponId:target.hp<=0?feedback.weaponId:null,hitSeq:target.hitSeq,actionSeq:target.lifeState?target.actionSeq:null,hitStunRemaining:target.hitStunRemaining??0,hp:target.hp,maxHp:target.maxHp??this.c.player.max_hp},target.id);
-      if(target.hp<=0){if(target.lifeState){this.enterDowned(target);}else if(this.s.enemies[target.id])this.killEnemy(target,hit.actorId);else if(targetKind==='prop')this.breakProp(target,hit);else if(targetKind==='turret'){target.ammo=0;target.targetId=null;this.event('TurretChanged',{destroyed:true,targetId:target.id},target.id);}else {target.gateOpen=false;this.event('BuildingChanged',{destroyed:true},target.id);}}
+      if(target.hp<=0){if(target.lifeState){this.enterDowned(target);}else if(this.s.enemies[target.id])this.killEnemy(target,hit.actorId);else if(targetKind==='prop')this.breakProp(target,hit);else if(targetKind==='cover'){target.expiresAt=this.s.time;if(this.navGeometry)this.navGeometry.tick=-1;this.event('Destroyed',{targetId:target.id,kind:'folding_cover',position:{x:target.x,y:target.y,z:target.z},seed:this.s.tick},target.id);}else if(targetKind==='turret'){target.ammo=0;target.targetId=null;this.event('TurretChanged',{destroyed:true,targetId:target.id},target.id);}else {target.gateOpen=false;this.event('BuildingChanged',{destroyed:true},target.id);}}
     }
   }
   die(p) {
+    clearGearState(p);
     if(p.lifeState==='DEAD_WAIT')return;
     this.cancelRescueFor(p);this.cancelWork(p);this.cancelFishing(p,'倒下了');p.reload=null;p.meleePending=null;p.lifeState='DEAD_WAIT';p.hp=0;p.input={};p.downedHp=0;p.downedRemaining=0;p.downedGraceRemaining=0;p.selfReviveReadyIn=0;p.respawnRemaining=this.s.phase==='NIGHT'?0:this.c.player.day_respawn_seconds;this.s.statistics.deaths++;
     if(this.mode==='mission'){p.respawnRemaining=5;this.event('LifeChanged',{state:'DEAD_WAIT'},p.id);return;}
@@ -940,16 +991,16 @@ export class SurvivalWorld {
   }
   respawn(p,emergency=false) { const position=emergency?this.location('emergency'):this.staticWorld().spawn;Object.assign(p,{x:position.x,y:position.y,z:position.z,lifeState:'ALIVE',hp:this.c.player.max_hp,stamina:this.c.player.stamina_max,oxygen:this.c.player.oxygen_seconds,respawnRemaining:0,downedHp:0,downedRemaining:0,downedGraceRemaining:0,selfReviveReadyIn:0,swimming:false,vy:0,input:{},jumpQueued:false});this.event('LifeChanged',{state:'ALIVE',respawn:true},p.id); }
   spawnEnemy(definitionId,x,z,night=false,multiplier=1) {
-    const def=this.defs.creatures[definitionId],enemy={id:this.id('enemy'),definitionId,x,y:this.ground(x,z),z,yaw:0,hp:Math.ceil(def.hp*multiplier),maxHp:Math.ceil(def.hp*multiplier),state:'CHASE',phaseRemaining:0,night,radius:definitionId==='boss_crab'?def.collision_radius:.6,weak:false,attackRadius:def.attack_range??0,attackKind:'melee',revision:1,homeX:x,homeZ:z,targetId:null,attackIndex:0,damageMultiplier:1,lostSight:0,stuckTime:0,hitSeq:0,hitAt:-100,lastHitDirection:{x:0,y:0,z:0},hitStunRemaining:0,hitResistance:definitionId==='boss_crab'?1:.7};
+    const def=this.defs.creatures[definitionId],enemy={id:this.id('enemy'),definitionId,x,y:this.ground(x,z),z,yaw:0,hp:Math.ceil(def.hp*multiplier),maxHp:Math.ceil(def.hp*multiplier),state:'CHASE',phaseRemaining:0,night,radius:def.collision_radius??.6,weak:false,attackRadius:def.attack_range??0,attackKind:'melee',revision:1,homeX:x,homeZ:z,targetId:null,attackIndex:0,damageMultiplier:1,lostSight:0,stuckTime:0,hitSeq:0,hitAt:-100,lastHitDirection:{x:0,y:0,z:0},hitStunRemaining:0,hitResistance:isBoss(def)?1:.7};
     Object.assign(enemy,{source:night?'night':'wild',ownerId:null,zoneId:night?null:this.nearestZone(enemy)?.id??null,alertState:'patrol',patrolIndex:0});this.s.enemies[enemy.id]=enemy;this.event('Spawned',{kind:'enemy',definitionId},enemy.id);return enemy;
   }
-  killEnemy(enemy,actorId) { if(!this.s.enemies[enemy.id])return;this.s.statistics.kills++;const loot=enemy.source==='fishing'?this.c.fishing.open_water.loot:this.defs.creatures[enemy.definitionId].loot;let lootContainerId=null;if(!enemy.night&&loot){const box=this.createContainer('loot',1,{x:enemy.x,y:this.ground(enemy.x,enemy.z),z:enemy.z,source:enemy.source,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});this.createItem(loot,1,box);this.containerContent(box);lootContainerId=box.id;}if(enemy.definitionId==='boss_crab')this.bossReward(enemy,actorId);delete this.s.enemies[enemy.id];this.aggro.forget(enemy.id);this.event('Removed',{kind:'enemy',actorId,lootContainerId},enemy.id); }
+  killEnemy(enemy,actorId) { if(!this.s.enemies[enemy.id])return;this.s.statistics.kills++;const loot=enemy.source==='fishing'?this.c.fishing.open_water.loot:this.defs.creatures[enemy.definitionId].loot;let lootContainerId=null;if(!enemy.night&&loot){const box=this.createContainer('loot',2,{x:enemy.x,y:this.ground(enemy.x,enemy.z),z:enemy.z,source:enemy.source,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});this.createItem(loot,1,box);const part=this.exploration?.partReward(enemy)??null;if(part)this.createItem(part,1,box);this.containerContent(box);lootContainerId=box.id;}if(isBoss(enemy))this.bossReward(enemy,actorId);delete this.s.enemies[enemy.id];this.aggro.forget(enemy.id);this.event('Removed',{kind:'enemy',actorId,lootContainerId},enemy.id); }
   enemyDefinition(enemy) { const def=this.defs.creatures[enemy.definitionId];return enemy.source==='fishing'?{...def,...this.c.fishing.open_water,aggressive:true}:enemy.source==='practice'?{...def,speed:Math.max(1.2,def.speed??0)}:def; }
   bossReward(enemy,actorId) {
     const night=this.s.night,key=`boss-reward:${night.id}`;
     if(!night.id||night.bossId!==enemy.id||night.rewardClaimed||this.s.resultLedger.includes(key))return;
     night.bossDefeated=true;night.rewardClaimed=true;this.s.resultLedger.push(key);
-    const c=this.c.encounters.nightly_boss,box=this.createContainer('loot',2,{x:enemy.x,y:enemy.y,z:enemy.z,source:'boss',createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});this.createItem(c.reward_item,1,box);this.addItems(box,'scrap',c.reward_scrap);this.containerContent(box);night.rewardContainerId=box.id;
+    const c=this.c.encounters.nightly_boss,box=this.createContainer('loot',4,{x:enemy.x,y:enemy.y,z:enemy.z,source:'boss',createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});this.createItem(c.reward_item,1,box);this.addItems(box,'scrap',c.reward_scrap);if(this.mode!=='mission')this.addItems(box,nightCore(this.s.threatStage),1);this.containerContent(box);night.rewardContainerId=box.id;
     if(this.s.threatStage>=4&&!this.s.statistics.stage4BossDefeated){this.s.statistics.stage4BossDefeated=true;this.event('Notice',{code:'STAGE_FOUR_MILESTONE',message:'击败四阶首领！冒险仍将继续'});}
     this.requestSave=true;this.event('BossReward',{actorId,enemyId:enemy.id,lootContainerId:box.id,definitionId:c.reward_item,nightId:night.id},enemy.id);
   }
@@ -964,7 +1015,16 @@ export class SurvivalWorld {
     const remembered=this.aggro.returnPoint(enemy);let target=remembered??home;enemy.alertState=this.aggro.state(enemy).returning?'returning':remembered?'investigate':'patrol';
     if(!remembered&&['wild','practice'].includes(enemy.source)&&dist(enemy,home)<leash){
       if((enemy.alertUntil??0)>this.s.time){target={x:enemy.investigateX,z:enemy.investigateZ};const length=dist(target,home);if(length>leash-1){target={x:home.x+(target.x-home.x)/length*(leash-1),z:home.z+(target.z-home.z)/length*(leash-1)};}enemy.alertState='investigate';}
-      else {const angle=(enemy.patrolIndex??0)*Math.PI/2;target={x:home.x+Math.sin(angle)*config.patrol_radius,z:home.z+Math.cos(angle)*config.patrol_radius};if(dist(enemy,target)<.6||(enemy.patrolBlocked??0)>2){enemy.patrolIndex=((enemy.patrolIndex??0)+1)%4;enemy.patrolBlocked=0;}}
+      else {
+       const radius=enemy.regionPatrol==='roam'?7:enemy.regionPatrol==='hold'?1.8:config.patrol_radius;
+       const late=this.s.phase==='RETURN'||this.s.phase==='DAY'&&this.s.phaseElapsed>this.phaseDuration('DAY')*.55;
+       const angle=((enemy.patrolIndex??0)+(late?1:0))*Math.PI/2;target={x:home.x+Math.sin(angle)*radius,z:home.z+Math.cos(angle)*radius};
+       if(enemy.regionPatrol==='escort'){
+        const anchor=Object.values(this.s.enemies).find(q=>q.id!==enemy.id&&q.source==='wild'&&q.zoneId===enemy.zoneId&&q.hp>0&&['artillery','lobber'].includes(q.role)&&dist(q,home)<leash-3);
+        if(anchor)target={x:anchor.x+Math.sin(angle)*2,z:anchor.z+Math.cos(angle)*2};
+       }
+       if(dist(enemy,target)<.6||(enemy.patrolBlocked??0)>2){enemy.patrolIndex=((enemy.patrolIndex??0)+1)%4;enemy.patrolBlocked=0;}
+      }
     }
     if(dist(enemy,target)<.35)return;
     if(!this.navigateEnemy(enemy,target,def.speed*.65,dt))enemy.patrolBlocked=(enemy.patrolBlocked??0)+dt;else enemy.patrolBlocked=0;
@@ -1013,11 +1073,11 @@ export class SurvivalWorld {
     // opening still has to break the gate instead of clipping its posts.
     if(enemy.night&&target?.definitionId==='gate'&&target.gateOpen&&enemy.radius<1.2)target=this.s.buildings.core;
     const first=this.enemyRouteBlock(enemy,target);
-    const obstacle=this.s.destructibles?.[first?.id]??this.s.buildings[first?.id]??this.s.turrets[first?.id];
+    const obstacle=this.attackObject(first?.id);
     return obstacle?.hp>0&&!obstacle.broken&&!(obstacle.definitionId==='gate'&&obstacle.gateOpen&&enemy.radius<1.2)&&this.lineVisible(enemy,obstacle)?obstacle:target;
   }
   routeAttack(enemy,target,def) {
-    const obstacle=id=>this.s.destructibles?.[id]??this.s.buildings[id]??this.s.turrets[id];
+    const obstacle=id=>this.attackObject(id);
     const inReach=t=>this.navigationGeometry().boxes.some(b=>b.id===t.id&&Math.hypot(enemy.x-clamp(enemy.x,b.x0,b.x1),enemy.z-clamp(enemy.z,b.z0,b.z1))<=enemy.radius+.85);
     if(enemy.state==='WINDUP'&&enemy.attackKind==='clear_route'){
       if(enemy.phaseRemaining<=0){
@@ -1036,17 +1096,16 @@ export class SurvivalWorld {
     enemy.attackZone={shape:'circle',x:target.x,y:target.y,z:target.z,radius:.7,endsAt:this.s.time+enemy.phaseRemaining};return true;
   }
   navigateEnemy(enemy,target,speed,dt) {
+    speed*=gearEnemySpeed(enemy,this.s.time)*nightContentSpeed(enemy,this.s.time);
     const geometry=this.navigationGeometry(true);
     this.navigation??=new EnemyNavigation({canTraverse:(a,b,r,e)=>this.navigationTraverse(a,b,r,e),projectPoint:p=>({...p,y:this.ground(p.x,p.z)})});
     const goal={x:target.x,y:this.ground(target.x,target.z),z:target.z},targetBoxes=geometry.boxes.filter(b=>b.id===target.id);
     // A solid target has many legal attack positions. Search for any reachable
     // one, rather than a single front-side point hidden inside another rock.
     const hover=this.enemyGroundHeight(enemy)-this.ground(enemy.x,enemy.z);
-    const baseBoss=!enemy.variantId||enemy.variantId==='base',bossDef=this.defs.creatures.boss_crab;
-    const slamNext=enemy.hp<=enemy.maxHp*.5?enemy.attackIndex%3===0:enemy.attackIndex%2===0;
-    const bossReach=baseBoss?(slamNext?bossDef.slam_radius+(target.lifeState?0:1.5):8):9;
+    const bossReach=isBoss(enemy)?bossAttackRange(this,enemy,target):0;
     const isGoal=targetBoxes.length?point=>{
-      const inRange=enemy.definitionId==='boss_crab'?dist(point,target)<=bossReach:targetBoxes.some(b=>Math.hypot(point.x-clamp(point.x,b.x0,b.x1),point.z-clamp(point.z,b.z0,b.z1))<=enemy.radius+.85);
+      const inRange=isBoss(enemy)?dist(point,target)<=bossReach:targetBoxes.some(b=>Math.hypot(point.x-clamp(point.x,b.x0,b.x1),point.z-clamp(point.z,b.z0,b.z1))<=enemy.radius+.85);
       return inRange&&this.lineVisible({...point,y:this.ground(point.x,point.z)+hover},target);
     }:null;
     const finishPoint=targetBoxes.length?point=>{
@@ -1109,8 +1168,8 @@ export class SurvivalWorld {
     if(boss.source==='practice')return [];
     // Breaking a route obstruction uses the same damage/loot transaction as a
     // player strike. Do not sweep unrelated scene props into every area attack.
-    const prop=this.s.destructibles?.[boss.targetId];
-    return [...Object.values(this.s.buildings),...Object.values(this.s.turrets),...(prop?.hp>0&&!prop.broken?[prop]:[])];
+    const prop=this.attackObject(boss.targetId);
+    return [...Object.values(this.s.buildings),...Object.values(this.s.turrets),...(prop?.hp>0&&!prop.broken&&!this.s.buildings[prop.id]&&!this.s.turrets[prop.id]?[prop]:[])];
   }
   moveBoss(boss,target,dt) {
     this.navigateEnemy(boss,target,this.defs.creatures.boss_crab.speed,dt);
@@ -1137,7 +1196,7 @@ export class SurvivalWorld {
       if(practice&&!practiceEnemyInside(boss,next)){boss.state='WEAK';boss.weak=true;boss.phaseRemaining=def.weak_seconds;boss.chargeRemaining=0;return;}
       this.move(boss,direction.x*travel/dt,direction.z*travel/dt,dt,boss.radius);boss.y=this.enemyGroundHeight(boss);boss.chargeRemaining-=travel;
       for(const p of this.scenePlayers()){if(p.lifeState==='DEAD_WAIT'||practice&&!practiceEnemyInside(boss,p)||boss.chargeHit.includes(p.id)||dist(p,boss)>1.7||!this.lineVisible(boss,p))continue;boss.chargeHit.push(p.id);this.damageQueue.push({target:p.id,damage:def.charge_damage,actorId:boss.id});}
-      if(!practice&&block&&(this.s.buildings[block.id]||this.s.turrets[block.id]||this.s.destructibles?.[block.id])&&!boss.chargeHit.includes(block.id)){boss.chargeHit.push(block.id);this.damageQueue.push({target:block.id,damage:90,actorId:boss.id});}
+      if(!practice&&block&&this.attackObject(block.id)&&!boss.chargeHit.includes(block.id)){boss.chargeHit.push(block.id);this.damageQueue.push({target:block.id,damage:90,actorId:boss.id});}
       if(block||boss.chargeRemaining<=0){boss.state='WEAK';boss.weak=true;boss.phaseRemaining=def.weak_seconds;}return;
     }
     const target=this.bossRouteTarget(boss,practice?practiceTarget:this.selectEnemyTarget(boss)??this.s.buildings.core),dx=target.x-boss.x,dz=target.z-boss.z,d=Math.hypot(dx,dz)||1;boss.targetId=target.id;boss.yaw=Math.atan2(-dx,-dz);
@@ -1150,7 +1209,7 @@ export class SurvivalWorld {
       const practice=projectile.practiceZone?{practiceZone:projectile.practiceZone}:null;
       if(practice&&!practiceEnemyInside(practice,projectile)){delete this.s.projectiles[projectile.id];continue;}
       if(!Number.isFinite(projectile.spawnAt)){projectile.spawnAt=this.s.time-dt;projectile.from={x:projectile.x,y:projectile.y,z:projectile.z};}
-      const length=Math.hypot(projectile.vx,projectile.vy,projectile.vz)*dt,direction={x:projectile.vx*dt/(length||1),y:projectile.vy*dt/(length||1),z:projectile.vz*dt/(length||1)};let hit=this.rayBlock(projectile,direction,length),targetId=practice?null:this.s.buildings[hit?.id]||this.s.turrets[hit?.id]||(projectile.definitionId==='power_bolt'&&this.s.destructibles?.[hit?.id])?hit.id:null,closest=hit?.distance??length;
+      const length=Math.hypot(projectile.vx,projectile.vy,projectile.vz)*dt,direction={x:projectile.vx*dt/(length||1),y:projectile.vy*dt/(length||1),z:projectile.vz*dt/(length||1)};let hit=this.rayBlock(projectile,direction,length),targetId=practice?null:this.s.buildings[hit?.id]||this.s.turrets[hit?.id]||this.s.director?.deployables.some(q=>q.id===hit?.id&&q.kind==='cover')||(projectile.definitionId==='power_bolt'&&this.s.destructibles?.[hit?.id])?hit.id:null,closest=hit?.distance??length;
       for(const p of this.scenePlayers()){if(p.lifeState==='DEAD_WAIT'||practice&&!practiceEnemyInside(practice,p))continue;const t=raySphere(projectile,direction,{x:p.x,y:p.y+(p.lifeState==='DOWNED'?.42:1),z:p.z},.5+projectile.radius,closest);if(t!==null){closest=t;targetId=p.id;hit={distance:t};}}
       if(targetId)this.damageQueue.push({target:targetId,damage:projectile.damage,actorId:projectile.actorId,slowSeconds:projectile.slowSeconds});
       projectile.life-=dt;if(hit||projectile.life<=0||practice&&!practiceEnemyInside(practice,{x:projectile.x+projectile.vx*dt,z:projectile.z+projectile.vz*dt})){
@@ -1181,8 +1240,9 @@ export class SurvivalWorld {
   generateDay() {
     this.s.nodes={};this.retainFishingEnemies();this.s.projectiles={};this.generateDestructibles();const n=this.s.lockedPlayerCount,used=Object.values(this.s.enemies).map(e=>({x:e.x,z:e.z}));
     for(const pool of Object.values(this.s.pools))pool.quota=this.c.fishing.pools.find(p=>p.id===pool.type).quota_per_player*n;
-    const zones=this.dangerZones();for(const type of ['crab','eel'])for(let i=0;i<this.c.encounters[`wild_${type}_per_player`]*n;i++){const center=zones[i%zones.length],point=this.choosePoint(center,n>4?22:14,used,8,45,'wildlife');used.push(point);const enemy=this.spawnEnemy(type,point.x,point.z);enemy.zoneId=center.id;}
-    for(const kind of ['scrap','treasure'])for(let i=0;i<(kind==='scrap'?this.c.encounters.scrap_nodes_per_player:this.c.encounters.treasure_caches_per_player)*n;i++){
+    const zones=this.dangerZones(),budget=dayEncounterBudget(n);for(let i=0;i<budget.guards;i++){const type=i%3===1?'eel':'crab',center=zones[i%zones.length],point=this.choosePoint(center,n>4?22:14,used,8,38,'wildlife');used.push(point);const enemy=this.spawnEnemy(type,point.x,point.z);enemy.zoneId=center.id;}
+    const cacheBudget=Math.max(zones.length,Math.floor(budget.nodes/5));let caches=0;
+    for(let i=0;i<budget.nodes;i++){const eligible=(i<zones.length*3&&Math.floor(i/zones.length)===2)||i>=zones.length*3&&i%5===4;const kind=eligible&&caches<cacheBudget?'treasure':'scrap';if(kind==='treasure')caches++;
       const center=zones[i%zones.length],point=this.choosePoint(center,18,used);used.push(point);const node={id:this.id('node'),kind,...point,zoneId:center.id,danger:true,state:'available',revision:1};this.s.nodes[node.id]=node;
     }
   }
@@ -1199,14 +1259,14 @@ export class SurvivalWorld {
     }
     this.setPhase('NIGHT');const n=Math.max(1,Object.values(this.s.players).filter(p=>p.connected).length),stage=Math.min(3,this.s.threatStage),wave=this.c.waves.find(w=>w.stage===stage),growth=this.c.encounters.nightly_boss,difficulty=this.difficultyFor(n);this.s.pressureDay=difficulty.pressureDay;
     this.s.night={id:this.id('night'),waveIndex:0,pending:[],spawned:0,remaining:0,bossId:null,addsSpawned:false,nextSpawnAt:0,resolved:false,bossDefeated:false,rewardClaimed:false,playerCount:n,pressureDay:difficulty.pressureDay,aliveCap:difficulty.aliveCap,spawnInterval:difficulty.spawnInterval,bossHp:difficulty.bossHp};
-    const position=this.location('night_south'),boss=this.spawnEnemy('boss_crab',position.x,position.z,true);boss.hp=boss.maxHp=difficulty.bossHp;this.s.night.bossId=boss.id;this.s.night.spawned=1;
+    const position=this.location('night_south'),boss=this.spawnEnemy(this.director?.s.nightPlan?.bossDefinitionId??'boss_crab',position.x,position.z,true);boss.hp=boss.maxHp=difficulty.bossHp;this.s.night.bossId=boss.id;this.s.night.spawned=1;
     {const countFactor=(1+this.c.encounters.ordinary_count_player_factor*(n-1))*Math.min(growth.count_growth_cap,1+growth.count_daily_growth*(difficulty.pressureDay-1)),counts={crab:Math.ceil(wave.base_crab*countFactor),eel:Math.ceil(wave.base_eel*countFactor)},list=[];while(counts.crab>0||counts.eel>0){for(const type of ['crab','eel'])if(counts[type]>0){counts[type]--;list.push(type);}}
       list.forEach((definitionId,i)=>this.s.night.pending.push({definitionId,at:wave.spawn_seconds[i%3],entry:i%3}));this.s.night.pending.sort((a,b)=>a.at-b.at);const counters={};for(const entry of this.s.night.pending){entry.entry=(counters[entry.at]??0)%3;counters[entry.at]=(counters[entry.at]??0)+1;}}
   }
   updateNightQueue() {
     const night=this.s.night;night.pending.sort((a,b)=>a.at-b.at);
     if(night.pending.length&&night.pending[0].at<=this.s.phaseElapsed&&this.s.time>=night.nextSpawnAt&&Object.values(this.s.enemies).filter(e=>e.night).length<night.aliveCap){const entry=night.pending.shift(),position=this.location(['night_north','night_east','night_south'][entry.entry]),wave=this.c.waves.find(w=>w.stage===Math.min(3,this.s.threatStage)),enemy=this.spawnEnemy(entry.definitionId,position.x,position.z,true,wave.hp_multiplier);enemy.damageMultiplier=wave.damage_multiplier;night.spawned++;night.nextSpawnAt=this.s.time+night.spawnInterval;night.waveIndex=Math.min(3,Math.floor(this.s.phaseElapsed/35)+1);}
-    night.remaining=Object.values(this.s.enemies).filter(e=>e.night).length+night.pending.length;
+    night.waveIndex=nightSegment(night,this.s.phaseElapsed)+1;night.remaining=Object.values(this.s.enemies).filter(e=>e.night).length+night.pending.length;
   }
   resolveNight() {
     const s=this.s;if(s.phase!=='NIGHT'||s.night.resolved)return;
@@ -1214,7 +1274,7 @@ export class SurvivalWorld {
     const online=Object.values(s.players).filter(p=>p.connected);if(s.buildings.core.hp<=0||(online.length>0&&online.every(p=>p.lifeState==='DEAD_WAIT'))){this.defeat();return;}
     const cleared=!!s.night.id&&!!s.night.bossId&&s.night.bossDefeated===true&&!s.enemies[s.night.bossId]&&s.night.pending.length===0&&!Object.values(s.enemies).some(e=>e.night&&e.hp>0);
     if(s.phaseElapsed>=this.phaseDuration('NIGHT')||cleared){
-      s.night.resolved=true;
+      s.night.resolved=true;s.night.outcome='won';
       if(s.resultLedger.includes(s.night.id))return;
       s.night.completedEarly=cleared&&s.phaseElapsed<this.phaseDuration('NIGHT');s.resultLedger.push(s.night.id);s.statistics.daysSurvived++;s.failureStreak=0;s.dayIndex++;s.threatStage=Math.min(4,s.threatStage+1);
       if(s.night.completedEarly)this.event('Notice',{code:'NIGHT_CLEARED',message:'夜袭全清，提前下班！'});
@@ -1223,7 +1283,7 @@ export class SurvivalWorld {
   }
   toPrep(revive=true) { this.retainFishingEnemies();this.s.projectiles={};this.s.waterY=this.c.cycle.low_water_y;for(const p of this.scenePlayers()){this.cancelWork(p);this.cancelFishing(p,'返回据点');p.ready=false;if(revive||p.lifeState!=='ALIVE')this.respawn(p);else {const spawn=this.staticWorld().spawn;p.x=spawn.x;p.y=spawn.y;p.z=spawn.z;}}for(const b of Object.values(this.s.buildings))if(b.definitionId==='gate'&&b.hp>0)b.gateOpen=true;this.setPhase('PREP'); }
   defeat() {
-    const s=this.s;if(s.night.resolved||s.resultLedger.includes(s.night.id))return;s.night.resolved=true;s.resultLedger.push(s.night.id);s.statistics.breaches++;const defeatId=this.id('defeat');
+    const s=this.s;if(s.night.resolved||s.resultLedger.includes(s.night.id))return;s.night.resolved=true;s.night.outcome='lost';s.resultLedger.push(s.night.id);s.statistics.breaches++;const defeatId=this.id('defeat');
     for(const p of this.scenePlayers()){this.die(p);this.respawn(p,true);p.ready=false;}
     for(const turret of Object.values(s.turrets)){turret.hp=0;turret.ammo=0;turret.targetId=null;turret.revision++;}
     s.enemies={};s.projectiles={};s.dayIndex++;s.failureStreak=(s.failureStreak??0)+1;s.waterY=this.c.cycle.low_water_y;
@@ -1270,15 +1330,16 @@ export class SurvivalWorld {
     const s=this.s,copy=structuredClone;
     for(const container of Object.values(s.containers))this.containerContent(container);
     const players=this.scenePlayers().map(p=>{const {tokenHash,memberGeneration,requestCache,input,inputAt,disconnectedAt,jumpQueued,meleePending,damageAt,staminaUsedAt,equipUntil,fireAt,meleeAt,vy,lockedBy,lastProtectionAt,joinProtectionUntil,pendingMagnetCatch,pendingSeaCatch,...publicPlayer}=p;
-      Object.assign(publicPlayer,{weaponId:this.equipped(p,'weapon')?.definitionId??null,heldDefinitionId:p.heldSlot==='quick'&&s.time<(p.quickUseUntil??0)?p.quickUseDefinitionId:this.equipped(p)?.definitionId??null,equipmentDefinitionId:this.equipped(p)?.definitionId??null,velocity:p.velocity??{x:0,y:0,z:0},moveSpeed:p.moveSpeed??0,grounded:!p.swimming&&p.y<=this.ground(p.x,p.z)+.05,sprint:live(p)&&p.sprinting===true,ads:live(p)&&p.heldSlot==='weapon'&&!!this.equipped(p,'weapon')&&p.input.ads===true&&!p.sprinting&&!p.swimming&&s.time-(p.adsSince??s.time)>=(this.defs.weapons[this.equipped(p)?.definitionId]?.ads_seconds??.15),joinProtectionRemaining:Math.max(0,(p.joinProtectionUntil??0)-s.time),action:p.carryingId?'carry':s.time<(p.actionStartedAt??0)+(p.actionDuration??0)?p.action:p.reload?'reload':p.fishing?.state==='REEL'?'reel':p.work?'interact':'idle',actionSeq:p.actionSeq??0,actionStartedAt:p.actionStartedAt??s.time,actionDuration:p.actionDuration??0});
+      Object.assign(publicPlayer,{weaponId:this.equipped(p,'weapon')?.definitionId??null,heldDefinitionId:p.heldSlot==='quick'&&s.time<(p.quickUseUntil??0)?p.quickUseDefinitionId:this.equipped(p)?.definitionId??null,equipmentDefinitionId:this.equipped(p)?.definitionId??null,heldModuleId:this.equipped(p)?.moduleId??null,heldAttachmentId:this.equipped(p)?.attachmentId??null,weaponStats:this.weaponStats(p)??null,rodStats:effectiveRod(this.defs.rods[this.equipped(p,'rod')?.definitionId],this.equipped(p,'rod'))??null,velocity:p.velocity??{x:0,y:0,z:0},moveSpeed:p.moveSpeed??0,grounded:!p.swimming&&p.y<=this.ground(p.x,p.z)+.05,sprint:live(p)&&p.sprinting===true,ads:live(p)&&p.heldSlot==='weapon'&&!!this.equipped(p,'weapon')&&p.input.ads===true&&!p.sprinting&&!p.swimming&&s.time-(p.adsSince??s.time)>=(this.weaponStats(p)?.ads_seconds??.15),joinProtectionRemaining:Math.max(0,(p.joinProtectionUntil??0)-s.time),action:p.carryingId?'carry':s.time<(p.actionStartedAt??0)+(p.actionDuration??0)?p.action:p.reload?'reload':p.fishing?.state==='REEL'?'reel':p.work?'interact':'idle',actionSeq:p.actionSeq??0,actionStartedAt:p.actionStartedAt??s.time,actionDuration:p.actionDuration??0});
       publicPlayer.downedRemaining=p.lifeState==='DOWNED'?p.downedHp/p.downedBleedRate:0;publicPlayer.downedMaxHp=this.c.player.downed_hp;const rescuer=s.players[p.lockedBy];publicPlayer.rescue=rescuer?.work?.kind==='Revive'&&this.rescueValid(rescuer)&&this.rescueHeld(rescuer)?{rescuerId:rescuer.id,progress:rescuer.work.progress,duration:rescuer.work.duration}:null;
-      publicPlayer.work=p.work?{kind:p.work.kind,targetId:p.work.targetId,progress:p.work.progress,duration:p.work.duration}:null;publicPlayer.fishing=p.fishing?{id:p.fishing.id,poolId:p.fishing.poolId,x:p.fishing.x,y:p.fishing.y??s.waterY,z:p.fishing.z,power:p.fishing.power??1,source:p.fishing.catch_kind==='salvage'?'magnet':'sea',catch_kind:p.fishing.catch_kind??'creature',state:p.fishing.state,progress:p.fishing.progress,tension:p.fishing.tension,remaining:p.fishing.remaining,struggling:p.fishing.struggling,reeling:p.input.reel===true,mode:p.fishing.mode,cue:p.fishing.cue,behavior:p.fishing.behavior,pullSide:p.fishing.pullSide,angleAdvantage:p.fishing.angleAdvantage,activity:p.fishing.activity,signal:p.fishing.signal,motion:p.fishing.motion}:null;return copy(publicPlayer);});
-    return {type:'state',protocolVersion:3,build:'0.11.8',mode:this.mode,mission:this.mode==='mission'?missionPublic(this):null,maxPlayers:this.c.baseline.max_players,difficulty:this.publicDifficulty(),snapshotId:s.tick,serverTick:s.tick,time:s.time,clock:this.publicClock(),dangerZones:this.dangerZones(),worldId:s.worldId,contentVersion:s.contentVersion,phase:s.phase,phaseElapsed:s.phaseElapsed,phaseRemaining:this.mode==='mission'?0:this.phaseRemaining(),dayIndex:s.dayIndex,threatStage:s.threatStage,lockedPlayerCount:s.lockedPlayerCount,waterY:s.waterY,paused:s.paused||this.needsBarrier,hostId:s.hostId,friendlyFire:s.friendlyFire,save,bank:copy(s.bank),players,items:copy(Object.values(s.items)),containers:copy(Object.values(s.containers)),buildings:copy(Object.values(s.buildings)),turrets:copy(Object.values(s.turrets)),enemies:copy(Object.values(s.enemies)),destructibles:copy(Object.values(s.destructibles??{}).map(prop=>({...prop,supportY:this.cachedPropBox(prop).y0}))),projectiles:copy(Object.values(s.projectiles)),nodes:copy(Object.values(s.nodes)),pools:Object.values(s.pools).map(p=>({...p,activeLines:this.scenePlayers().filter(x=>x.fishing?.poolId===p.id).length,submerged:s.waterY>this.ground(p.x+p.radius+2,p.z)+.6})),recovery:copy(s.recovery),night:copy(s.night),statistics:copy(s.statistics),world:this.staticWorld()};
+      publicPlayer.work=p.work?{kind:p.work.kind,targetId:p.work.targetId,progress:p.work.progress,duration:p.work.duration}:null;publicPlayer.fishing=p.fishing?{id:p.fishing.id,poolId:p.fishing.poolId,x:p.fishing.x,y:p.fishing.y??s.waterY,z:p.fishing.z,power:p.fishing.power??1,source:p.fishing.catch_kind==='salvage'?'magnet':'sea',catch_kind:p.fishing.catch_kind??'creature',state:p.fishing.state,progress:p.fishing.progress,tension:p.fishing.tension,remaining:p.fishing.remaining,struggling:p.fishing.struggling,reeling:p.input.reel===true,mode:p.fishing.mode,cue:p.fishing.cue,behavior:p.fishing.behavior,pullSide:p.fishing.pullSide,angleAdvantage:p.fishing.angleAdvantage,activity:p.fishing.activity,signal:p.fishing.signal,motion:p.fishing.motion,netBatch:p.fishing.netBatch??1}:null;return copy(publicPlayer);});
+    return {type:'state',protocolVersion:3,build:'0.17.0',mode:this.mode,mission:this.mode==='mission'?missionPublic(this):null,maxPlayers:this.c.baseline.max_players,difficulty:this.publicDifficulty(),snapshotId:s.tick,serverTick:s.tick,time:s.time,clock:this.publicClock(),dangerZones:this.dangerZones(),worldId:s.worldId,contentVersion:s.contentVersion,phase:s.phase,phaseElapsed:s.phaseElapsed,phaseRemaining:this.mode==='mission'?0:this.phaseRemaining(),dayIndex:s.dayIndex,threatStage:s.threatStage,lockedPlayerCount:s.lockedPlayerCount,waterY:s.waterY,paused:s.paused||this.needsBarrier,hostId:s.hostId,friendlyFire:s.friendlyFire,save,bank:copy(s.bank),players,items:copy(Object.values(s.items).map(item=>({...item,...(this.defs.weapons[item.definitionId]?{effectiveStats:effectiveWeapon(this.defs.weapons[item.definitionId],item,null,s.time)}:this.defs.rods[item.definitionId]?{effectiveStats:effectiveRod(this.defs.rods[item.definitionId],item)}:{})}))),containers:copy(Object.values(s.containers)),buildings:copy(Object.values(s.buildings)),turrets:copy(Object.values(s.turrets)),enemies:copy(Object.values(s.enemies).map(e=>({...e,markedRemaining:Math.max(0,(e.markedUntil??0)-s.time)}))),destructibles:copy(Object.values(s.destructibles??{}).map(prop=>({...prop,supportY:this.cachedPropBox(prop).y0}))),projectiles:copy(Object.values(s.projectiles)),nodes:copy(Object.values(s.nodes)),pools:Object.values(s.pools).map(p=>({...p,activeLines:this.scenePlayers().filter(x=>x.fishing?.poolId===p.id).length,submerged:s.waterY>this.ground(p.x+p.radius+2,p.z)+.6})),recovery:copy(s.recovery),night:copy(s.night),statistics:copy(s.statistics),world:this.staticWorld()};
   }
   serialize() { for(const c of Object.values(this.s.containers))this.containerContent(c);this.aggro.prune();this.assertInvariants();return structuredClone(this.s); }
   assertInvariants() {
+    for(const p of Object.values(this.s.players))if(p.wallet&&['credits','materials','reservedCredits','reservedMaterials'].some(k=>!Number.isSafeInteger(p.wallet[k])||p.wallet[k]<0))throw Error('Invalid personal wallet');
     const counts={};for(const container of Object.values(this.s.containers)){if(container.itemIds.length>container.slotLimit||new Set(container.itemIds).size!==container.itemIds.length)throw Error('Invalid container capacity');for(const id of container.itemIds){const item=this.s.items[id];if(!item||item.containerId!==container.id)throw Error('Item ownership mismatch');counts[id]=(counts[id]??0)+1;}}
-    for(const item of Object.values(this.s.items)){const def=this.defs.items[item.definitionId];if(!def||counts[item.id]!==1||!Number.isSafeInteger(item.quantity)||item.quantity<1||item.quantity>def.stack)throw Error('Invalid item instance');if(this.defs.weapons[item.definitionId]&&(item.magazineAmmo<0||item.magazineAmmo>this.defs.weapons[item.definitionId].magazine))throw Error('Invalid magazine');}
+    for(const item of Object.values(this.s.items)){const def=this.defs.items[item.definitionId];if(!def||counts[item.id]!==1||!Number.isSafeInteger(item.quantity)||item.quantity<1||item.quantity>def.stack)throw Error('Invalid item instance');if(this.defs.weapons[item.definitionId]&&(item.magazineAmmo<0||item.magazineAmmo>this.defs.weapons[item.definitionId].magazine))throw Error('Invalid magazine');if(item.moduleId&&MODULE_BY_ID[item.moduleId]?.definitionId!==item.definitionId||!validAttachment(item,def.kind))throw Error('Invalid gear fitting');}
     for(const t of Object.values(this.s.turrets??{})){const def=this.c.fortress.levels[t.level-1];if(!this.c.fortress.slots.some(slot=>slot.id===t.id)||!Number.isInteger(t.level)||t.level<0||t.level>2||!Number.isSafeInteger(t.ammo)||t.ammo<0||t.ammo>(def?.capacity??0)||!Number.isFinite(t.hp)||t.hp<0||t.hp>(def?.hp??0))throw Error('Invalid turret state');}
     if(Object.values(this.s.players).filter(p=>!this.onlineRoster||p.connected).length>this.c.baseline.max_players||this.s.bank.credits<0||this.s.bank.materials<0||this.s.bank.reservedCredits<0||this.s.bank.reservedMaterials<0)throw Error('Invalid world ledger');
   }

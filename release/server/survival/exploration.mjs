@@ -1,3 +1,5 @@
+import {DAY_SOLID_EVENTS,DAY_CRATE_EVENTS,FISH_PARTS,FISH_REGIONS} from './day-content-config.mjs';
+import {startDayEvent,finishDayEvent,deliverRelay} from './day-content.mjs';
 import {EXPLORATION_EVENTS,EXPLORATION_CREATURES} from './exploration-config.mjs';
 import {need} from './director.mjs';
 import {initializeFishing} from './fishing-experience.mjs';
@@ -15,13 +17,14 @@ export class Exploration {
  constructor(w,saved) {
   this.w=w;this.c=w.c.exploration;
   w.s.exploration??={version:1,events:[],history:[],catches:0,rareDay:0,generatedDay:0};
-  this.s=w.s.exploration;need(this.s.version===1&&Array.isArray(this.s.events)&&this.s.events.length<=3&&Array.isArray(this.s.history),'INVALID_TARGET','探索进度格式无效');
+  this.s=w.s.exploration;this.s.partDay??=0;this.s.partsGranted??=0;need(Number.isSafeInteger(this.s.partDay)&&this.s.partDay>=0&&Number.isSafeInteger(this.s.partsGranted)&&this.s.partsGranted>=0&&this.s.partsGranted<=64,'INVALID_TARGET');need(this.s.version===1&&Array.isArray(this.s.events)&&this.s.events.length<=3&&Array.isArray(this.s.history),'INVALID_TARGET','探索进度格式无效');
   const ids=new Set(),eventIds=new Set(),validPoint=p=>p&&['x','y','z'].every(k=>Number.isFinite(p[k]));
   need(['catches','rareDay','generatedDay'].every(k=>Number.isSafeInteger(this.s[k])&&this.s[k]>=0)&&this.s.history.length<=18,'INVALID_TARGET');
   for(const e of this.s.events){
    const def=EXPLORATION_EVENTS.find(d=>d.id===e.type);
    need(!eventIds.has(e.id)&&['done','started','rewarded'].every(k=>typeof e[k]==='boolean')&&Number.isSafeInteger(e.revision)&&e.revision>0,'INVALID_TARGET');eventIds.add(e.id);
    need(def&&e.zoneId===def.zone&&typeof e.id==='string'&&Number.isSafeInteger(e.day)&&Number.isSafeInteger(e.stage)&&e.stage>=0&&e.stage<=3&&Number.isSafeInteger(e.answer)&&e.answer>=0&&e.answer<3&&Number.isFinite(e.until)&&Array.isArray(e.parts)&&e.parts.length===def.parts&&(!e.rewarded||e.done)&&(!e.receiver||validPoint(e.receiver)),'INVALID_TARGET','探索进度格式无效');
+   need((e.sequence===undefined||Array.isArray(e.sequence)&&e.sequence.length===3&&new Set(e.sequence).size===3&&e.sequence.every(n=>Number.isInteger(n)&&n>=0&&n<3))&&(e.dial===undefined||Number.isInteger(e.dial)&&e.dial>=0&&e.dial<3),'INVALID_TARGET');
    for(const p of e.parts){need(typeof p.id==='string'&&!ids.has(p.id)&&validPoint(p)&&Number.isSafeInteger(p.index)&&p.index>=0&&p.index<def.parts&&Number.isSafeInteger(p.revision)&&p.revision>0&&(!p.safePosition||validPoint(p.safePosition)),'INVALID_TARGET');ids.add(p.id);delete p.lockedBy;if(p.carrierId){p.carrierId=null;try{Object.assign(p,this.safeDrop(p));}catch{Object.assign(p,p.safePosition??pos(p));}}}
   }
   for(const p of Object.values(w.s.players)){p.carryingId=null;if(p.pendingSeaCatch)need(seaFishIds.has(p.pendingSeaCatch.creature)&&Number.isSafeInteger(p.pendingSeaCatch.day)&&p.pendingSeaCatch.day>0&&(p.pendingSeaCatch.rare===true)===(p.pendingSeaCatch.creature==='manager_koi'),'INVALID_TARGET','钓获进度格式无效');}
@@ -38,17 +41,18 @@ export class Exploration {
   this.s.events=[];this.s.generatedDay=w.s.dayIndex;this.pendingMigration=false;
   const used=[...w.scenePlayers(),...Object.values(w.s.enemies),...Object.values(w.s.destructibles),...Object.values(w.s.nodes)];
   for(const zone of w.dangerZones()){
-   const list=EXPLORATION_EVENTS.filter(d=>d.zone===zone.id),last=this.s.history.filter(h=>h.zone===zone.id).at(-1);
-   const def=list.find(d=>d.id!==last?.type)??list[0];
-   // The first day varies by world seed; subsequent days alternate within each district.
-   const chosen=last?def:list[Math.floor(w.rng('exploration')*list.length)];
+   const list=EXPLORATION_EVENTS.filter(d=>d.zone===zone.id),recent=this.s.history.filter(h=>h.zone===zone.id).slice(-(list.length-1));
+   const candidates=list.filter(d=>!recent.some(h=>h.type===d.id)),available=candidates.length?candidates:list,preferred=w.s.director?.regionPlans?.[zone.id]?.events??[];
+   const matches=available.filter(d=>preferred.includes(d.id)),pool=matches.length?matches:available;
+   const chosen=pool[Math.floor(w.rng('exploration')*pool.length)];
    const direction={x:-zone.x/(Math.hypot(zone.x,zone.z)||1),z:-zone.z/(Math.hypot(zone.x,zone.z)||1)};
    const center={x:zone.x+direction.x*7,z:zone.z+direction.z*7};
    const e={id:w.id('outing'),type:chosen.id,zoneId:zone.id,day:w.s.dayIndex,stage:0,started:false,done:false,rewarded:false,revision:1,parts:[],answer:Math.floor(w.rng('exploration')*3),until:0};
+   if(e.type==='desk_stamp')e.sequence=[e.answer,(e.answer+1)%3,(e.answer+2)%3];if(e.type==='supply_dial')e.dial=0;
    for(let i=0;i<chosen.parts;i++){
     const point=w.choosePoint(center,chosen.parts>1?5:3,used,2.8,20,'exploration',w.c.cycle.low_water_y);used.push(point);
     const q={id:w.id('outing-part'),...point,safePosition:{...point},index:i,opened:false,carrierId:null,revision:1};e.parts.push(q);
-    if(['supply_seal','parcel_intact','parcel_rush'].includes(e.type)){
+    if(DAY_CRATE_EVENTS.includes(e.type)){
      // Replace an existing scenery slot; event boxes do not increase the 36-prop budget.
      const old=Object.values(w.s.destructibles).filter(p=>p.kind==='crate'&&!p.explorationId).sort((a,b)=>dist(a,point)-dist(b,point))[0];
      if(old)delete w.s.destructibles[old.id];
@@ -56,7 +60,7 @@ export class Exploration {
      w.s.destructibles[q.id]={id:q.id,...point,kind:'crate',yaw:0,hp,maxHp:hp,size:{x:1.2,y:1.2,z:1.2},radius:.85,revision:1,broken:false,seed:Math.floor(w.rng('exploration')*2147483647),explorationId:e.id};
     }
    }
-   if(e.type==='supply_carry'){
+   if(['supply_carry','parcel_relay'].includes(e.type)){
     const first=e.parts[0],center2={x:first.x+direction.x*14,z:first.z+direction.z*14};
     e.receiver=w.choosePoint(center2,2,used,2,16,'exploration',w.c.cycle.low_water_y);used.push(e.receiver);
    }
@@ -64,7 +68,7 @@ export class Exploration {
   }
   this.s.history=this.s.history.slice(-18);w.requestSave=true;
  }
- reward(e,items,at=e.parts[0]){
+ reward(e,items,at=e.parts[0],actorId=null){
   if(e.rewarded)return null;
   const w=this.w;e.rewarded=true;e.done=true;e.revision++;
   const box=w.createContainer('loot',Math.max(4,items.length),{...pos(at),source:'exploration',eventId:e.id,createdDay:w.s.dayIndex,expiresAfterDay:w.s.dayIndex+w.c.recovery.bag_retention_days});
@@ -72,23 +76,25 @@ export class Exploration {
   w.containerContent(box);e.lootContainerId=box.id;w.requestSave=true;
   for(const q of e.parts){if(q.lockedBy&&w.s.players[q.lockedBy])w.cancelWork(w.s.players[q.lockedBy]);delete q.lockedBy;const p=w.s.destructibles[q.id];if(p&&!p.broken){p.broken=true;p.hp=0;p.revision++;w.event('Destroyed',{targetId:p.id,kind:p.kind,position:pos(p),seed:p.seed,reason:'unpacked'},p.id);}q.opened=true;if(q.carrierId)this.drop(w.s.players[q.carrierId]);q.carrierId=null;}
   if(w.navGeometry)w.navGeometry.tick=-1;
+  w.expedition?.record('search',{id:e.id,zoneId:e.zoneId,actorId});
   w.event('ExplorationCompleted',{eventId:e.id,lootContainerId:box.id,position:pos(at)},e.id);return box;
  }
  alarm(p,e){this.w.alertNoise(p,'shot');e.noisy=true;}
  start(p,message){
   const w=this.w,held=this.carry(p);
-  if(held){const e=held.event;if(e.receiver&&dist(p,e.receiver)<=2.8)this.reward(e,[['sealed_cell',1],['spring_parts',5],['coffee_coupon',1]],e.receiver);else this.drop(p);return;}
+  if(held){const e=held.event;if(e.receiver&&dist(p,e.receiver)<=2.8){if(!deliverRelay(this,p,e,held.part))this.reward(e,[['sealed_cell',1],['spring_parts',5],['coffee_coupon',1]],e.receiver,p.id);}else this.drop(p);return;}
   const found=this.target(message.targetId);need(found&&this.active(found.event),'NOT_FOUND','这件事已结束');
   const {event:e,part:q}=found;need(!q.opened&&!q.carrierId,'BUSY');need(dist(p,q)<=w.c.player.interact_distance&&Math.abs(p.y-q.y)<1.4&&w.lineVisible(p,q),'OUT_OF_RANGE');
   need(w.s.waterY-q.y<=.6,'INVALID_TARGET','涨潮了，先回办公室');
   need(!p.work&&!p.fishing&&!p.reload,'BUSY');w.checkTargetRevision(q,message.expectedRevision);
   const alt=message.payload?.alternate===true;
+  if(startDayEvent(this,p,e,q,alt))return;
   if(e.type==='supply_carry'){need(!q.lockedBy,'BUSY');p.carryingId=q.id;q.carrierId=p.id;q.revision++;p.meleePending=null;p.jumpQueued=false;w.setAction(p,'carry',.5);return;}
   if(e.type==='parcel_rush'){
    if(!e.started){e.started=true;e.until=w.s.time+this.c.rushSeconds;e.revision++;this.alarm(p,e);w.event('Notice',{actorId:p.id,message:'快拆！25秒内打碎三件快递'});}
    return;
   }
-  if(e.type==='parcel_intact'&&alt){need(e.stage>0,'BUSY','先装好一段');this.reward(e,[['spring_parts',2+e.stage],['coffee_coupon',1]],q);return;}
+  if(e.type==='parcel_intact'&&alt){need(e.stage>0,'BUSY','先装好一段');this.reward(e,[['spring_parts',2+e.stage],['coffee_coupon',1]],q,p.id);return;}
   let action='open',duration=4;
   if(e.type==='desk_alarm'){
    if(alt&&e.stage===0){need(!q.lockedBy,'BUSY');e.stage=2;e.revision++;q.revision++;this.alarm(p,e);return;}
@@ -108,16 +114,17 @@ export class Exploration {
   if(!q||!this.active(e)||q.opened||q.lockedBy!==p.id||!w.inScene(p)||p.lifeState!=='ALIVE'||p.swimming||dist(p,q)>w.c.player.interact_distance+.1||dist(p,{x:task.startX,z:task.startZ})>.25||p.damageAt!==task.startDamageAt||(!held&&w.s.time-task.startedAt>.3)||w.s.waterY-q.y>.6){w.cancelWork(p);return;}
   task.progress+=dt;if(task.progress+1e-8<task.duration)return;
   w.cancelWork(p);q.revision++;e.revision++;const action=task.explorationAction;
+  if(finishDayEvent(this,p,e,q,action))return;
   if(e.type==='desk_alarm'){
    if(action==='disarm'){e.stage=1;return;}
    if(action==='loud')this.alarm(p,e);
-   this.reward(e,[['spring_parts',4],['coffee_coupon',e.noisy?2:1]],q);
+   this.reward(e,[['spring_parts',4],['coffee_coupon',e.noisy?2:1]],q,p.id);
   }else if(e.type==='desk_sort'){
-   q.opened=true;if(q.index===e.answer)this.reward(e,[['sealed_cell',1],['coffee_coupon',1]],q);else this.alarm(p,e);
+   q.opened=true;if(q.index===e.answer)this.reward(e,[['sealed_cell',1],['coffee_coupon',1]],q,p.id);else this.alarm(p,e);
   }else if(e.type==='supply_seal'){
-   e.stage++;if(e.stage>=3)this.reward(e,[['sealed_cell',2],['coffee_coupon',1]],q);
+   e.stage++;if(e.stage>=3)this.reward(e,[['sealed_cell',2],['coffee_coupon',1]],q,p.id);
   }else if(e.type==='parcel_intact'){
-   e.stage++;if(e.stage>=3){const hp=w.s.destructibles[q.id]?.hp??0;this.reward(e,hp>=90?[['team_medal',1],['spring_parts',3]]:[['spring_parts',5],['coffee_coupon',1]],q);}
+   e.stage++;if(e.stage>=3){const hp=w.s.destructibles[q.id]?.hp??0;this.reward(e,hp>=90?[['team_medal',1],['spring_parts',3]]:[['spring_parts',5],['coffee_coupon',1]],q,p.id);}
   }
  }
  propBroken(prop,hit){
@@ -127,8 +134,8 @@ export class Exploration {
   if(e.done)return;
   if(e.type==='parcel_rush'){
    if(e.started&&w.s.time<=e.until){e.stage++;const box=w.createContainer('loot',1,{...pos(q),source:'exploration',createdDay:w.s.dayIndex,expiresAfterDay:w.s.dayIndex+w.c.recovery.bag_retention_days});w.addItems(box,'spring_parts',2);w.containerContent(box);}
-   if(e.parts.every(p=>p.opened)){if(e.stage===3)this.reward(e,[['sealed_cell',1],['coffee_coupon',1]],q);else{e.done=true;e.revision++;}}
-  }else this.reward(e,[['scrap',e.type==='supply_seal'?3:1]],q);
+   if(e.parts.every(p=>p.opened)){if(e.stage===3)this.reward(e,[['sealed_cell',1],['coffee_coupon',1]],q,hit.actorId);else{e.done=true;e.revision++;}}
+  }else this.reward(e,[['scrap',e.type==='supply_seal'?3:1]],q,hit.actorId);
   w.requestSave=true;
  }
  tick(){
@@ -153,7 +160,8 @@ export class Exploration {
   }
   let pending=p.pendingSeaCatch;
   if(!pending||pending.day!==w.s.dayIndex||!seaFishIds.has(pending.creature)){
-   const roll=w.rng('exploration_fish');let creature=roll<.16?'spring_shrimp':roll<.32?'ink_cuttle':f.creature;
+   const roll=w.rng('exploration_fish'),zone=w.dangerZones().slice().sort((a,b)=>dist(a,f)-dist(b,f))[0]?.id??'salvage',preferred=FISH_REGIONS[zone]??[];
+   const pool=practiceFishIds.filter(id=>id!=='manager_koi').map(id=>({id,weight:(preferred.includes(id)?3:1)*(id==='eel'?.7:1)}));let value=roll*pool.reduce((n,row)=>n+row.weight,0),creature=pool.at(-1).id;for(const row of pool){value-=row.weight;if(value<=0){creature=row.id;break;}}f.region=zone;
    const rare=outside(w.s.phase)&&this.s.catches>=this.c.rareAfterCatches&&roll>.84&&this.s.rareDay!==w.s.dayIndex&&!Object.values(w.s.enemies).some(e=>e.source==='rare_catch');
    if(rare){creature='manager_koi';this.s.rareDay=w.s.dayIndex;}
    pending={creature,rare,day:w.s.dayIndex};p.pendingSeaCatch=pending;
@@ -184,18 +192,27 @@ export class Exploration {
   if(e.state==='WINDUP'){
    if(e.phaseRemaining>0)return;
    if(e.definitionId==='spring_shrimp'||rare){e.state='CHARGE';e.phaseRemaining=.45;e.chargeHits=[];w.event('EnemyAttackResolved',{enemyId:e.id,position:pos(e),zone:e.attackZone},e.id);return;}
-   const reach=def.attack_range;
-   for(const p of w.scenePlayers().filter(p=>p.lifeState==='ALIVE'&&dist(p,home)<=leash&&dist(p,e)<=reach+.3)){
-    const forward={x:-Math.sin(e.yaw),z:-Math.cos(e.yaw)};
-    if(((p.x-e.x)*forward.x+(p.z-e.z)*forward.z)/Math.max(.01,dist(p,e))>=Math.cos(1.15)&&Math.abs(p.y-e.y)<1.5&&w.lineVisible(e,p))w.damageQueue.push({target:p.id,damage:def.damage,actorId:e.id});
+   const z=e.attackZone??{shape:'cone',...pos(e),yaw:e.yaw,radius:def.attack_range+.3,halfAngle:1.15},forward={x:-Math.sin(z.yaw??e.yaw),z:-Math.cos(z.yaw??e.yaw)};
+   for(const p of w.scenePlayers().filter(p=>p.lifeState==='ALIVE'&&dist(p,home)<=leash)){
+    const dx=p.x-z.x,dz=p.z-z.z,r=Math.hypot(dx,dz),along=dx*forward.x+dz*forward.z,side=Math.abs(dx*forward.z-dz*forward.x);
+    const inside=z.shape==='marks'?z.points.some(q=>dist(p,q)<=z.radius):z.shape==='line'?along>=0&&along<=z.length&&side<=z.width/2:z.shape==='ring'?r>=z.innerRadius&&r<=z.radius:r<=z.radius&&along/Math.max(.01,r)>=Math.cos(z.halfAngle??1.15);
+    if(inside&&Math.abs(p.y-e.y)<1.5&&w.lineVisible(e,p))w.damageQueue.push({target:p.id,damage:def.damage,actorId:e.id});
    }
-   w.event('EnemyAttackResolved',{enemyId:e.id,definitionId:e.definitionId,position:pos(e),zone:e.attackZone},e.id);e.state='RECOVER';e.phaseRemaining=def.attack_cooldown;e.attackZone=null;return;
+   e.attackActionSeq=(e.attackActionSeq??0)+1;e.attackActionAt=w.s.time;w.event('EnemyAttackResolved',{enemyId:e.id,definitionId:e.definitionId,attackActionSeq:e.attackActionSeq,position:pos(e),zone:e.attackZone},e.id);e.state='RECOVER';e.phaseRemaining=def.attack_cooldown;e.attackZone=null;return;
   }
   if(!target){e.targetId=null;e.attackZone=null;if(dist(e,home)>.4)w.navigateEnemy(e,home,def.speed*.7,dt);return;}
   e.targetId=target.id;e.yaw=Math.atan2(-(target.x-e.x),-(target.z-e.z));
   const obstacle=w.enemyRouteTarget(e,target);
   if(w.s.destructibles[obstacle?.id]&&w.routeAttack(e,obstacle,def))return;
-  if(dist(e,target)<=def.attack_range&&w.lineVisible(e,target)){e.state='WINDUP';e.attackKind='fish';e.lockX=e.x-Math.sin(e.yaw)*2;e.lockZ=e.z-Math.cos(e.yaw)*2;e.phaseRemaining=def.attack_windup;e.attackZone={shape:'cone',...pos(e),yaw:e.yaw,radius:e.definitionId==='ink_cuttle'?def.attack_range:3.6,halfAngle:1.15,endsAt:w.s.time+def.attack_windup};return;}
+  const reach=e.definitionId==='receipt_ray'?3.5:e.definitionId==='staple_squid'?3:def.attack_range;
+  if(dist(e,target)<=reach&&w.lineVisible(e,target)){
+   e.state='WINDUP';e.attackKind='fish';e.lockX=e.x-Math.sin(e.yaw)*2;e.lockZ=e.z-Math.cos(e.yaw)*2;e.phaseRemaining=def.attack_windup;
+   let zone={shape:'cone',...pos(e),yaw:e.yaw,radius:e.definitionId==='spring_shrimp'?3.6:def.attack_range+.3,halfAngle:e.definitionId==='clip_crab'?.55:1.15};
+   if(e.definitionId==='receipt_ray')zone={shape:'line',...pos(e),yaw:e.yaw,length:3.5,width:.9};
+   if(e.definitionId==='staple_squid')zone={shape:'marks',...pos(e),radius:.85,points:[{x:target.x,y:w.ground(target.x,target.z),z:target.z}]};
+   if(e.definitionId==='seal_puffer')zone={shape:'ring',...pos(e),radius:def.attack_range+.3,innerRadius:.9};
+   e.attackZone={...zone,endsAt:w.s.time+def.attack_windup};w.event('EnemyAttackWarning',{enemyId:e.id,definitionId:e.definitionId,attackKind:'fish',position:pos(e),zone:structuredClone(e.attackZone)},e.id);return;
+  }
   w.navigateEnemy(e,target,def.speed,dt);
  }
  guardUpdate(e,dt){
@@ -223,15 +240,20 @@ export class Exploration {
   }else need(false,'INVALID_TARGET');
   w.event('TransactionResult',{kind:'Redeem',definitionId:id,actorId:p.id});
  }
+ partReward(enemy){
+  if(enemy.night||!['fishing','exploration_fish'].includes(enemy.source))return null;const part=FISH_PARTS[enemy.definitionId];if(!part)return null;
+  const w=this.w;if(w.mode==='mission')return part;if(this.s.partDay!==w.s.dayIndex){this.s.partDay=w.s.dayIndex;this.s.partsGranted=0;}
+  const limit=this.c.partLimitBase+this.c.partLimitPerPlayer*Math.min(4,Math.max(1,w.scenePlayers().length));if(this.s.partsGranted>=limit)return null;this.s.partsGranted++;w.requestSave=true;return part;
+ }
  public(){
-  const w=this.w;return {version:1,events:this.s.events.map(e=>{
+  const w=this.w,limit=this.c.partLimitBase+this.c.partLimitPerPlayer*Math.min(4,Math.max(1,w.scenePlayers().length)),used=this.s.partDay===w.s.dayIndex?this.s.partsGranted:0;return {version:1,fishParts:{unlimited:w.mode==='mission',remaining:Math.max(0,limit-used),limit},events:this.s.events.map(e=>{
    const def=EXPLORATION_EVENTS.find(d=>d.id===e.type);
-   return {id:e.id,type:e.type,name:def.name,icon:def.icon,goal:def.goal,zoneId:e.zoneId,stage:e.stage,started:e.started,done:e.done,remaining:e.until?Math.max(0,e.until-w.s.time):0,revision:e.revision,receiver:e.receiver??null,clue:e.type==='desk_sort'?e.answer:null,parts:e.parts.map(q=>({...pos(q),id:q.id,index:q.index,opened:q.opened,carrierId:q.carrierId,revision:q.revision,hp:w.s.destructibles[q.id]?.hp??null,maxHp:w.s.destructibles[q.id]?.maxHp??null}))};})};
+   return {id:e.id,type:e.type,name:def.name,icon:def.icon,goal:def.goal,zoneId:e.zoneId,stage:e.stage,started:e.started,done:e.done,remaining:e.until?Math.max(0,e.until-w.s.time):0,revision:e.revision,receiver:e.receiver??null,clue:['desk_sort','parcel_invoice','supply_dial'].includes(e.type)?e.answer:null,sequence:e.sequence??null,dial:e.dial??null,parts:e.parts.map(q=>({...pos(q),id:q.id,index:q.index,opened:q.opened,carrierId:q.carrierId,revision:q.revision,hp:w.s.destructibles[q.id]?.hp??null,maxHp:w.s.destructibles[q.id]?.maxHp??null}))};})};
  }
  install(){
   const w=this.w,x=this,wrap=(name,fn)=>{const original=w[name].bind(w);w[name]=(...args)=>fn(original,...args);};
   wrap('generateDay',original=>{const r=original();x.generate();return r;});
-  wrap('boxes',(original,...args)=>{const boxes=original(...args);for(const e of x.s.events)if(x.active(e)&&['desk_alarm','desk_sort'].includes(e.type))for(const q of e.parts)if(!q.opened)boxes.push({id:q.id,x0:q.x-.51,x1:q.x+.51,y0:q.y,y1:q.y+1.06,z0:q.z-.39,z1:q.z+.39});return boxes;});
+  wrap('boxes',(original,...args)=>{const boxes=original(...args);for(const e of x.s.events)if(x.active(e)&&DAY_SOLID_EVENTS.includes(e.type))for(const q of e.parts)if(!q.opened){boxes.push({id:q.id,x0:q.x-.51,x1:q.x+.51,y0:q.y,y1:q.y+1.06,z0:q.z-.39,z1:q.z+.39});const tops={desk_stamp:[.26,.24,.24,1.17],desk_print:[.68,.23,.49,1.165],supply_cool:[.37,.3025,.25,1.21125]},spec=tops[e.type];if(spec)boxes.push({id:q.id,x0:q.x-spec[0]/2,x1:q.x+spec[0]/2,y0:q.y+spec[3]-spec[1]/2,y1:q.y+spec[3]+spec[1]/2,z0:q.z-spec[2]/2,z1:q.z+spec[2]/2});}return boxes;});
   wrap('publicState',(original,...args)=>{const r=original(...args);r.exploration=x.public();for(const p of r.players){p.carryingId=w.s.players[p.id].carryingId??null;if(p.fishing)p.fishing.special=w.s.players[p.id].fishing?.special===true;}return r;});
   wrap('catalog',original=>({...original(),exploration:{events:EXPLORATION_EVENTS,items:['spring_parts','sealed_cell','coffee_coupon','team_medal']}}));
   wrap('workTarget',(original,work)=>work.kind==='Explore'?x.target(work.targetId)?.part:original(work));

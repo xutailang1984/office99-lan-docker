@@ -1,3 +1,4 @@
+import {isBoss} from './night-content-config.mjs';
 // A temporary practice chapter. It observes the real world rules and never
 // changes adventure saves, prices, damage or item definitions.
 const STAGES=[
@@ -7,7 +8,7 @@ const STAGES=[
   {id:'fight',title:'试射',hint:'开枪并击败一只练习怪',checks:['shot','defeat']},
   {id:'base',title:'守灯',hint:'靠近协作灯，按住 E 修好它',checks:['repair']},
 ];
-const LOANABLE=new Set(['pistol','smg','carbine','lmg','shotgun','rifle','rod_basic','rod_pro','rod_light','rod_heavy','rod_magnet','decoy_alarm','repair_kit','coffee_flask','flash_note','bandage']);
+const LOANABLE=new Set(['pistol','smg','carbine','lmg','shotgun','rifle','doublebarrel','dmr','rod_net','rod_basic','rod_pro','rod_light','rod_heavy','rod_magnet','decoy_alarm','repair_kit','coffee_flask','flash_note','bandage','folding_cover','tape_trap','scan_note']);
 const TUTORIAL_TYPES=['crab','courier','shield_bug'];
 const PARK={patrol:{x:0,z:-38,radius:14,activation:20},boss:{x:-22,z:-38,radius:11,activation:15},props:[{x:13,z:-29},{x:18,z:-32}]};
 const PRACTICE_LOOT_LIMIT=12;
@@ -51,7 +52,7 @@ function removePracticeFixture(world,prop){
 function clearPractice(world){
   removePracticeEnemies(world);
   for(const prop of Object.values(world.s.destructibles))if(prop.practiceFixture)removePracticeFixture(world,prop);
-  if(world.s.mission)world.s.mission.park={creatureCursor:0,activeEnemyIds:[],nextCreatureAt:world.s.time,creatureSeen:[],bossId:null,nextBossAt:world.s.time,propCursor:0,activePropIds:[],nextPropAt:world.s.time,propSeen:[],nextCleanupAt:world.s.time,patrolEmptyAt:null,bossEmptyAt:null};
+  if(world.s.mission)world.s.mission.park={bossCursor:0,creatureCursor:0,activeEnemyIds:[],nextCreatureAt:world.s.time,creatureSeen:[],bossId:null,nextBossAt:world.s.time,propCursor:0,activePropIds:[],nextPropAt:world.s.time,propSeen:[],nextCleanupAt:world.s.time,patrolEmptyAt:null,bossEmptyAt:null};
 }
 function spawnPracticeEnemy(world,zone,id){
   const center=PARK[zone],used=[...world.scenePlayers(),...Object.values(world.s.enemies),...Object.values(world.s.destructibles).filter(prop=>!prop.broken)];
@@ -106,14 +107,15 @@ function practiceStep(world){
   if(park.bossEmptyAt!==null&&now-park.bossEmptyAt>20&&world.s.enemies[park.bossId]){const id=park.bossId;delete world.s.enemies[id];world.aggro.forget(id);world.event('Removed',{kind:'enemy',actorId:null},id);}
   park.activeEnemyIds=park.activeEnemyIds.filter(id=>!!world.s.enemies[id]);
   if(park.activeEnemyIds.length<Math.min(2,nearPatrol.length>=4?2:1)&&nearPatrol.length&&now>=park.nextCreatureAt&&practiceCreatureLoad(world)<PRACTICE_CREATURE_CAP){
-    const roster=world.c.creatures.filter(def=>def.id!=='boss_crab');
+    const roster=world.c.creatures.filter(def=>!isBoss(def));
     const id=roster[park.creatureCursor%roster.length]?.id,enemy=id?spawnPracticeEnemy(world,'patrol',id):null;
     if(enemy){park.activeEnemyIds.push(enemy.id);park.creatureCursor++;park.nextCreatureAt=now+6;if(!park.creatureSeen.includes(id))park.creatureSeen.push(id);}
     else park.nextCreatureAt=now+2;
   }
   if(nearBoss&&!world.s.enemies[park.bossId]&&now>=park.nextBossAt&&practiceCreatureLoad(world)<PRACTICE_CREATURE_CAP){
-    const boss=spawnPracticeEnemy(world,'boss','boss_crab');
-    if(boss){park.bossId=boss.id;park.nextBossAt=now+20;}
+    const bosses=world.c.creatures.filter(isBoss),definitionId=bosses[(park.bossCursor??0)%bosses.length].id;
+    const boss=spawnPracticeEnemy(world,'boss',definitionId);
+    if(boss){park.bossCursor=(park.bossCursor??0)+1;park.bossId=boss.id;park.nextBossAt=now+20;}
     else park.nextBossAt=now+2;
   }
   for(const propId of [...park.activePropIds]){
@@ -272,7 +274,7 @@ export function missionStep(world){
 export function missionPublic(world){
   const mission=world.s.mission;if(!mission)return null;const current=stage(world),done=mission.checks[current.id]??[];
   const finished=value=>value.checks.every(check=>mission.checks[value.id]?.includes(check));
-  const park=mission.park,roster=world.c.creatures.filter(def=>def.id!=='boss_crab'),props=world.c.destructibles.types;
+  const park=mission.park,roster=world.c.creatures.filter(def=>!isBoss(def)),props=world.c.destructibles.types;
   const activeEnemy=park?.activeEnemyIds.map(id=>world.s.enemies[id]).find(Boolean),activeProp=park?.activePropIds.map(id=>world.s.destructibles[id]).find(prop=>prop&&!prop.broken);
   const parkPublic={active:mission.freePlay,creatureId:activeEnemy?.definitionId??null,nextCreatureId:roster[park.creatureCursor%roster.length]?.id??null,creatureSeen:park.creatureSeen.length,creatureTotal:roster.length,propId:activeProp?.kind??null,nextPropId:props[park.propCursor%props.length]?.id??null,propSeen:park.propSeen.length,propTotal:props.length,bossId:world.s.enemies[park?.bossId]?.definitionId??null};
   return {stage:mission.stage,stageId:current.id,title:mission.freePlay?'自由试用':current.title,hint:mission.freePlay?'南侧试装备和钓鱼 · 北侧巡逻与拆解':current.hint,progress:done.length,goal:current.checks.length,completed:mission.completed,freePlay:mission.freePlay,seed:mission.seed,park:parkPublic,completedStages:STAGES.filter(finished).map(value=>value.id),stages:STAGES.map(value=>({id:value.id,title:value.title,done:finished(value)}))};

@@ -40,6 +40,7 @@ if (@(Get-ChildItem -LiteralPath $releaseData -Force).Count -ne 0) {
 
 & node (Join-Path $releaseRoot 'tools/verify-docker-release.mjs') $releaseRoot
 if ($LASTEXITCODE -ne 0) { throw '发布包校验失败，停止部署。' }
+$expectedVersion = (Get-Content -LiteralPath (Join-Path $releaseRoot 'release-manifest.json') -Raw | ConvertFrom-Json).version
 
 if ([string]::IsNullOrWhiteSpace($DataDir)) {
     $dataPath = Join-Path $repoRoot 'data'
@@ -81,11 +82,11 @@ try {
     for ($attempt = 0; $attempt -lt 45; $attempt++) {
         try {
             $result = Invoke-RestMethod -Uri ($url + 'health') -TimeoutSec 3
-            if ($result.ready -eq $true) { $healthy = $true; break }
+            if ($result.ready -eq $true -and $result.build -eq $expectedVersion) { $healthy = $true; break }
         } catch { }
         Start-Sleep -Seconds 2
     }
-    if (-not $healthy) { throw '服务在 90 秒内未通过健康检查，请查看 docker compose ps 和 logs。' }
+    if (-not $healthy) { throw '服务未通过就绪及版本检查，请查看端口、docker compose ps 和 logs。' }
 
     Write-Host ('部署完成：' + $url) -ForegroundColor Green
     Write-Host ('存档目录：' + $dataPath)

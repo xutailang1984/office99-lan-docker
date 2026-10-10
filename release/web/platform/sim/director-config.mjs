@@ -1,9 +1,9 @@
 // Portable data: imported by Node and the host browser Worker, no filesystem APIs.
 export const PHASE_ROWS = [
-  {players:1, PREP:60, DAY:240, RETURN:45, NIGHT:180},
-  {players:2, PREP:45, DAY:180, RETURN:45, NIGHT:180},
-  {players:4, PREP:30, DAY:135, RETURN:45, NIGHT:180},
-  {players:8, PREP:20, DAY:105, RETURN:45, NIGHT:180},
+  {players:1, PREP:60, DAY:420, RETURN:75, NIGHT:120},
+  {players:2, PREP:60, DAY:420, RETURN:75, NIGHT:120},
+  {players:4, PREP:60, DAY:420, RETURN:75, NIGHT:120},
+  {players:8, PREP:60, DAY:420, RETURN:75, NIGHT:120},
 ];
 export const PERKS = [
   {id:'precision',name:'精准签批',description:'命中弱点时伤害提高20%',effect:'weak_damage',value:1.2},
@@ -48,6 +48,9 @@ export const CREATURES = [
   ordinary('archive_guard','归档机甲','artillery','crab',110,1.9,4,{tier:'elite',attack_range:12,attack_windup:1.3,attack_cooldown:3,projectile_speed:7,projectile_radius:.18,loot:'treasure'}),
 ];
 export const TOOL_ITEMS = [
+  {id:'folding_cover',name:'折叠挡板',kind:'tool',stack:3,buy_c:35,buy_m:3,buy_quantity:1,resale_c:17,description:'立起挡板18秒，能挡子弹；怪物会拆它'},
+  {id:'tape_trap',name:'胶带陷阱',kind:'tool',stack:3,buy_c:25,buy_m:2,buy_quantity:1,resale_c:12,description:'留在地面16秒，绊住一只普通地面怪'},
+  {id:'scan_note',name:'扫描便签',kind:'tool',stack:3,buy_c:30,buy_m:2,buy_quantity:1,resale_c:15,description:'标出7米内可见怪物6秒；不会打开首领弱点'},
   {id:'decoy_alarm',name:'诱敌闹钟',kind:'tool',stack:3,buy_c:25,buy_m:0,buy_quantity:1,description:'投在可见地面，吸引附近普通敌人8秒'},
   {id:'repair_kit',name:'应急维修包',kind:'tool',stack:3,buy_c:40,buy_m:4,buy_quantity:1,description:'近距离立刻修复存活建筑120耐久；不能重建废墟'},
   {id:'coffee_flask',name:'咖啡保温杯',kind:'tool',stack:3,buy_c:25,buy_m:0,buy_quantity:1,description:'恢复40耐力；满耐力时不消耗'},
@@ -57,7 +60,7 @@ export const DIRECTOR_DEFAULTS = {
   version:1,enabled:true,phaseRows:PHASE_ROWS,historySeconds:1800,
   objectives:OBJECTIVES,nightPlans:NIGHT_PLANS,perks:PERKS,
   budgets:{maxDeployables:16,maxEnemyZones:8,maxProjectiles:64,maxDecoysPerPlayer:1},
-  tools:{decoy_alarm:{range:10,radius:14,duration:8,cooldown:8},repair_kit:{range:2.5,heal:120,cooldown:5},coffee_flask:{stamina:40,cooldown:20},flash_note:{range:8,radius:4,duration:1,cooldown:20}},
+  tools:{folding_cover:{range:6,radius:1,hp:140,duration:18,cooldown:10},tape_trap:{range:8,radius:1.35,duration:16,hold:1.8,cooldown:8},scan_note:{range:8,radius:7,duration:6,cooldown:12},decoy_alarm:{range:10,radius:14,duration:8,cooldown:8},repair_kit:{range:2.5,heal:120,cooldown:5},coffee_flask:{stamina:40,cooldown:20},flash_note:{range:8,radius:4,duration:1,cooldown:20}},
   fishVariants:{weight:10,ids:['bubble_puffer','lantern_fish']},
   bosses:{auditor:{windup:1.4,range:9,halfAngle:.46,damage:22,buildingDamage:60,weakSeconds:4,stampWindup:1.6,stampRadius:1.8,stampDamage:16,stampBuildingDamage:50,stampRange:12},overload:{windup:1.6,outerRadius:7,innerRadius:2.5,damage:25,buildingDamage:70,weakSeconds:4,burstWindup:1.5,burstSpeed:6,burstDamage:8}},
 };

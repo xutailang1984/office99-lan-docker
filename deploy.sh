@@ -50,6 +50,7 @@ if [[ -n $(ls -A "$release_data") ]]; then
   exit 1
 fi
 node "$release_root/tools/verify-docker-release.mjs" "$release_root"
+expected_version=$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).version)' "$release_root/release-manifest.json")
 
 if [[ -z "$data_arg" ]]; then
   data_path="$repo_root/data"
@@ -74,13 +75,13 @@ docker compose up -d --no-build
 
 healthy=0
 for ((attempt=0; attempt<45; attempt++)); do
-  if node -e 'fetch("http://127.0.0.1:"+process.argv[1]+"/health",{signal:AbortSignal.timeout(3000)}).then(async r=>{const body=await r.json();process.exit(r.ok&&body.ready?0:1)}).catch(()=>process.exit(1))' "$port" >/dev/null 2>&1; then
+  if node -e 'fetch("http://127.0.0.1:"+process.argv[1]+"/health",{signal:AbortSignal.timeout(3000)}).then(async r=>{const body=await r.json();process.exit(r.ok&&body.ready&&body.build===process.argv[2]?0:1)}).catch(()=>process.exit(1))' "$port" "$expected_version" >/dev/null 2>&1; then
     healthy=1
     break
   fi
   sleep 2
 done
-((healthy == 1)) || { echo '服务在 90 秒内未通过健康检查，请查看 docker compose ps 和 logs。' >&2; exit 1; }
+((healthy == 1)) || { echo '服务未通过就绪及版本检查，请查看端口、docker compose ps 和 logs。' >&2; exit 1; }
 
 echo "部署完成：http://127.0.0.1:$port/"
 echo "存档目录：$data_path"

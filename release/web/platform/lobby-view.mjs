@@ -67,9 +67,9 @@ export function renderLobby({account, adventures, rooms, capacity, busy, onConti
     const active = !!item.roomId;
     return {id:item.id, title:item.title, icon:'home',
       detail:`第 ${item.dayIndex ?? item.day ?? 1} 天 · ${({PREP:'整备',DAY:'搜集',RETURN:'返程',NIGHT:'守夜',RECOVERY:'重建',COMPLETE:'已完成'})[item.phase]??'整备'} · ${mine ? '我创建的' : '队友创建的'}${active ? ' · 房间已开启' : item.revision ? ' · 已保存' : ''}`,
-      label:active ? '加入' : mine ? '继续' : '等待房主',
-      disabled:busy || (!mine && !active),
-      reason:!mine && !active ? '等创建者开启房间后，就能继续这次冒险' : '',
+      label:active ? '加入' : '继续',
+      disabled:busy,
+      reason:!mine && !active ? '继续同一份冒险，进度会共同更新' : '',
       open:() => active ? onJoin(item.roomId) : onContinue(item),
       remove:() => onDelete(item),
       removeLabel:mine ? '删除这次冒险' : '删除我的进度',
@@ -79,7 +79,7 @@ export function renderLobby({account, adventures, rooms, capacity, busy, onConti
     const full = item.members.length >= item.maxPlayers;
     const practice=item.mode==='mission';
     const progressFull=!practice&&capacity&&capacity.progressUsed>=capacity.progressLimit&&!adventures.some(a=>a.id===item.adventureId);
-    const host=item.members.find(member=>member.accountId===item.ownerId)?.name??'房主';
+    const host=item.members.find(member=>member.peerId===item.hostPeerId)?.name??'房主';
     return {id:item.id, title:item.title, icon:'users',
       detail:`${practice?'体验 · '+host+'创建 · ':''}${item.members.length}/${item.maxPlayers} 人 · ${item.status === 'running' ? '游玩中 · 可加入' : '等队友准备'}`,
       label:full ? '房间已满' : '加入', disabled:busy || full || progressFull,

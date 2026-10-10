@@ -5,7 +5,8 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=8080 \
     WEB_ROOT=/app/web \
-    SAVE_FILE=/data/save.json
+    SAVE_FILE=/data/save.json \
+    OFFICE99_ECONOMY_VERSION=1
 
 WORKDIR /app/server
 COPY server/package.json server/package-lock.json ./
