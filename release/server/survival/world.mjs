@@ -1,3 +1,5 @@
+import {resolveEnemyAttack,cancelEnemyAttack} from './combat-feedback.mjs';
+import {combatRoleDefinition} from './combat-moves.mjs';
 import {riskCost,nightCore} from './risk-progression.mjs';
 import {DAY_PROPS} from './day-content-config.mjs';
 import {attachExploration} from './exploration.mjs';
@@ -357,7 +359,7 @@ export class SurvivalWorld {
       const homeMoved=overlaps({x:enemy.homeX,y:this.ground(enemy.homeX,enemy.homeZ),z:enemy.homeZ},radius);
       Object.assign(enemy,point);enemy.revision++;this.requestSave=true;
       if(homeMoved){enemy.homeX=point.x;enemy.homeZ=point.z;}
-      if(['WINDUP','CHARGE','burrow_windup'].includes(enemy.state)){enemy.state='RECOVER';enemy.phaseRemaining=Math.max(enemy.phaseRemaining??0,.5);enemy.weak=false;}
+      if(['WINDUP','CHARGE','ATTACK','FOLLOW_THROUGH','burrow_windup'].includes(enemy.state))cancelEnemyAttack(enemy);
       enemy.attackZone=null;enemy.chargeRemaining=0;enemy.chargeHit=[];enemy.targetId=null;enemy.comboNext=null;enemy.stampPrevious=null;enemy.continueStamp=false;
       for(const key of ['lockX','lockY','lockZ','rescuePosition','hitVelocity'])delete enemy[key];
       enemy.stuckTime=0;enemy.patrolBlocked=0;
@@ -933,7 +935,8 @@ export class SurvivalWorld {
     recordNightContentHit(this,enemy,hit);if(isBoss(enemy))return;
     const elite=this.defs.creatures[enemy.definitionId].tier==='elite',shielded=hit.shielded===true;
     if(this.s.time>=(enemy.staggerResistUntil??0)){enemy.hitStunRemaining=elite?.06:.12;enemy.staggerResistUntil=this.s.time+(elite?1.1:.7);}
-    if(!hit.shotId||enemy.lastImpulseShotId!==hit.shotId){const factor=(['shotgun','doublebarrel'].includes(hit.weaponId)?3.6:hit.weaponId==='knife'?2.5:2)*(elite?.4:1)*(shielded?.25:1);enemy.hitVelocity={x:direction.x*factor,z:direction.z*factor};enemy.lastImpulseShotId=hit.shotId??null;}
+    const heavyImpulse=['shotgun','doublebarrel','knife','fist'].includes(hit.weaponId);
+    if((!hit.shotId||enemy.lastImpulseShotId!==hit.shotId)&&(heavyImpulse||enemy.source==='fishing'||this.s.time>=(enemy.impulseResistUntil??0))){const factor=(['shotgun','doublebarrel'].includes(hit.weaponId)?3.6:hit.weaponId==='knife'?2.5:2)*(elite?.4:1)*(shielded?.25:1);enemy.hitVelocity={x:direction.x*factor,z:direction.z*factor};enemy.lastImpulseShotId=hit.shotId??null;enemy.impulseResistUntil=this.s.time+.3;}
     if(elite&&this.s.time>=(enemy.poiseResistUntil??0)){
       enemy.poiseDamage=(this.s.time-(enemy.poiseAt??-100)>2?0:enemy.poiseDamage??0)+Math.max(0,hit.actualDamage??hit.damage);enemy.poiseAt=this.s.time;
       if(enemy.poiseDamage>=Math.max(18,enemy.maxHp*.2)&&['WINDUP','CHARGE'].includes(enemy.state)){
@@ -974,7 +977,7 @@ export class SurvivalWorld {
       const hpBefore=target.hp;target.hp=Math.max(0,target.hp-hit.damage);target.revision=(target.revision??0)+1;target.hitSeq=(target.hitSeq??0)+1;target.hitAt=this.s.time;target.lastHitDirection=direction;
       if(targetKind==='enemy')gearAfterHit(this,target,hit);
       if(targetKind==='enemy')this.aggro.damage(target,actor,Math.max(0,hpBefore-target.hp));
-      if(targetKind==='enemy'){target.lastHitShielded=hit.shielded===true;target.lastHitHeavy=['shotgun','rifle','doublebarrel','dmr','knife'].includes(hit.weaponId);}
+      if(targetKind==='enemy'){target.lastHitWeak=hit.weak===true;target.lastHitShielded=hit.shielded===true;target.lastHitHeavy=['shotgun','rifle','doublebarrel','dmr','knife'].includes(hit.weaponId);}
       if(target.hp>0&&targetKind==='enemy'&&(this.s.players[hit.actorId]||this.s.turrets[hit.actorId]))this.reactToHit(target,{...hit,actualDamage:Math.max(0,hpBefore-target.hp)},direction);
       this.event('Hit',{...feedback,damage:hit.damage,killed:target.hp<=0,killingWeaponId:target.hp<=0?feedback.weaponId:null,hitSeq:target.hitSeq,actionSeq:target.lifeState?target.actionSeq:null,hitStunRemaining:target.hitStunRemaining??0,hp:target.hp,maxHp:target.maxHp??this.c.player.max_hp},target.id);
       if(target.hp<=0){if(target.lifeState){this.enterDowned(target);}else if(this.s.enemies[target.id])this.killEnemy(target,hit.actorId);else if(targetKind==='prop')this.breakProp(target,hit);else if(targetKind==='cover'){target.expiresAt=this.s.time;if(this.navGeometry)this.navGeometry.tick=-1;this.event('Destroyed',{targetId:target.id,kind:'folding_cover',position:{x:target.x,y:target.y,z:target.z},seed:this.s.tick},target.id);}else if(targetKind==='turret'){target.ammo=0;target.targetId=null;this.event('TurretChanged',{destroyed:true,targetId:target.id},target.id);}else {target.gateOpen=false;this.event('BuildingChanged',{destroyed:true},target.id);}}
@@ -995,7 +998,7 @@ export class SurvivalWorld {
     Object.assign(enemy,{source:night?'night':'wild',ownerId:null,zoneId:night?null:this.nearestZone(enemy)?.id??null,alertState:'patrol',patrolIndex:0});this.s.enemies[enemy.id]=enemy;this.event('Spawned',{kind:'enemy',definitionId},enemy.id);return enemy;
   }
   killEnemy(enemy,actorId) { if(!this.s.enemies[enemy.id])return;this.s.statistics.kills++;const loot=enemy.source==='fishing'?this.c.fishing.open_water.loot:this.defs.creatures[enemy.definitionId].loot;let lootContainerId=null;if(!enemy.night&&loot){const box=this.createContainer('loot',2,{x:enemy.x,y:this.ground(enemy.x,enemy.z),z:enemy.z,source:enemy.source,createdDay:this.s.dayIndex,expiresAfterDay:this.s.dayIndex+this.c.recovery.bag_retention_days});this.createItem(loot,1,box);const part=this.exploration?.partReward(enemy)??null;if(part)this.createItem(part,1,box);this.containerContent(box);lootContainerId=box.id;}if(isBoss(enemy))this.bossReward(enemy,actorId);delete this.s.enemies[enemy.id];this.aggro.forget(enemy.id);this.event('Removed',{kind:'enemy',actorId,lootContainerId},enemy.id); }
-  enemyDefinition(enemy) { const def=this.defs.creatures[enemy.definitionId];return enemy.source==='fishing'?{...def,...this.c.fishing.open_water,aggressive:true}:enemy.source==='practice'?{...def,speed:Math.max(1.2,def.speed??0)}:def; }
+  enemyDefinition(enemy) { const def=this.defs.creatures[enemy.definitionId];return enemy.source==='fishing'?{...def,...this.c.fishing.open_water,aggressive:true}:combatRoleDefinition(enemy,def); }
   bossReward(enemy,actorId) {
     const night=this.s.night,key=`boss-reward:${night.id}`;
     if(!night.id||night.bossId!==enemy.id||night.rewardClaimed||this.s.resultLedger.includes(key))return;
@@ -1083,6 +1086,7 @@ export class SurvivalWorld {
       if(enemy.phaseRemaining<=0){
         const actual=obstacle(enemy.targetId);
         if(actual?.hp>0&&!actual.broken&&!(actual.definitionId==='gate'&&actual.gateOpen&&enemy.radius<1.2)&&inReach(actual)&&this.lineVisible(enemy,actual))this.damageQueue.push({target:actual.id,damage:Math.ceil((enemy.role==='breaker'?(def.building_damage??def.damage):def.damage)*(enemy.damageMultiplier??1)),actorId:enemy.id});
+        resolveEnemyAttack(this,enemy);
         enemy.state='RECOVER';enemy.phaseRemaining=def.attack_cooldown;enemy.attackZone=null;
       }
       return true;
@@ -1129,6 +1133,9 @@ export class SurvivalWorld {
   }
   updateEnemy(enemy,dt) {
     if(this.updateHitReaction(enemy,dt))return;
+    // A return-to-home decision must not erase a committed boss strike or leave
+    // weak=true forever after a charge. Boss code enforces practice boundaries.
+    if(enemy.definitionId==='boss_crab'&&['WINDUP','CHARGE','WEAK'].includes(enemy.state)){this.updateBoss(enemy,dt);return;}
     if(this.aggro.returnGate(enemy)){
       if(['STUNNED','RECOVER'].includes(enemy.state)){enemy.phaseRemaining=Math.max(0,enemy.phaseRemaining-dt);if(enemy.phaseRemaining<=0)enemy.state='CHASE';return;}
       enemy.state='CHASE';enemy.phaseRemaining=0;enemy.attackZone=null;this.patrolEnemy(enemy,this.enemyDefinition(enemy),dt);return;
@@ -1148,7 +1155,8 @@ export class SurvivalWorld {
           const from={x:enemy.x,y:enemy.y+.85,z:enemy.z},length=Math.hypot(enemy.lockX-from.x,enemy.lockY-from.y,enemy.lockZ-from.z)||1;
           const projectile={id:this.id('projectile'),...from,vx:(enemy.lockX-from.x)/length*def.projectile_speed,vy:(enemy.lockY-from.y)/length*def.projectile_speed,vz:(enemy.lockZ-from.z)/length*def.projectile_speed,radius:def.projectile_radius,damage:Math.ceil(def.damage*enemy.damageMultiplier),actorId:enemy.id,life:4,practiceZone:enemy.practiceZone??null};this.s.projectiles[projectile.id]=projectile;
         }else if(!ranged&&target&&dist(enemy,target)<=def.attack_range+.6&&this.lineVisible(enemy,target)){const forward=aim(enemy.yaw,0),targetDistance=Math.max(.01,dist(enemy,target));if(((target.x-enemy.x)*forward.x+(target.z-enemy.z)*forward.z)/targetDistance>=.5)this.damageQueue.push({target:target.id,damage:Math.ceil(def.damage*enemy.damageMultiplier),actorId:enemy.id});}
-        enemy.state='RECOVER';enemy.phaseRemaining=def.attack_cooldown;
+        resolveEnemyAttack(this,enemy);
+        enemy.state='RECOVER';enemy.phaseRemaining=def.attack_cooldown;enemy.attackZone=null;
       }
       return;
     }
@@ -1156,7 +1164,7 @@ export class SurvivalWorld {
     if(!target){enemy.lostSight+=dt;if(!enemy.night)this.patrolEnemy(enemy,def,dt);return;}
     enemy.alertState='chase';enemy.lostSight=0;enemy.targetId=target.id;const dx=target.x-enemy.x,dz=target.z-enemy.z,d=Math.hypot(dx,dz)||1;enemy.yaw=Math.atan2(-dx,-dz);
     if(this.routeAttack(enemy,target,def))return;
-    if(ranged&&target.lifeState&&d<8){const retreat={id:`retreat:${target.id}`,x:enemy.x-dx/d*2-dz/d*.7,z:enemy.z-dz/d*2+dx/d*.7};if(this.navigateEnemy(enemy,retreat,def.speed,dt))return;}
+    if(ranged&&target.lifeState&&d<8&&this.s.time>=(enemy.retreatAt??0)){const retreat={id:`retreat:${target.id}`,x:enemy.x-dx/d*2-dz/d*.7,z:enemy.z-dz/d*2+dx/d*.7},moved=this.navigateEnemy(enemy,retreat,def.speed,dt);enemy.retreatRemaining=(enemy.retreatRemaining??.4)-dt;if(enemy.retreatRemaining<=0){enemy.retreatAt=this.s.time+2;enemy.retreatRemaining=.4;}if(moved)return;}
     const reach=(ranged&&target.lifeState?Math.min(12,def.attack_range):def.attack_range)+(target.definitionId==='core'?1.5:target.socketId?.startsWith('W')?.2:0);
     if(d<=reach&&this.lineVisible(enemy,target)){enemy.state='WINDUP';enemy.phaseRemaining=def.attack_windup;enemy.attackKind=ranged?'projectile':'melee';enemy.attackRadius=def.attack_range;enemy.lockX=target.x;enemy.lockY=target.y+1;enemy.lockZ=target.z;return;}
     this.navigateEnemy(enemy,target,def.speed,dt);
@@ -1176,7 +1184,7 @@ export class SurvivalWorld {
   }
   updateBoss(boss,dt) {
     const def=this.defs.creatures.boss_crab,practice=boss.source==='practice',practiceTarget=practice?this.selectEnemyTarget(boss):null;
-    if(practice&&!practiceTarget){boss.state='CHASE';boss.phaseRemaining=0;boss.attackZone=null;boss.chargeRemaining=0;this.patrolEnemy(boss,def,dt);return;}
+    if(practice&&!practiceTarget&&['CHASE','RECOVER'].includes(boss.state)){boss.state='CHASE';boss.weak=false;boss.phaseRemaining=0;boss.attackZone=null;boss.chargeRemaining=0;this.patrolEnemy(boss,def,dt);return;}
     if(boss.state==='CHASE'||boss.state==='RECOVER')boss.combatPhase=boss.hp<=boss.maxHp*.5?2:1;
     if(!practice&&boss.hp<=boss.maxHp*.5&&!this.s.night.addsSpawned)boss.addsPending=true;
     boss.phaseRemaining=Math.max(0,boss.phaseRemaining-dt);
@@ -1186,9 +1194,9 @@ export class SurvivalWorld {
       if(boss.phaseRemaining<=0){if(boss.attackKind==='slam'){
         for(const p of this.scenePlayers())if(p.lifeState!=='DEAD_WAIT'&&(!practice||practiceEnemyInside(boss,p))&&dist(p,boss)<=def.slam_radius&&this.lineVisible(boss,p))this.damageQueue.push({target:p.id,damage:def.slam_player_damage,actorId:boss.id});
         for(const b of this.bossAttackObjects(boss))if(b.hp>0&&dist(b,boss)<=def.slam_radius+1.5&&this.lineVisible(boss,b))this.damageQueue.push({target:b.id,damage:def.slam_building_damage,actorId:boss.id});
-        this.event('EnemyAttackResolved',{enemyId:boss.id,attackKind:'slam',zone:{shape:'circle',x:boss.x,y:boss.y,z:boss.z,radius:def.slam_radius},position:{x:boss.x,y:boss.y,z:boss.z}},boss.id);
-        boss.state='WEAK';boss.weak=true;boss.phaseRemaining=def.weak_seconds;
-      }else {boss.state='CHARGE';boss.chargeRemaining=def.charge_range;boss.chargeHit=[];}}
+        resolveEnemyAttack(this,boss,{shape:'circle',x:boss.x,y:boss.y,z:boss.z,radius:def.slam_radius});
+        boss.state='WEAK';boss.weak=true;boss.phaseRemaining=def.weak_seconds;boss.attackZone=null;
+      }else {resolveEnemyAttack(this,boss);boss.state='CHARGE';boss.chargeRemaining=def.charge_range;boss.chargeHit=[];boss.attackZone=null;}}
       return;
     }
     if(boss.state==='CHARGE'){
@@ -1333,7 +1341,7 @@ export class SurvivalWorld {
       Object.assign(publicPlayer,{weaponId:this.equipped(p,'weapon')?.definitionId??null,heldDefinitionId:p.heldSlot==='quick'&&s.time<(p.quickUseUntil??0)?p.quickUseDefinitionId:this.equipped(p)?.definitionId??null,equipmentDefinitionId:this.equipped(p)?.definitionId??null,heldModuleId:this.equipped(p)?.moduleId??null,heldAttachmentId:this.equipped(p)?.attachmentId??null,weaponStats:this.weaponStats(p)??null,rodStats:effectiveRod(this.defs.rods[this.equipped(p,'rod')?.definitionId],this.equipped(p,'rod'))??null,velocity:p.velocity??{x:0,y:0,z:0},moveSpeed:p.moveSpeed??0,grounded:!p.swimming&&p.y<=this.ground(p.x,p.z)+.05,sprint:live(p)&&p.sprinting===true,ads:live(p)&&p.heldSlot==='weapon'&&!!this.equipped(p,'weapon')&&p.input.ads===true&&!p.sprinting&&!p.swimming&&s.time-(p.adsSince??s.time)>=(this.weaponStats(p)?.ads_seconds??.15),joinProtectionRemaining:Math.max(0,(p.joinProtectionUntil??0)-s.time),action:p.carryingId?'carry':s.time<(p.actionStartedAt??0)+(p.actionDuration??0)?p.action:p.reload?'reload':p.fishing?.state==='REEL'?'reel':p.work?'interact':'idle',actionSeq:p.actionSeq??0,actionStartedAt:p.actionStartedAt??s.time,actionDuration:p.actionDuration??0});
       publicPlayer.downedRemaining=p.lifeState==='DOWNED'?p.downedHp/p.downedBleedRate:0;publicPlayer.downedMaxHp=this.c.player.downed_hp;const rescuer=s.players[p.lockedBy];publicPlayer.rescue=rescuer?.work?.kind==='Revive'&&this.rescueValid(rescuer)&&this.rescueHeld(rescuer)?{rescuerId:rescuer.id,progress:rescuer.work.progress,duration:rescuer.work.duration}:null;
       publicPlayer.work=p.work?{kind:p.work.kind,targetId:p.work.targetId,progress:p.work.progress,duration:p.work.duration}:null;publicPlayer.fishing=p.fishing?{id:p.fishing.id,poolId:p.fishing.poolId,x:p.fishing.x,y:p.fishing.y??s.waterY,z:p.fishing.z,power:p.fishing.power??1,source:p.fishing.catch_kind==='salvage'?'magnet':'sea',catch_kind:p.fishing.catch_kind??'creature',state:p.fishing.state,progress:p.fishing.progress,tension:p.fishing.tension,remaining:p.fishing.remaining,struggling:p.fishing.struggling,reeling:p.input.reel===true,mode:p.fishing.mode,cue:p.fishing.cue,behavior:p.fishing.behavior,pullSide:p.fishing.pullSide,angleAdvantage:p.fishing.angleAdvantage,activity:p.fishing.activity,signal:p.fishing.signal,motion:p.fishing.motion,netBatch:p.fishing.netBatch??1}:null;return copy(publicPlayer);});
-    return {type:'state',protocolVersion:3,build:'0.17.0',mode:this.mode,mission:this.mode==='mission'?missionPublic(this):null,maxPlayers:this.c.baseline.max_players,difficulty:this.publicDifficulty(),snapshotId:s.tick,serverTick:s.tick,time:s.time,clock:this.publicClock(),dangerZones:this.dangerZones(),worldId:s.worldId,contentVersion:s.contentVersion,phase:s.phase,phaseElapsed:s.phaseElapsed,phaseRemaining:this.mode==='mission'?0:this.phaseRemaining(),dayIndex:s.dayIndex,threatStage:s.threatStage,lockedPlayerCount:s.lockedPlayerCount,waterY:s.waterY,paused:s.paused||this.needsBarrier,hostId:s.hostId,friendlyFire:s.friendlyFire,save,bank:copy(s.bank),players,items:copy(Object.values(s.items).map(item=>({...item,...(this.defs.weapons[item.definitionId]?{effectiveStats:effectiveWeapon(this.defs.weapons[item.definitionId],item,null,s.time)}:this.defs.rods[item.definitionId]?{effectiveStats:effectiveRod(this.defs.rods[item.definitionId],item)}:{})}))),containers:copy(Object.values(s.containers)),buildings:copy(Object.values(s.buildings)),turrets:copy(Object.values(s.turrets)),enemies:copy(Object.values(s.enemies).map(e=>({...e,markedRemaining:Math.max(0,(e.markedUntil??0)-s.time)}))),destructibles:copy(Object.values(s.destructibles??{}).map(prop=>({...prop,supportY:this.cachedPropBox(prop).y0}))),projectiles:copy(Object.values(s.projectiles)),nodes:copy(Object.values(s.nodes)),pools:Object.values(s.pools).map(p=>({...p,activeLines:this.scenePlayers().filter(x=>x.fishing?.poolId===p.id).length,submerged:s.waterY>this.ground(p.x+p.radius+2,p.z)+.6})),recovery:copy(s.recovery),night:copy(s.night),statistics:copy(s.statistics),world:this.staticWorld()};
+    return {type:'state',protocolVersion:3,build:'0.18.0',mode:this.mode,mission:this.mode==='mission'?missionPublic(this):null,maxPlayers:this.c.baseline.max_players,difficulty:this.publicDifficulty(),snapshotId:s.tick,serverTick:s.tick,time:s.time,clock:this.publicClock(),dangerZones:this.dangerZones(),worldId:s.worldId,contentVersion:s.contentVersion,phase:s.phase,phaseElapsed:s.phaseElapsed,phaseRemaining:this.mode==='mission'?0:this.phaseRemaining(),dayIndex:s.dayIndex,threatStage:s.threatStage,lockedPlayerCount:s.lockedPlayerCount,waterY:s.waterY,paused:s.paused||this.needsBarrier,hostId:s.hostId,friendlyFire:s.friendlyFire,save,bank:copy(s.bank),players,items:copy(Object.values(s.items).map(item=>({...item,...(this.defs.weapons[item.definitionId]?{effectiveStats:effectiveWeapon(this.defs.weapons[item.definitionId],item,null,s.time)}:this.defs.rods[item.definitionId]?{effectiveStats:effectiveRod(this.defs.rods[item.definitionId],item)}:{})}))),containers:copy(Object.values(s.containers)),buildings:copy(Object.values(s.buildings)),turrets:copy(Object.values(s.turrets)),enemies:copy(Object.values(s.enemies).map(e=>({...e,markedRemaining:Math.max(0,(e.markedUntil??0)-s.time)}))),destructibles:copy(Object.values(s.destructibles??{}).map(prop=>({...prop,supportY:this.cachedPropBox(prop).y0}))),projectiles:copy(Object.values(s.projectiles)),nodes:copy(Object.values(s.nodes)),pools:Object.values(s.pools).map(p=>({...p,activeLines:this.scenePlayers().filter(x=>x.fishing?.poolId===p.id).length,submerged:s.waterY>this.ground(p.x+p.radius+2,p.z)+.6})),recovery:copy(s.recovery),night:copy(s.night),statistics:copy(s.statistics),world:this.staticWorld()};
   }
   serialize() { for(const c of Object.values(this.s.containers))this.containerContent(c);this.aggro.prune();this.assertInvariants();return structuredClone(this.s); }
   assertInvariants() {

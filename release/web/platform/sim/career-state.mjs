@@ -74,7 +74,7 @@ export function stripCareerPlayer(state,accountId,{dropCarried=false}={}) {
  for(const collection of ['items','buildings','turrets','nodes','destructibles','players','containers'])for(const entity of Object.values(state[collection]??{}))if(entity.lockedBy===p.id)delete entity.lockedBy;
  for(const debris of Object.values(state.recovery?.debris??{}))if(debris.lockedBy===p.id)delete debris.lockedBy;
  for(const id of ids)delete state.containers[id];delete state.players[p.id];
- for(const e of Object.values(state.enemies??{})){if(e.targetId===p.id){e.targetId=null;e.attackZone=null;e.phaseRemaining=0;}if(e.ownerId===p.id)e.ownerId=null;}
+ for(const e of Object.values(state.enemies??{})){if(e.targetId===p.id){e.targetId=null;cancelEnemyAttack(e);}if(e.ownerId===p.id)e.ownerId=null;}
  for(const [id,shot]of Object.entries(state.projectiles??{}))if(shot.actorId===p.id||shot.ownerId===p.id||shot.targetId===p.id)delete state.projectiles[id];
  for(const row of Object.values(state.enemyAggro??{})){if(row.damage)delete row.damage[p.id];if(row.targetId===p.id){row.targetId=null;row.engagement=null;row.scanAt=0;}}
  if(state.hostId===p.id)state.hostId=null;
@@ -94,3 +94,4 @@ export function importCareerCapsule(world,p,binding) {
  for(const slot of ['weapon','rod','melee'])capsule.equipment[slot].forEach(item=>put(item,world.s.containers[p.equipment[slot]]));
  world.assertInvariants();return p;
 }
+import {cancelEnemyAttack} from './combat-feedback.mjs';

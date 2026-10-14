@@ -1,4 +1,5 @@
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+import {cancelEnemyAttack} from './combat-feedback.mjs';
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const positive=value=>Number.isSafeInteger(value)&&value>0;
 const requireThat=condition=>{if(!condition)throw Error('Invalid member reset data');};
@@ -77,7 +78,9 @@ export function applyMemberResetsToState(state,entries) {
   for(const enemy of Object.values(state.enemies??{})){
     if(forgotten.has(enemy.ownerId))enemy.ownerId=null;
     if(forgotten.has(enemy.targetId)){
-      enemy.targetId=null;enemy.attackZone=null;enemy.phaseRemaining=0;enemy.state='CHASE';
+      const previousHits=enemy.chargeHit;
+      enemy.targetId=null;cancelEnemyAttack(enemy);enemy.phaseRemaining=0;enemy.state='CHASE';
+      if(Array.isArray(previousHits))enemy.chargeHit=previousHits;
       for(const key of ['lockX','lockY','lockZ'])delete enemy[key];
     }
     if(Array.isArray(enemy.chargeHit))enemy.chargeHit=enemy.chargeHit.filter(id=>!forgotten.has(id));

@@ -98,6 +98,12 @@ export class EnemyAggro {
  endEngagement(r){
   r.engagement=null;r.targetId=null;r.scanAt=0;r.routeUntil=this.w.s.time+AGGRO_RULES.routeSeconds;
  }
+ range(e,definition,damage=0){
+  if(e.night)return isBoss(e)?AGGRO_RULES.bossRange:AGGRO_RULES.nightRange;
+  // Old/partial definitions must never produce NaN threat scores.
+  const sight=Number.isFinite(definition.aggro_range)&&definition.aggro_range>0?definition.aggro_range:(isBoss(e)?8:12);
+  return Math.min(this.leash(e),sight+(damage>0?6:0));
+ }
  select(e){
   const w=this.w,now=w.s.time,r=this.state(e),boss=isBoss(e),definition=w.enemyDefinition(e);
   if(now>=this.pruneAt){this.prune();this.pruneAt=now+1;}
@@ -108,7 +114,7 @@ export class EnemyAggro {
   const old=this.actor(r.targetId);
   const legal=target=>{
    if(!this.living(target)||!this.inside(e,target)||!this.inWindow(e,target,r))return false;
-   const damage=this.threat(e,target.id),range=e.night?(boss?AGGRO_RULES.bossRange:AGGRO_RULES.nightRange):Math.min(this.leash(e),definition.aggro_range+(damage>0?6:0));
+   const damage=this.threat(e,target.id),range=this.range(e,definition,damage);
    if(dist(e,target)>range)return false;
    if(target.lifeState&&(target.joinProtectionUntil??0)>now&&damage<=0)return false;
    if(e.night&&target.lifeState&&dist(e,target)>w.c.encounters.nightly_boss.player_proximity&&damage<=0)return false;
@@ -121,7 +127,7 @@ export class EnemyAggro {
   const candidates=[];
   for(const target of [...w.scenePlayers(),...Object.values(w.s.turrets),...(w.director?.s.deployables??[]).filter(d=>d.kind==='decoy')]){
    if(!legal(target)||!w.lineVisible(e,target))continue;
-   const range=e.night?(boss?AGGRO_RULES.bossRange:AGGRO_RULES.nightRange):Math.min(this.leash(e),definition.aggro_range+(this.threat(e,target.id)>0?6:0));
+   const range=this.range(e,definition,this.threat(e,target.id));
    const distanceScore=clamp(1-dist(e,target)/Math.max(.1,range),0,1),damageScore=clamp(this.threat(e,target.id)/AGGRO_RULES.damageScale,0,1);
    candidates.push({target,score:(e.night?.35:.4)*distanceScore+(e.night?.65:.6)*damageScore});
   }

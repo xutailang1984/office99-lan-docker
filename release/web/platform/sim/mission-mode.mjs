@@ -113,9 +113,10 @@ function practiceStep(world){
     else park.nextCreatureAt=now+2;
   }
   if(nearBoss&&!world.s.enemies[park.bossId]&&now>=park.nextBossAt&&practiceCreatureLoad(world)<PRACTICE_CREATURE_CAP){
-    const bosses=world.c.creatures.filter(isBoss),definitionId=bosses[(park.bossCursor??0)%bosses.length].id;
+    const bosses=[['boss_coffee_boiler','base'],['boss_shredder','base'],['boss_printer','base'],['boss_stamp_press','base'],['boss_crab','base'],['boss_crab','auditor'],['boss_crab','overload']];
+    const [definitionId,variantId]=bosses[(park.bossCursor??0)%bosses.length];
     const boss=spawnPracticeEnemy(world,'boss',definitionId);
-    if(boss){park.bossCursor=(park.bossCursor??0)+1;park.bossId=boss.id;park.nextBossAt=now+20;}
+    if(boss){boss.variantId=variantId;boss.combatPreset='complete';park.bossCursor=(park.bossCursor??0)+1;park.bossId=boss.id;park.nextBossAt=now+20;}
     else park.nextBossAt=now+2;
   }
   for(const propId of [...park.activePropIds]){

@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "version": "0.17.0",
-  "source": "verified-release",
-  "fileCount": 229,
-  "pckSha256": "76f7e0e249739427f3e29f0d9753b80f694fa502955feb476a44d4ed37bf3a89",
+  "version": "0.18.0",
+  "source": "workspace-export",
+  "fileCount": 235,
+  "pckSha256": "a98aab23455ecc63acf9dcbe9c58b1aff8cc99a55e5a47bfe88c489caf219f15",
   "files": {
     ".dockerignore": {
       "bytes": 245,
@@ -27,11 +27,11 @@
     },
     "server/package-lock.json": {
       "bytes": 915,
-      "sha256": "387094da08efc35beffa2949b1212afb8c98fc4a61255df921116a9648791dbc"
+      "sha256": "dead598e54a3fae9cd80abf6f2f19c54f5c99fff4bb18859ff8b47627758e1bc"
     },
     "server/package.json": {
       "bytes": 415,
-      "sha256": "10469e490b3145936dd221ebfc696991b010f743ff33d43288470e68f827dd39"
+      "sha256": "670ad768592b2a1006aac58874aa62f6dc2a4abec702f0affb1b472eb50da027"
     },
     "server/platform/careers.mjs": {
       "bytes": 5668,
@@ -71,15 +71,27 @@
     },
     "server/server.mjs": {
       "bytes": 46368,
-      "sha256": "b81d6f8787b4bbb1aa32fd4b3126aa96da4c5d95bd0bac2f2ff48c662cf64a7e"
+      "sha256": "3bd47326273eec9b2a91a3515ff1f9c6d019428d93881d4eab71c7a0d730fb14"
     },
     "server/survival/assembly-config.mjs": {
       "bytes": 9032,
       "sha256": "209433f28ec2e9cdc1f9c9b122f2068e6086ca65ce1a1c600bd87d4eda2caec4"
     },
+    "server/survival/boss-combat.mjs": {
+      "bytes": 10442,
+      "sha256": "124ef291f006cc602056ef5d76a93d3255183477cba0cc12e1c7273ddd4aac44"
+    },
     "server/survival/career-state.mjs": {
-      "bytes": 9357,
-      "sha256": "972578ed08f8a2c3cf85e3723e877fa4a867915345096a90df8523a1ba773edd"
+      "bytes": 9398,
+      "sha256": "3780b978217867d52bc3e47c2ea66a79d6aa9dcdeab6a78b85a1522e41a6e708"
+    },
+    "server/survival/combat-feedback.mjs": {
+      "bytes": 2105,
+      "sha256": "4a4e6eaa266b3813a24f176881534c978c1e36276cfab54e1740d67493c3fc90"
+    },
+    "server/survival/combat-moves.mjs": {
+      "bytes": 4485,
+      "sha256": "12099d46fbc384e5211e17ccdbd262ffee0cad573b2fcea2e6bd1cce9f37820b"
     },
     "server/survival/config.mjs": {
       "bytes": 13201,
@@ -102,24 +114,24 @@
       "sha256": "319fb9564813a2dcc4a6d3fa901020722bb843acb25ad30d1ec09b1387c0640b"
     },
     "server/survival/director-combat.mjs": {
-      "bytes": 15008,
-      "sha256": "ec939304c40798c0df6f275ae525aaf141dcb7bee2375ba9adf162ef95919c6e"
+      "bytes": 15566,
+      "sha256": "fcba61ad0353b419aa95db82a3844dc09ced73e3dcac28bf592620399621bce7"
     },
     "server/survival/director-config.mjs": {
       "bytes": 11107,
       "sha256": "3ad9a8d80c1c7361dd81fdc46f281f44893d022de834dd28782367b8adf1c3f2"
     },
     "server/survival/director.mjs": {
-      "bytes": 24597,
-      "sha256": "14c6e709490d480fff704d106140c472f6f834a2a50dc3fbe1e308a8ab97efd0"
+      "bytes": 24878,
+      "sha256": "ddf2f65de8eaedcdda779ce24583aa140902303e69911b442b1db0ff199b5751"
     },
     "server/survival/encounter-variety.mjs": {
       "bytes": 4505,
       "sha256": "bbfcdd550fb52b21fed0c08d3b7eb595847a087549db1a59e771f2fe46f35f7d"
     },
     "server/survival/enemy-aggro.mjs": {
-      "bytes": 8883,
-      "sha256": "444b6a92dc40be8a25dd18bb35424b1943f923cb040d83121d91549625a29e9d"
+      "bytes": 9056,
+      "sha256": "1af694824cc8f4252ba99466a1f6db2cb8fe0110e742a173f8b51c9f9a2b2846"
     },
     "server/survival/enemy-navigation.mjs": {
       "bytes": 7966,
@@ -138,8 +150,8 @@
       "sha256": "737b6b398ea16122352a6498b148e1e7028b1c3c5c9c627b4a16502901cdf59d"
     },
     "server/survival/exploration.mjs": {
-      "bytes": 27557,
-      "sha256": "91f70455defd29922f503ffb5c22946b3ea794a770a1131f2593324365006a70"
+      "bytes": 27362,
+      "sha256": "eaca740bdbc3fdd35f9131514be5a31109bb83e995749afde1dd14737205b2ec"
     },
     "server/survival/fishing-experience.mjs": {
       "bytes": 14919,
@@ -158,20 +170,20 @@
       "sha256": "118dd1f3ec5ad6b5eb117526479358da4f0b6c820dc046478beec2d29cf6c83f"
     },
     "server/survival/member-progress.mjs": {
-      "bytes": 6444,
-      "sha256": "e2bc3a12be70f18d22b093a2f5b2fc45c7420f8162c3b16393a4acda6ee6abf7"
+      "bytes": 6613,
+      "sha256": "87671de97128bae1371e70417cb9dc53fb0558972213c3930250db5ea8944408"
     },
     "server/survival/mission-mode.mjs": {
-      "bytes": 20282,
-      "sha256": "5de706984baff9ac8f7698ad1e22bca950ce9b6b6e2367b56b4deb31f333f2f3"
+      "bytes": 20502,
+      "sha256": "c9b7789bf1989aa2208dacbc9db3af325722531b022998dc3df3fca25eaa1cf5"
     },
     "server/survival/night-content-config.mjs": {
       "bytes": 6926,
       "sha256": "8cd572b7e774581c1317cc0270ea3ed9867bd2bf767f55c204ba3ef9bc7af3e4"
     },
     "server/survival/night-content.mjs": {
-      "bytes": 12116,
-      "sha256": "b3d6b9739514240842fd8f951d299468a4c23c3fba87c5e5958421fb7ccaf59d"
+      "bytes": 12071,
+      "sha256": "0e2d23ddd590c8b22b9bc6a0c537d59f0d14400bf87630dd8b5c561afbaa99b2"
     },
     "server/survival/portable-id.mjs": {
       "bytes": 553,
@@ -183,7 +195,7 @@
     },
     "server/survival/room-runtime.mjs": {
       "bytes": 16512,
-      "sha256": "6c8e0d51ccf57cecb3df76d47a02d3279611d14b1a24e8b8205be039950f9738"
+      "sha256": "1d0f282764fd1a64cf019158fabea3d9c53227fa4c87c63901dae8a3441fb7ee"
     },
     "server/survival/save-store.mjs": {
       "bytes": 3481,
@@ -191,7 +203,7 @@
     },
     "server/survival/service.mjs": {
       "bytes": 16379,
-      "sha256": "25d6579db20f5c47abeaa606ba72c4ea92c13c355f8af366dec1b1f16ab4fd65"
+      "sha256": "e216ac237f77b7dd79c34766ddd0f6c98c7d9af63277d1c61c693783da589d65"
     },
     "server/survival/social-activities.mjs": {
       "bytes": 3179,
@@ -210,16 +222,16 @@
       "sha256": "aa2371969da55119d3acecd97aaf284f76650e8372ac2431c53323d07f2e045a"
     },
     "server/survival/tactical-content.mjs": {
-      "bytes": 8560,
-      "sha256": "d155977c97567c9dd27ae6ccea3f694db6f00df176b988a064c1d5d5e0313713"
+      "bytes": 8472,
+      "sha256": "34d260945572856c7d2e7781a928730dd631076e0f46b6682d2e3773ff3d9205"
     },
     "server/survival/terrain-layout.mjs": {
       "bytes": 4097,
       "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
     },
     "server/survival/world.mjs": {
-      "bytes": 165890,
-      "sha256": "cc5a53f59e13236b69be61a7d68fdc748f82e909ea2c95fbdc7f3240ea102da6"
+      "bytes": 166805,
+      "sha256": "8fb3ae100a81d1c99bfd88a4cce1c49dd316431680e4eab34427196ca58a7508"
     },
     "tools/build-docker-release.mjs": {
       "bytes": 7601,
@@ -623,15 +635,15 @@
     },
     "web/index.html": {
       "bytes": 10441,
-      "sha256": "548ca159607160a05640529417f5ff2f08e38aa995d232dd0b834210969230e0"
+      "sha256": "77e3c63f7c8c3d521328e676b45ec093155d110ff258aae39dca60a1ea00c7f1"
     },
     "web/index.js": {
       "bytes": 279815,
       "sha256": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba"
     },
     "web/index.pck": {
-      "bytes": 9654220,
-      "sha256": "76f7e0e249739427f3e29f0d9753b80f694fa502955feb476a44d4ed37bf3a89"
+      "bytes": 9671912,
+      "sha256": "a98aab23455ecc63acf9dcbe9c58b1aff8cc99a55e5a47bfe88c489caf219f15"
     },
     "web/index.png": {
       "bytes": 21443,
@@ -654,8 +666,8 @@
       "sha256": "cd895eac2d876585ea07126c4cbe3bd298d8f1d8d223d32afc8054751615cc2f"
     },
     "web/platform/balance.json": {
-      "bytes": 54874,
-      "sha256": "e5f80bac9fef60f906e938af3c8d217c9c61fcbf7afdb83f2be3b728eef30dbc"
+      "bytes": 54891,
+      "sha256": "39c85e535aa7d3afd45d6e5863433c5f2a2b5b1d61581608fcb2108fc9699162"
     },
     "web/platform/browser-audio-session.mjs": {
       "bytes": 1723,
@@ -743,7 +755,7 @@
     },
     "web/platform/index.html": {
       "bytes": 10441,
-      "sha256": "548ca159607160a05640529417f5ff2f08e38aa995d232dd0b834210969230e0"
+      "sha256": "77e3c63f7c8c3d521328e676b45ec093155d110ff258aae39dca60a1ea00c7f1"
     },
     "web/platform/IslandSans.ttf": {
       "bytes": 10589076,
@@ -785,9 +797,21 @@
       "bytes": 9032,
       "sha256": "209433f28ec2e9cdc1f9c9b122f2068e6086ca65ce1a1c600bd87d4eda2caec4"
     },
+    "web/platform/sim/boss-combat.mjs": {
+      "bytes": 10442,
+      "sha256": "124ef291f006cc602056ef5d76a93d3255183477cba0cc12e1c7273ddd4aac44"
+    },
     "web/platform/sim/career-state.mjs": {
-      "bytes": 9357,
-      "sha256": "972578ed08f8a2c3cf85e3723e877fa4a867915345096a90df8523a1ba773edd"
+      "bytes": 9398,
+      "sha256": "3780b978217867d52bc3e47c2ea66a79d6aa9dcdeab6a78b85a1522e41a6e708"
+    },
+    "web/platform/sim/combat-feedback.mjs": {
+      "bytes": 2105,
+      "sha256": "4a4e6eaa266b3813a24f176881534c978c1e36276cfab54e1740d67493c3fc90"
+    },
+    "web/platform/sim/combat-moves.mjs": {
+      "bytes": 4485,
+      "sha256": "12099d46fbc384e5211e17ccdbd262ffee0cad573b2fcea2e6bd1cce9f37820b"
     },
     "web/platform/sim/crafting-config.mjs": {
       "bytes": 6462,
@@ -806,24 +830,24 @@
       "sha256": "319fb9564813a2dcc4a6d3fa901020722bb843acb25ad30d1ec09b1387c0640b"
     },
     "web/platform/sim/director-combat.mjs": {
-      "bytes": 15008,
-      "sha256": "ec939304c40798c0df6f275ae525aaf141dcb7bee2375ba9adf162ef95919c6e"
+      "bytes": 15566,
+      "sha256": "fcba61ad0353b419aa95db82a3844dc09ced73e3dcac28bf592620399621bce7"
     },
     "web/platform/sim/director-config.mjs": {
       "bytes": 11107,
       "sha256": "3ad9a8d80c1c7361dd81fdc46f281f44893d022de834dd28782367b8adf1c3f2"
     },
     "web/platform/sim/director.mjs": {
-      "bytes": 24597,
-      "sha256": "14c6e709490d480fff704d106140c472f6f834a2a50dc3fbe1e308a8ab97efd0"
+      "bytes": 24878,
+      "sha256": "ddf2f65de8eaedcdda779ce24583aa140902303e69911b442b1db0ff199b5751"
     },
     "web/platform/sim/encounter-variety.mjs": {
       "bytes": 4505,
       "sha256": "bbfcdd550fb52b21fed0c08d3b7eb595847a087549db1a59e771f2fe46f35f7d"
     },
     "web/platform/sim/enemy-aggro.mjs": {
-      "bytes": 8883,
-      "sha256": "444b6a92dc40be8a25dd18bb35424b1943f923cb040d83121d91549625a29e9d"
+      "bytes": 9056,
+      "sha256": "1af694824cc8f4252ba99466a1f6db2cb8fe0110e742a173f8b51c9f9a2b2846"
     },
     "web/platform/sim/enemy-navigation.mjs": {
       "bytes": 7966,
@@ -842,8 +866,8 @@
       "sha256": "737b6b398ea16122352a6498b148e1e7028b1c3c5c9c627b4a16502901cdf59d"
     },
     "web/platform/sim/exploration.mjs": {
-      "bytes": 27557,
-      "sha256": "91f70455defd29922f503ffb5c22946b3ea794a770a1131f2593324365006a70"
+      "bytes": 27362,
+      "sha256": "eaca740bdbc3fdd35f9131514be5a31109bb83e995749afde1dd14737205b2ec"
     },
     "web/platform/sim/fishing-experience.mjs": {
       "bytes": 14919,
@@ -862,20 +886,20 @@
       "sha256": "118dd1f3ec5ad6b5eb117526479358da4f0b6c820dc046478beec2d29cf6c83f"
     },
     "web/platform/sim/member-progress.mjs": {
-      "bytes": 6444,
-      "sha256": "e2bc3a12be70f18d22b093a2f5b2fc45c7420f8162c3b16393a4acda6ee6abf7"
+      "bytes": 6613,
+      "sha256": "87671de97128bae1371e70417cb9dc53fb0558972213c3930250db5ea8944408"
     },
     "web/platform/sim/mission-mode.mjs": {
-      "bytes": 20282,
-      "sha256": "5de706984baff9ac8f7698ad1e22bca950ce9b6b6e2367b56b4deb31f333f2f3"
+      "bytes": 20502,
+      "sha256": "c9b7789bf1989aa2208dacbc9db3af325722531b022998dc3df3fca25eaa1cf5"
     },
     "web/platform/sim/night-content-config.mjs": {
       "bytes": 6926,
       "sha256": "8cd572b7e774581c1317cc0270ea3ed9867bd2bf767f55c204ba3ef9bc7af3e4"
     },
     "web/platform/sim/night-content.mjs": {
-      "bytes": 12116,
-      "sha256": "b3d6b9739514240842fd8f951d299468a4c23c3fba87c5e5958421fb7ccaf59d"
+      "bytes": 12071,
+      "sha256": "0e2d23ddd590c8b22b9bc6a0c537d59f0d14400bf87630dd8b5c561afbaa99b2"
     },
     "web/platform/sim/portable-id.mjs": {
       "bytes": 553,
@@ -887,7 +911,7 @@
     },
     "web/platform/sim/room-runtime.mjs": {
       "bytes": 16512,
-      "sha256": "6c8e0d51ccf57cecb3df76d47a02d3279611d14b1a24e8b8205be039950f9738"
+      "sha256": "1d0f282764fd1a64cf019158fabea3d9c53227fa4c87c63901dae8a3441fb7ee"
     },
     "web/platform/sim/social-activities.mjs": {
       "bytes": 3179,
@@ -906,20 +930,20 @@
       "sha256": "aa2371969da55119d3acecd97aaf284f76650e8372ac2431c53323d07f2e045a"
     },
     "web/platform/sim/tactical-content.mjs": {
-      "bytes": 8560,
-      "sha256": "d155977c97567c9dd27ae6ccea3f694db6f00df176b988a064c1d5d5e0313713"
+      "bytes": 8472,
+      "sha256": "34d260945572856c7d2e7781a928730dd631076e0f46b6682d2e3773ff3d9205"
     },
     "web/platform/sim/terrain-layout.mjs": {
       "bytes": 4097,
       "sha256": "a9905756c0b7101471fafc827cf0732a82aec01bb47090107de348b997608174"
     },
     "web/platform/sim/world.mjs": {
-      "bytes": 165890,
-      "sha256": "cc5a53f59e13236b69be61a7d68fdc748f82e909ea2c95fbdc7f3240ea102da6"
+      "bytes": 166805,
+      "sha256": "8fb3ae100a81d1c99bfd88a4cce1c49dd316431680e4eab34427196ca58a7508"
     },
     "web/play.html": {
       "bytes": 14368,
-      "sha256": "6a74bcb8f34844daf2063db291686b0e18025bad837c1571d10f996b64749380"
+      "sha256": "09a1b0738f6eb15dfcea66c758c180bd43966959b6c9fa1497968e0ce54af594"
     }
   }
 }

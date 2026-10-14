@@ -1,3 +1,5 @@
+import {resolveEnemyAttack} from './combat-feedback.mjs';
+import {bossApproachRange} from './combat-moves.mjs';
 import {isBoss} from './night-content-config.mjs';
 import {updateTacticalEnemy} from './tactical-content.mjs';
 export {isBoss} from './night-content-config.mjs';
@@ -13,8 +15,7 @@ function warning(w,e,kind,seconds,shape,fields){
  w.event('EnemyAttackWarning',{enemyId:e.id,definitionId:e.definitionId,attackKind:kind,position:position(e),zone:structuredClone(e.attackZone)},e.id);
 }
 function weak(w,e,seconds){e.state='WEAK';e.weak=true;e.phaseRemaining=seconds;e.attackZone=null;e.chargeRemaining=0;e.motorDamage=0;w.event('EnemyWeakPoint',{enemyId:e.id,definitionId:e.definitionId,weakPart:e.definitionId==='boss_shredder'?'motor':'paper_jam',duration:seconds,position:position(e)},e.id);}
-function attackAction(w,e){e.attackActionSeq=(e.attackActionSeq??0)+1;e.attackActionAt=w.s.time;}
-function resolved(w,e,zone,animate=true){if(animate)attackAction(w,e);w.event('EnemyAttackResolved',{enemyId:e.id,definitionId:e.definitionId,attackKind:e.attackKind,attackActionSeq:e.attackActionSeq,zone,position:position(e)},e.id);}
+function resolved(w,e,zone,animate=true){resolveEnemyAttack(w,e,zone,{animate});}
 export function bossHitProfile(w,e,attacker){
  if(!isBoss(e))return {weak:false,multiplier:1};
  const def=w.defs.creatures[e.definitionId],v=forward(e.yaw),length=distance(e,attacker)||1,dot=((attacker.x-e.x)*v.x+(attacker.z-e.z)*v.z)/length;
@@ -22,6 +23,7 @@ export function bossHitProfile(w,e,attacker){
  return {weak:exposed,multiplier:exposed?def.weak_multiplier:def.armor_multiplier};
 }
 export function bossAttackRange(w,e,target){
+ if(isBoss(e))return bossApproachRange(e);
  if(e.definitionId==='boss_shredder')return w.c.director.nightContent.shredder.fanRadius+(target?.lifeState?0:1.5);
  if(e.definitionId==='boss_printer')return w.c.director.nightContent.printer.waveLength+(target?.lifeState?0:1);
  if(e.definitionId==='boss_stamp_press')return w.c.director.nightContent.stamp.range;
@@ -72,7 +74,7 @@ function updateBoss(d,e,dt){
  if(e.state==='WINDUP'){
   if(e.phaseRemaining>0)return;
   const zone=e.attackZone,v=forward(zone?.yaw??e.yaw);
-  if(['shredder_advance','printer_shift'].includes(e.attackKind)){attackAction(w,e);e.state='CHARGE';e.chargeRemaining=shredder?def.advanceRange:def.shiftRange;e.chargeHit=[];e.committedZone=structuredClone(zone);e.attackZone=null;return;}
+  if(['shredder_advance','printer_shift'].includes(e.attackKind)){resolved(w,e,zone);e.state='CHARGE';e.chargeRemaining=shredder?def.advanceRange:def.shiftRange;e.chargeHit=[];e.committedZone=structuredClone(zone);e.attackZone=null;return;}
   for(const target of targets(w,e)){
    const dx=target.x-e.x,dz=target.z-e.z,range=Math.hypot(dx,dz)||1,along=dx*v.x+dz*v.z,side=Math.abs(dx*v.z-dz*v.x),margin=target.lifeState?0:(shredder?1.5:1);
    const inside=shredder?range<=def.fanRadius+margin&&along/range>=Math.cos(def.fanHalfAngle):along>=-margin&&along<=def.waveLength+margin&&side<=def.waveWidth/2+margin;
@@ -109,8 +111,8 @@ function updateRole(d,e,dt){
   }else if(e.attackKind==='paper_lob'){
    const point={x:e.lockX,y:w.ground(e.lockX,e.lockZ),z:e.lockZ};
    for(const target of targets(w,e))if(distance(point,target)<=special.radius+(target.lifeState?0:.8)&&(!target.lifeState||target.y<=point.y+.6)&&w.lineVisible(e,target))hit(w,e,target,target.lifeState?def.damage:special.buildingDamage);
-   resolved(w,e,e.attackZone);
   }else {const target=d.target(e);if(target?.hp>0&&distance(e,target)<=def.attack_range+(target.lifeState?.6:1.5)&&w.lineVisible(e,target))hit(w,e,target,def.damage);}
+  resolveEnemyAttack(w,e,e.attackZone,{followActor:e.attackKind!=='paper_lob'});
   e.state='RECOVER';e.phaseRemaining=def.attack_cooldown;e.attackZone=null;return;
  }
  if(rally&&w.s.time>=(e.rallyAt??0)&&eligibleAllies(w,e,special).length){warning(w,e,'rally',special.windup,'circle',{radius:special.radius});return;}

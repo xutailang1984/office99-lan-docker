@@ -1,3 +1,4 @@
+import {resolveEnemyAttack} from './combat-feedback.mjs';
 import {DAY_SOLID_EVENTS,DAY_CRATE_EVENTS,FISH_PARTS,FISH_REGIONS} from './day-content-config.mjs';
 import {startDayEvent,finishDayEvent,deliverRelay} from './day-content.mjs';
 import {EXPLORATION_EVENTS,EXPLORATION_CREATURES} from './exploration-config.mjs';
@@ -191,14 +192,14 @@ export class Exploration {
   if(w.routeAttack(e,null,def))return;
   if(e.state==='WINDUP'){
    if(e.phaseRemaining>0)return;
-   if(e.definitionId==='spring_shrimp'||rare){e.state='CHARGE';e.phaseRemaining=.45;e.chargeHits=[];w.event('EnemyAttackResolved',{enemyId:e.id,position:pos(e),zone:e.attackZone},e.id);return;}
+   if(e.definitionId==='spring_shrimp'||rare){e.state='CHARGE';e.phaseRemaining=.45;e.chargeHits=[];resolveEnemyAttack(w,e);return;}
    const z=e.attackZone??{shape:'cone',...pos(e),yaw:e.yaw,radius:def.attack_range+.3,halfAngle:1.15},forward={x:-Math.sin(z.yaw??e.yaw),z:-Math.cos(z.yaw??e.yaw)};
    for(const p of w.scenePlayers().filter(p=>p.lifeState==='ALIVE'&&dist(p,home)<=leash)){
     const dx=p.x-z.x,dz=p.z-z.z,r=Math.hypot(dx,dz),along=dx*forward.x+dz*forward.z,side=Math.abs(dx*forward.z-dz*forward.x);
     const inside=z.shape==='marks'?z.points.some(q=>dist(p,q)<=z.radius):z.shape==='line'?along>=0&&along<=z.length&&side<=z.width/2:z.shape==='ring'?r>=z.innerRadius&&r<=z.radius:r<=z.radius&&along/Math.max(.01,r)>=Math.cos(z.halfAngle??1.15);
     if(inside&&Math.abs(p.y-e.y)<1.5&&w.lineVisible(e,p))w.damageQueue.push({target:p.id,damage:def.damage,actorId:e.id});
    }
-   e.attackActionSeq=(e.attackActionSeq??0)+1;e.attackActionAt=w.s.time;w.event('EnemyAttackResolved',{enemyId:e.id,definitionId:e.definitionId,attackActionSeq:e.attackActionSeq,position:pos(e),zone:e.attackZone},e.id);e.state='RECOVER';e.phaseRemaining=def.attack_cooldown;e.attackZone=null;return;
+   resolveEnemyAttack(w,e);e.state='RECOVER';e.phaseRemaining=def.attack_cooldown;e.attackZone=null;return;
   }
   if(!target){e.targetId=null;e.attackZone=null;if(dist(e,home)>.4)w.navigateEnemy(e,home,def.speed*.7,dt);return;}
   e.targetId=target.id;e.yaw=Math.atan2(-(target.x-e.x),-(target.z-e.z));

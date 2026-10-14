@@ -1,3 +1,4 @@
+import {resolveEnemyAttack} from './combat-feedback.mjs';
 import {updateTacticalDeployables} from './tactical-content.mjs';
 import {isBoss} from './night-content-config.mjs';
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -48,7 +49,7 @@ export function updateDirectedEnemy(d,e,dt) {
   if(e.state==='WINDUP'){
     if(e.phaseRemaining>0)return true;
     const target=d.target(e);
-    if(e.attackKind==='dash') {e.state='CHARGE';e.chargeRemaining=def.dash_distance;e.chargeHit=[];e.attackZone=null;return true;}
+    if(e.attackKind==='dash') {resolveEnemyAttack(w,e,e.attackZone,{followActor:true});e.state='CHARGE';e.chargeRemaining=def.dash_distance;e.chargeHit=[];e.attackZone=null;return true;}
     if(e.attackKind==='heal') {
       if(target?.hp>0&&!isBoss(target)&&dist(e,target)<=def.heal_range&&w.lineVisible(e,target)){const amount=Math.min(def.heal_amount,target.maxHp-target.hp);target.hp+=amount;target.revision++;w.event('EnemyHeal',{actorId:e.id,targetId:target.id,amount,position:pos(target)},e.id);}
       e.healAt=w.s.time+def.heal_cooldown;
@@ -71,6 +72,7 @@ export function updateDirectedEnemy(d,e,dt) {
       const v=direction(e.yaw),distance=dist(e,target)||1;
       if(((target.x-e.x)*v.x+(target.z-e.z)*v.z)/distance>=.5)hurt(w,e,target,e.role==='breaker'&&!target.lifeState?(def.building_damage??def.damage):def.damage);
     }
+    resolveEnemyAttack(w,e,e.attackZone,{followActor:e.attackKind!=='puddle'});
     recover(e,def.attack_cooldown);return true;
   }
   let target=w.enemyRouteTarget(e,w.selectEnemyTarget(e));
@@ -96,6 +98,7 @@ export function updateDirectedEnemy(d,e,dt) {
     else if(e.attackKind==='puddle')zone(w,e,'circle',{x:e.lockX,y:w.ground(e.lockX,e.lockZ),z:e.lockZ,radius:def.zone_radius});
     else if(['slow_bolt','paper_bolt'].includes(e.attackKind))zone(w,e,'line',{length:def.attack_range,width:.4});
     else if(e.attackKind==='archive_spread')zone(w,e,'cone',{radius:def.attack_range,halfAngle:.24});
+    else if(['melee','breach'].includes(e.attackKind))zone(w,e,'cone',{radius:def.attack_range,halfAngle:Math.PI/3});
     else zone(w,e,'circle',{radius:def.attack_range});
     return true;
   }
@@ -112,7 +115,7 @@ export function updateDirectedBoss(d,boss,dt) {
   if(boss.state==='WEAK'){boss.weak=true;if(boss.phaseRemaining<=0){boss.weak=false;recover(boss,2);}return;}
   if(boss.state==='RECOVER'){
     if(boss.phaseRemaining<=0){
-      if(boss.hp<=boss.maxHp*.5&&!w.s.night.addsSpawned){w.s.night.addsSpawned=true;for(let i=0;i<w.c.waves[3].adds_crab_per_player*w.s.night.playerCount;i++)w.s.night.pending.push({definitionId:'crab',at:w.s.phaseElapsed+i*w.s.night.spawnInterval,entry:i%3});}
+      if(boss.source!=='practice'&&boss.hp<=boss.maxHp*.5&&!w.s.night.addsSpawned){w.s.night.addsSpawned=true;for(let i=0;i<w.c.waves[3].adds_crab_per_player*w.s.night.playerCount;i++)w.s.night.pending.push({definitionId:'crab',at:w.s.phaseElapsed+i*w.s.night.spawnInterval,entry:i%3});}
       boss.state='CHASE';
     }
     return;
@@ -123,7 +126,7 @@ export function updateDirectedBoss(d,boss,dt) {
     if(boss.attackKind==='power_burst'){
       for(let i=0;i<8;i++){const angle=boss.yaw+i*Math.PI/4,point={x:boss.x-Math.sin(angle)*12,y:boss.y+.65,z:boss.z-Math.cos(angle)*12};bolt(d,boss,point,{speed:def.burstSpeed,damage:def.burstDamage,radius:.20,kind:'power_bolt'});}
     }
-    for(const target of [...w.scenePlayers().filter(vulnerable),...w.bossAttackObjects(boss).filter(b=>b.hp>0)]){
+    for(const target of [...w.scenePlayers().filter(p=>vulnerable(p)&&(boss.source!=='practice'||w.aggro.inside(boss,p))),...w.bossAttackObjects(boss).filter(b=>b.hp>0)]){
       const distance=dist(boss,target);let inside=false;
       if(boss.attackKind==='power_burst')continue;
       if(boss.attackKind==='stamp_marks')inside=(attackZone.points??[]).some(point=>dist(point,target)<=def.stampRadius+(target.lifeState?0:.8)&&(!target.lifeState||target.y<=w.ground(target.x,target.z)+.6));
@@ -131,10 +134,10 @@ export function updateDirectedBoss(d,boss,dt) {
       else inside=distance<=def.outerRadius+(target.lifeState?0:1.5)&&(!target.lifeState||distance>=def.innerRadius&&target.y<=w.ground(target.x,target.z)+.45);
       if(inside&&w.lineVisible(boss,target))hurt(w,boss,target,boss.attackKind==='stamp_marks'?(target.lifeState?def.stampDamage:def.stampBuildingDamage):(target.lifeState?def.damage:def.buildingDamage));
     }
-    w.event('EnemyAttackResolved',{enemyId:boss.id,attackKind:boss.attackKind,zone:boss.attackZone,position:pos(boss)},boss.id);
+    resolveEnemyAttack(w,boss);
     boss.state='WEAK';boss.weak=true;boss.phaseRemaining=def.weakSeconds;boss.attackZone=null;return;
   }
-  const target=w.bossRouteTarget(boss,w.selectEnemyTarget(boss)??w.s.buildings.core);boss.targetId=target.id;face(boss,target);
+  const target=w.bossRouteTarget(boss,w.selectEnemyTarget(boss)??(boss.source==='practice'?null:w.s.buildings.core));if(!target){boss.weak=false;w.patrolEnemy(boss,w.defs.creatures[boss.definitionId],dt);return;}boss.targetId=target.id;face(boss,target);
   if(dist(boss,target)<=9&&w.lineVisible(boss,target)){
     const index=boss.attackIndex++,secondPhase=boss.combatPhase===2;
     boss.state='WINDUP';boss.phaseRemaining=def.windup;boss.attackKind=boss.variantId==='auditor'?'audit_cone':'overload_ring';
@@ -167,7 +170,8 @@ export function prepareDirectedDamage(d) {
 }
 
 export function updateDeployables(d,dt) {
-  const w=d.w;const before=d.s.deployables.length;d.s.deployables=d.s.deployables.filter(x=>x.expiresAt>w.s.time&&x.hp!==0);if(before!==d.s.deployables.length&&w.navGeometry)w.navGeometry.tick=-1;
+  const w=d.w;const retired=new Set(d.s.deployables.filter(x=>x.expiresAt<=w.s.time||x.hp===0).map(x=>x.id));d.s.deployables=d.s.deployables.filter(x=>!retired.has(x.id));
+  if(retired.size){if(w.navGeometry)w.navGeometry.tick=-1;for(const enemy of Object.values(w.s.enemies))if(retired.has(enemy.targetId))enemy.targetId=null;}
   updateTacticalDeployables(d);
   for(const zone of d.s.deployables)if(zone.kind==='slow')for(const p of w.scenePlayers())if(living(p)&&(!zone.practiceZone||w.aggro.inside({source:'practice',practiceZone:zone.practiceZone},p))&&dist(p,zone)<=zone.radius&&p.y<=zone.y+.5&&(p.joinProtectionUntil??0)<=w.s.time&&w.lineVisible(zone,p))p.slowUntil=Math.max(p.slowUntil??0,w.s.time+.3);
 }

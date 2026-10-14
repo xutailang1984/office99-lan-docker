@@ -4,6 +4,8 @@ import {attachExpedition} from './expedition.mjs';
 import {zoneRisk} from './expedition-config.mjs';
 import {useTacticalTool} from './tactical-content.mjs';
 import {chooseNight,prepareRegions,compileNight,REGION_PATTERNS} from './encounter-variety.mjs';
+import {updateBossCombat} from './boss-combat.mjs';
+import {syncCombatIntent} from './combat-feedback.mjs';
 
 const copy=structuredClone;
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -215,9 +217,9 @@ export class ContentDirector {
     });
     wrap('updateFishing',(original,p,dt)=>{const landed=game.s.statistics.fishLanded;const result=original(p,dt);if(game.s.statistics.fishLanded>landed){for(const e of Object.values(game.s.enemies))if(e.source==='fishing')w.classify(e);w.record('fish',{id:`landed:${game.s.statistics.fishLanded}`});}return result;});
     wrap('cast',(original,p,...args)=>{const result=original(p,...args);if(p.fishing&&p.fishing.catch_kind!=='salvage'){if(game.rng('fish_variants')*100<w.c.fishVariants.weight){const list=w.c.fishVariants.ids;p.fishing.creature=list[Math.floor(game.rng('fish_variants')*list.length)];}p.fishing.catch_resistance=game.defs.creatures[p.fishing.creature].resistance;}return result;});
-    wrap('updateEnemy',(original,enemy,dt)=>(updateNightContent(w,enemy,dt)||updateDirectedEnemy(w,enemy,dt))?undefined:original(enemy,dt));
-    wrap('updateBoss',(original,enemy,dt)=>enemy.variantId&&enemy.variantId!=='base'?updateDirectedBoss(w,enemy,dt):original(enemy,dt));
-    wrap('reactToHit',(original,enemy,hit,direction)=>{original(enemy,hit,direction);if(['courier','medic','swooper'].includes(enemy.role)&&['WINDUP','CHARGE'].includes(enemy.state)){enemy.state='RECOVER';enemy.phaseRemaining=1.2;enemy.attackZone=null;enemy.weak=false;enemy.chargeRemaining=0;enemy.chargeHit=[];game.event('EnemyInterrupted',{enemyId:enemy.id,role:enemy.role,hitSeq:enemy.hitSeq,duration:1.2,position:{x:enemy.x,y:enemy.y,z:enemy.z}},enemy.id);}});
+    wrap('updateEnemy',(original,enemy,dt)=>{const previous=enemy.state,kind=enemy.attackKind;if(!(updateBossCombat(w,enemy,dt)||updateNightContent(w,enemy,dt)||updateDirectedEnemy(w,enemy,dt)))original(enemy,dt);syncCombatIntent(game,enemy,previous,kind);});
+    wrap('updateBoss',(original,enemy,dt)=>updateBossCombat(w,enemy,dt)?undefined:original(enemy,dt));
+    wrap('reactToHit',(original,enemy,hit,direction)=>{original(enemy,hit,direction);if(['courier','medic','swooper'].includes(enemy.role)&&['WINDUP','CHARGE'].includes(enemy.state)&&game.s.time>=(enemy.interruptResistUntil??0)){enemy.state='RECOVER';enemy.phaseRemaining=.8;enemy.interruptResistUntil=game.s.time+4;enemy.attackZone=null;enemy.weak=false;enemy.chargeRemaining=0;enemy.chargeHit=[];game.event('EnemyInterrupted',{enemyId:enemy.id,role:enemy.role,hitSeq:enemy.hitSeq,duration:.8,position:{x:enemy.x,y:enemy.y,z:enemy.z}},enemy.id);}});
     wrap('resolveDamage',original=>{prepareDirectedDamage(w);return original();});
     wrap('updateProjectiles',(original,dt)=>{updateDeployables(w,dt);const keys=Object.keys(game.s.projectiles);for(const id of keys.slice(w.c.budgets.maxProjectiles))delete game.s.projectiles[id];return original(dt);});
   }

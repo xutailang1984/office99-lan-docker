@@ -1,3 +1,4 @@
+import {resolveEnemyAttack} from './combat-feedback.mjs';
 import {isBoss} from './night-content-config.mjs';
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function useTacticalTool(d,p,id,at,def,need){
@@ -29,7 +30,7 @@ export function updateTacticalEnemy(d,e,dt){const w=d.w,stamp=e.definitionId==='
    const inside=z.shape==='marks'?z.points.some(point=>distance(t,point)<=z.radius+margin):z.shape==='circle'?r<=z.radius+margin:z.shape==='ring'?r>=z.innerRadius&&r<=z.radius+margin:along>=0&&along<=z.length+margin&&side<=z.width/2+margin;
    if(t.hp>0&&inside&&w.lineVisible(e,t))w.damageQueue.push({target:t.id,actorId:e.id,damage:Math.ceil((t.lifeState?def.damage:def.buildingDamage)*(e.damageMultiplier??1))});
   }
-  e.attackActionSeq=(e.attackActionSeq??0)+1;e.attackActionAt=w.s.time;w.event('EnemyAttackResolved',{enemyId:e.id,definitionId:e.definitionId,attackKind:e.attackKind,attackActionSeq:e.attackActionSeq,zone:z,position:{x:e.x,y:e.y,z:e.z}},e.id);
+  resolveEnemyAttack(w,e,z);
   if(stamp&&(e.stampRemaining??1)>1){e.stampPrevious=z.points[0];e.stampRemaining--;e.state='CHASE';e.continueStamp=true;}
   else{
    if(coffee&&z.shape==='line')for(const fraction of [.35,.7]){const count=d.s.deployables.filter(q=>q.kind==='slow').length;if(count>=d.c.budgets.maxEnemyZones||d.s.deployables.length>=d.c.budgets.maxDeployables)break;d.s.deployables.push({id:w.id('zone'),definitionId:'coffee_spill',kind:'slow',faction:'enemy',ownerId:e.id,x:z.x+v.x*z.length*fraction,y:w.ground(z.x+v.x*z.length*fraction,z.z+v.z*z.length*fraction),z:z.z+v.z*z.length*fraction,radius:1.1,expiresAt:w.s.time+(e.combatPhase===2?8:3),practiceZone:e.practiceZone??null});}
@@ -44,9 +45,9 @@ export function updateTacticalEnemy(d,e,dt){const w=d.w,stamp=e.definitionId==='
  else{const ring=e.attackIndex++%2===1;e.comboNext=e.combatPhase===2?(ring?'boil':'ring'):null;telegraph(w,e,ring?'coffee_ring':'coffee_line',def.windup,ring?{shape:'ring',x:e.x,y:e.y,z:e.z,radius:def.radius,innerRadius:def.innerRadius}:{shape:'line',x:e.x,y:e.y,z:e.z,yaw:e.yaw,length:def.length,width:def.width});}return true;
 }
 function updateUtilityEnemy(d,e,dt,eraser){const w=d.w,def=w.enemyDefinition(e);if(w.updateHitReaction(e,dt))return true;e.phaseRemaining=Math.max(0,e.phaseRemaining-dt);if(['STUNNED','RECOVER'].includes(e.state)){if(e.phaseRemaining<=0)e.state='CHASE';return true;}if(w.aggro.returnGate(e)){e.state='CHASE';e.attackZone=null;w.patrolEnemy(e,def,dt);return true;}
- if(e.state==='WINDUP'){if(w.routeAttack(e,null,def))return true;if(e.phaseRemaining>0)return true;const t=d.target(e);if(t?.hp>0&&distance(e,t)<=2.3&&w.lineVisible(e,t)){if(e.attackKind==='erase'){if(t.kind==='cover')w.damageQueue.push({target:t.id,actorId:e.id,damage:28});else t.expiresAt=w.s.time;}else if(e.attackKind==='eat_cell'){t.ammo=Math.max(0,t.ammo-4);t.revision++;}else w.damageQueue.push({target:t.id,actorId:e.id,damage:def.damage});}e.specialAt=w.s.time+(eraser?5:4);e.state='RECOVER';e.phaseRemaining=def.attack_cooldown;e.attackZone=null;return true;}
+ if(e.state==='WINDUP'){if(w.routeAttack(e,null,def))return true;if(e.phaseRemaining>0)return true;const t=d.target(e);if(t?.hp>0&&distance(e,t)<=2.3&&w.lineVisible(e,t)){if(e.attackKind==='erase'){if(t.kind==='cover')w.damageQueue.push({target:t.id,actorId:e.id,damage:28});else t.expiresAt=w.s.time;}else if(e.attackKind==='eat_cell'){t.ammo=Math.max(0,t.ammo-4);t.revision++;}else w.damageQueue.push({target:t.id,actorId:e.id,damage:def.damage});}resolveEnemyAttack(w,e,e.attackZone,{followActor:true});e.specialAt=w.s.time+(eraser?5:4);e.state='RECOVER';e.phaseRemaining=def.attack_cooldown;e.attackZone=null;return true;}
  const toolTargets=eraser?d.s.deployables.filter(q=>['cover','trap','decoy'].includes(q.kind)&&q.hp>0):Object.values(w.s.turrets).filter(q=>q.hp>0&&q.ammo>0);
  const special=w.s.time>=(e.specialAt??0)?toolTargets.filter(q=>distance(e,q)<8&&w.lineVisible(e,q)).sort((a,b)=>distance(e,a)-distance(e,b))[0]:null;
  const t=w.enemyRouteTarget(e,special??w.selectEnemyTarget(e));if(!t){w.patrolEnemy(e,def,dt);return true;}e.targetId=t.id;e.yaw=Math.atan2(-(t.x-e.x),-(t.z-e.z));if(!special&&w.routeAttack(e,t,def))return true;
- if(distance(e,t)<=2.2&&w.lineVisible(e,t))telegraph(w,e,special?.id===t.id?(eraser?'erase':'eat_cell'):'melee',1.4,{shape:'circle',x:e.x,y:e.y,z:e.z,radius:1.6});else w.navigateEnemy(e,t,def.speed,dt);return true;
+ if(distance(e,t)<=2.2&&w.lineVisible(e,t))telegraph(w,e,special?.id===t.id?(eraser?'erase':'eat_cell'):'melee',def.attack_windup,{shape:'circle',x:e.x,y:e.y,z:e.z,radius:1.6});else w.navigateEnemy(e,t,def.speed,dt);return true;
 }
