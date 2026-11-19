@@ -34,6 +34,14 @@ export async function verifyPortableBrowser(address, { isolated = false } = {}) 
   let browser;
   let page;
   let stage = 'launch Chromium';
+  function observe(target) {
+    target.setDefaultTimeout(30000);
+    target.on('pageerror', () => { errors.page++; });
+    target.on('console', message => {
+      const text = message.text();
+      if (text.includes('SCRIPT ERROR') || text.startsWith('ERROR:')) errors.engine++;
+    });
+  }
   try {
     const args = ['--autoplay-policy=no-user-gesture-required', '--enable-unsafe-swiftshader'];
     if (process.platform === 'darwin' && process.env.CI) args.push('--use-gl=angle', '--use-angle=swiftshader');
@@ -43,13 +51,9 @@ export async function verifyPortableBrowser(address, { isolated = false } = {}) 
       channel: process.env.OFFICE99_SMOKE_CHROMIUM ? undefined : 'chromium',
       args,
     });
-    page = await browser.newPage({ viewport });
-    page.setDefaultTimeout(30000);
-    page.on('pageerror', () => { errors.page++; });
-    page.on('console', message => {
-      const text = message.text();
-      if (text.includes('SCRIPT ERROR') || text.startsWith('ERROR:')) errors.engine++;
-    });
+    const context = await browser.newContext({ viewport });
+    page = await context.newPage();
+    observe(page);
 
     stage = 'load login and show both versions';
     await page.goto(origin);
@@ -103,16 +107,28 @@ export async function verifyPortableBrowser(address, { isolated = false } = {}) 
     }, point, { timeout: 12000 });
     checks.push('MOBA camera lock and right-click movement');
 
-    stage = 'return to lobby and render PVE';
+    stage = 'return to the shared lobby';
     await page.locator('#menu-open').click();
     await page.locator('#exit-match').click();
     await page.locator('#create').waitFor({ state: 'visible' });
     await page.locator('#back').click();
+    await page.locator('#mission-entry-primary').waitFor({state: 'visible'});
+    checks.push('MOBA return to the shared lobby');
+    // A fresh page keeps the PVE result independent of the GPU objects MOBA just released.
+    const storageState = await context.storageState();
+    await context.close();
+    const pveContext = await browser.newContext({ viewport, storageState });
+    page = await pveContext.newPage();
+    observe(page);
+    await page.goto(origin);
+    stage = 'open the PVE onboarding room';
     await page.locator('#mission-entry-primary').click();
+    await page.waitForFunction(() => window.tidalDiagnostics?.().room?.status === 'running');
+    stage = 'render the PVE onboarding scene';
     await page.waitForFunction(() => {
       const d = window.tidalDiagnostics?.();
       return d?.workerReady && d.gameLoaded;
-    }, undefined, { timeout: 120000 });
+    }, undefined, { timeout: process.platform === 'darwin' && process.env.CI ? 240000 : 120000 });
     await page.locator('#game-enter').click();
     const pve = page.frames().find(candidate => new URL(candidate.url()).pathname === '/play.html');
     if (!pve) throw new Error('PVE game frame not found');
@@ -146,7 +162,10 @@ export async function verifyPortableBrowser(address, { isolated = false } = {}) 
       frame: Boolean(document.querySelector('#game-frame')),
       frameReady: Boolean(window.mobaDiagnostics?.().frameReady),
       roomStatus: window.mobaDiagnostics?.().room?.status || null,
-      runtimeFault: Boolean(window.mobaDiagnostics?.().runtimeFault)
+      runtimeFault: Boolean(window.mobaDiagnostics?.().runtimeFault),
+      pveRoomStatus: window.tidalDiagnostics?.().room?.status || null,
+      pveWorkerReady: Boolean(window.tidalDiagnostics?.().workerReady),
+      pveLoadingMessage: document.querySelector('#game-loading b')?.textContent || null
     })).catch(() => undefined);
     console.error(JSON.stringify({stage, checks, errors, state}));
     throw new Error(`${stage}: ${error.message.split('\n')[0]}`);
