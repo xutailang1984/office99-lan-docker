@@ -41,6 +41,9 @@ node_major=$(node -p "process.versions.node.split('.')[0]")
 docker_os=$(docker info --format '{{.OSType}}') || { echo 'Docker 尚未运行。' >&2; exit 1; }
 [[ "$docker_os" == linux ]] || { echo '请使用 Docker 的 Linux 容器。' >&2; exit 1; }
 docker compose version --short >/dev/null || { echo '需要 Docker Compose v2。' >&2; exit 1; }
+host_uid=$(id -u)
+host_gid=$(id -g)
+[[ "$host_uid" != 0 ]] || { echo '请用平时登录电脑的用户运行部署脚本。' >&2; exit 1; }
 
 [[ -d "$release_root" ]] || { echo '缺少 release 发布目录。' >&2; exit 1; }
 mkdir -p -- "$release_data"
@@ -69,9 +72,19 @@ esac
 
 export OFFICE99_PORT="$port"
 export OFFICE99_DATA_DIR="$data_path"
+export OFFICE99_DOCKER_USER="$host_uid:$host_gid"
 cd -- "$release_root"
 docker compose config --quiet
 node tools/build-docker-release.mjs . --tag office99-lan:moba-050
+if ! docker compose run --rm --no-deps --entrypoint node game -e '
+  const {writeFileSync,unlinkSync}=require("node:fs");
+  const filename="/data/.office99-"+require("node:crypto").randomUUID();
+  writeFileSync(filename,"", {flag:"wx",mode:0o600});
+  unlinkSync(filename);
+'; then
+  echo '容器无法写入所选存档目录。请检查目录归属与 Docker 文件共享设置。' >&2
+  exit 1
+fi
 docker compose up -d --no-build
 
 healthy=0

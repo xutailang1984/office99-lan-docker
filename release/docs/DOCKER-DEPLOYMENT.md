@@ -10,9 +10,9 @@
 
 ## 获取可部署的文件
 
-推荐从已经验收的游戏发布目录制作发布包，例如 `node tools/package-docker-release.mjs --release-root <已验证的发布目录>`。脚本核对原发布清单中每个文件的 SHA-256，包含完整 `web/`、Node 服务、Docker 配置、构建/校验工具和新清单，**不包含真实账号、存档或 GM 配置**。可把 `.runtime/docker-distributions/*.tar.gz` 作为日后的 GitHub Release 资产；从 Windows、Mac 或 Linux 下载并解压同一发布包即可部署。解压后先运行 `node tools/verify-docker-release.mjs .`，验证文件数量、大小和哈希。
+优先从 GitHub 下载完整仓库，并在仓库根目录使用 `bash ./deploy.sh`（Mac/Linux）或 `.\deploy.ps1`（Windows）。脚本核对 `release/` 内的 SHA-256，启动 PVE 与 MOBA，实际数据目录默认是仓库根部的 `data/`。Mac/Linux 脚本使用当前登录用户对应的容器 UID/GID，启动前测试容器能否写入存档目录。
 
-单纯复制源码目录还不够：`web/` 是本地导出产物，当前不纳入源码仓库。开发机也可先用 Godot 4.7.2 导出 Web，并运行 `node tools/finalize_web.mjs web`，再运行不带参数的打包命令；该路径记为尚未经过正式发布清单核对的工作区导出。Docker 构建会检查关键 PCK、WASM、页面和房主 Worker 是否齐全，缺失时拒绝生成镜像。
+仓库同时提供 Godot 源码与冻结的 `release/web/`。开发机使用 Godot 4.7.2 和 `node tools/build-candidate.mjs .runtime/dev-web` 导出开发候选。
 
 ## 首次启动
 
@@ -20,7 +20,7 @@
 
 ```sh
 node tools/verify-docker-release.mjs .
-node tools/build-docker-release.mjs . --tag office99-lan:local
+node tools/build-docker-release.mjs . --tag office99-lan:moba-050
 docker compose up -d --no-build
 docker compose ps
 ```

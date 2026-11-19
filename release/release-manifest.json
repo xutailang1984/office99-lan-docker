@@ -10,8 +10,8 @@
       "sha256": "1ffb0c887595223ea99a0dd61bb9aa5064484d15637747268d5cf8dfdf918820"
     },
     "compose.yaml": {
-      "bytes": 509,
-      "sha256": "828f9e56fa0a0008d9caf824e9c66e1ef31207b73c686e4150b9979def7ed450"
+      "bytes": 556,
+      "sha256": "77ed50753371b74dba82763d1f7d6ee76fd727d1668d6e4f87252444cbe2f390"
     },
     "docker/healthcheck.mjs": {
       "bytes": 1066,
@@ -22,8 +22,8 @@
       "sha256": "9d096033bad7e5eaa8f9efe5f92ef97eb5731fe034fe9f9cdfcc6e8cf0984069"
     },
     "docs/DOCKER-DEPLOYMENT.md": {
-      "bytes": 5600,
-      "sha256": "a351467dac1929285af26999bc20d990ed2a61bfe970ebdfd79a2ccc1275da91"
+      "bytes": 5114,
+      "sha256": "942d38a070ef5a42af5c80a42507e8979e76ad8b18272a73b41e751774ab97e9"
     },
     "server/moba/catalog.mjs": {
       "bytes": 13001,

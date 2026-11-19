@@ -4,6 +4,7 @@ services:
   game:
     image: office99-lan:moba-050
     pull_policy: never
+    user: "${OFFICE99_DOCKER_USER:-1000:1000}"
     environment:
       OFFICE99_MOBA: "1"
     ports:
