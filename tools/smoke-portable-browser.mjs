@@ -32,14 +32,18 @@ export async function verifyPortableBrowser(address, { isolated = false } = {}) 
   const errors = { page: 0, engine: 0 };
   const checks = [];
   let browser;
+  let page;
   let stage = 'launch Chromium';
   try {
+    const args = ['--autoplay-policy=no-user-gesture-required', '--enable-unsafe-swiftshader'];
+    if (process.platform === 'darwin' && process.env.CI) args.push('--use-gl=angle', '--use-angle=swiftshader');
     browser = await chromium.launch({
       headless: true,
       executablePath: process.env.OFFICE99_SMOKE_CHROMIUM || undefined,
-      args: ['--autoplay-policy=no-user-gesture-required', '--enable-unsafe-swiftshader'],
+      channel: process.env.OFFICE99_SMOKE_CHROMIUM ? undefined : 'chromium',
+      args,
     });
-    const page = await browser.newPage({ viewport });
+    page = await browser.newPage({ viewport });
     page.setDefaultTimeout(30000);
     page.on('pageerror', () => { errors.page++; });
     page.on('console', message => {
@@ -55,6 +59,8 @@ export async function verifyPortableBrowser(address, { isolated = false } = {}) 
       return pveText?.includes(pve) && mobaText?.includes(moba);
     }, { pve: health.build, moba: moba.version.replace(/^moba-/, '') });
     checks.push('dual version badges');
+    const webgl = await page.evaluate(() => !!document.createElement('canvas').getContext('webgl2'));
+    if (!webgl) throw new Error('WebGL 2 unavailable in this browser environment');
 
     stage = 'register a disposable browser account';
     await page.locator('#auth-toggle').click();
@@ -72,8 +78,11 @@ export async function verifyPortableBrowser(address, { isolated = false } = {}) 
     await page.locator('#begin').click();
     await page.waitForFunction(() => {
       const d = window.mobaDiagnostics?.();
-      return d?.frameReady && d.room?.status === 'running' && d.room.slots === 10 && d.state?.self;
+      return document.querySelector('#loading-title')?.textContent.includes('加载失败') ||
+        (d?.frameReady && d.room?.status === 'running' && d.room.slots === 10 && d.state?.self);
     }, undefined, { timeout: 120000 });
+    const started = await page.evaluate(() => window.mobaDiagnostics?.().frameReady);
+    if (!started) throw new Error('Godot reported a loading failure');
     checks.push('MOBA Godot frame and 10-seat match');
 
     stage = 'move a MOBA hero with a canvas right click';
@@ -133,6 +142,13 @@ export async function verifyPortableBrowser(address, { isolated = false } = {}) 
     }
     return { passed: true, hostPlatform: process.platform, hostArch: process.arch, browser: 'Chromium', checks, errors };
   } catch (error) {
+    const state = await page?.evaluate(() => ({
+      frame: Boolean(document.querySelector('#game-frame')),
+      frameReady: Boolean(window.mobaDiagnostics?.().frameReady),
+      roomStatus: window.mobaDiagnostics?.().room?.status || null,
+      runtimeFault: Boolean(window.mobaDiagnostics?.().runtimeFault)
+    })).catch(() => undefined);
+    console.error(JSON.stringify({stage, checks, errors, state}));
     throw new Error(`${stage}: ${error.message.split('\n')[0]}`);
   } finally {
     await browser?.close();
