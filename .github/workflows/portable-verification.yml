@@ -35,10 +35,8 @@ jobs:
           mkdir -p release/docker-data
           node release/tools/verify-docker-release.mjs release
           npm --prefix server ci --omit=optional
-          npm --prefix .runtime/browser install --no-save --no-audit playwright@1.58.2
-          node .runtime/browser/node_modules/playwright/cli.js install chromium
-      - name: Launch, play and restart on macOS
-        run: node tools/test-local-deploy.mjs --browser
+      - name: Launch, create rooms and restart on macOS
+        run: node tools/test-local-deploy.mjs
       - name: Verify game rules
         run: npm --prefix server test
       - name: Install pinned Godot and web export templates
@@ -63,6 +61,12 @@ jobs:
       - name: Rebuild the web game from editable sources
         if: matrix.arch == 'arm64'
         run: node tools/build-candidate.mjs .runtime/dev-web
+      - name: Verify both scenes and input in Chromium
+        if: '!cancelled()'
+        run: |
+          npm --prefix .runtime/browser install --no-save --no-audit playwright@1.58.2
+          node .runtime/browser/node_modules/playwright/cli.js install --no-shell chromium
+          node tools/test-local-deploy.mjs --browser
 
   docker:
     name: Docker deploy (${{ matrix.arch }})
@@ -100,5 +104,7 @@ jobs:
         shell: bash
         run: |
           export OFFICE99_DATA_DIR="$RUNNER_TEMP/office99-data"
+          if [[ "${{ job.status }}" == failure ]]; then docker compose -f release/compose.yaml logs --tail 25; fi
           docker compose -f release/compose.yaml down
+
 
