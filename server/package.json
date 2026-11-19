@@ -6,8 +6,8 @@
   "description": "Authoritative LAN server for an original voxel fishing prototype",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test test/*.test.mjs survival/test/*.test.mjs platform/test/*.test.mjs moba/test/*.test.mjs",
-    "test:moba": "node --test moba/test/*.test.mjs"
+    "test": "node --import ./test/canonical-temp.mjs --test test/*.test.mjs survival/test/*.test.mjs platform/test/*.test.mjs moba/test/*.test.mjs",
+    "test:moba": "node --import ./test/canonical-temp.mjs --test moba/test/*.test.mjs"
   },
   "engines": {
     "node": ">=20"
