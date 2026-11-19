@@ -40,7 +40,8 @@ jobs:
       - name: Verify game rules
         run: npm --prefix server test
       - name: Install pinned Godot and web export templates
-        if: matrix.arch == 'arm64'
+        id: godot
+        if: ${{ !cancelled() && matrix.arch == 'arm64' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -59,7 +60,7 @@ jobs:
           unzip -jo "$dir/templates.tpz" templates/version.txt templates/web_nothreads_release.zip -d "$templates"
           echo "GODOT_EXE=$dir/Godot.app/Contents/MacOS/Godot" >> "$GITHUB_ENV"
       - name: Rebuild the web game from editable sources
-        if: matrix.arch == 'arm64'
+        if: ${{ !cancelled() && steps.godot.outcome == 'success' }}
         run: node tools/build-candidate.mjs .runtime/dev-web
       - name: Verify both scenes and input in Chromium
         if: '!cancelled()'
@@ -106,5 +107,6 @@ jobs:
           export OFFICE99_DATA_DIR="$RUNNER_TEMP/office99-data"
           if [[ "${{ job.status }}" == failure ]]; then docker compose -f release/compose.yaml logs --tail 25; fi
           docker compose -f release/compose.yaml down
+
 
 
