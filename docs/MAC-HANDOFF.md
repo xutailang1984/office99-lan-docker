@@ -53,6 +53,20 @@ curl --fail --silent --show-error http://127.0.0.1:8080/moba/status
 
 记录 Mac 的系统版本、芯片、Git 提交、运行方式、浏览器、双版本、数据目录和上述步骤的结果。后续换机器时先备份存档，安排单独的搬迁核对。禁止把真实存档或配置提交到仓库。
 
+### 已验证的范围
+
+2026-11-19 对照正在部署的 PVE 0.18.0 和 MOBA 0.5.0。GitHub 发布包校验通过，共 250 个文件。
+
+| 验证环境 | 实际结果 |
+| --- | --- |
+| GitHub 托管 macOS Apple 芯片和 Intel | 双模式启动、注册、建房、重启后账号与冒险恢复通过。每种架构的 1,430 项规则测试均通过。 |
+| GitHub 托管 macOS Apple 芯片 | 利用官方 Godot 4.7.2 和 Web 模板从源码导出成功。 |
+| GitHub 托管 Linux ARM64 和 AMD64 | 通过部署脚本建镜像并启动，双模式房间流程通过。 |
+| macOS 托管无窗口 Chromium | MOBA 进场、锁定镜头、右键移动、退回大厅通过。PVE 房间已运行，进入画面的自动检查超时。 |
+| Windows Chromium | 冻结包与源码重导出包均通过双模式画面与键鼠检查。 |
+
+自动化结果见 [GitHub Actions](https://github.com/xutailang1984/office99-lan-docker/actions/runs/44533240979)。Mac 图形检查的超时见 [Intel 记录](https://github.com/xutailang1984/office99-lan-docker/actions/runs/44532338156/job/135588643136) 和 [Apple 芯片记录](https://github.com/xutailang1984/office99-lan-docker/actions/runs/44532131207/job/135587911561)。接手助理应在目标 Mac 的桌面 Chrome 或 Edge 优先实际进入 PVE，确认画面、鼠标和声音。还需要第二台设备验证该 Mac 所在局域网的连接。若选择 Docker Desktop，也在目标机运行一次部署脚本。
+
 ## 继续开发
 
 从仓库根目录安装依赖并运行规则测试：
