@@ -8,6 +8,8 @@
 !server/platform/*.mjs
 !server/survival/
 !server/survival/*.mjs
+!server/moba/
+!server/moba/*.mjs
 !web/
 !web/**
 !docker/

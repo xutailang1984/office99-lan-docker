@@ -16,6 +16,7 @@ RUN npm ci --omit=dev --omit=optional --ignore-scripts --no-audit --no-fund \
 COPY server/server.mjs ./
 COPY server/platform/ ./platform/
 COPY server/survival/ ./survival/
+COPY server/moba/ ./moba/
 COPY web/ /app/web/
 COPY docker/healthcheck.mjs /app/docker/healthcheck.mjs
 
@@ -28,6 +29,8 @@ RUN test -s /app/web/index.html \
     && test -s /app/web/platform/app.mjs \
     && test -s /app/web/platform/host-worker.mjs \
     && test -s /app/web/platform/balance.json \
+    && test -s /app/web/moba-play.html \
+    && test -s /app/web/moba/app.mjs \
     && node -e "const f=require('fs');for(const n of ['index.html','play.html']){if(!/^<!doctype html>/i.test(f.readFileSync('/app/web/'+n,'utf8')))process.exit(1)}if(!f.readFileSync('/app/web/index.js','utf8').startsWith('var Godot='))process.exit(1)" \
     && mkdir /data \
     && chown node:node /data

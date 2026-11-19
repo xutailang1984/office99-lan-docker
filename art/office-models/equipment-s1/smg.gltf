@@ -1,0 +1,118 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.2.40",
+    "version": "2.0",
+    "extras": {
+      "bufferSha256": "3ea110b6496a83ebc00e6e4159adba060baea38aff02bff69d5645adc868862b"
+    }
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "smg"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "OfficeLinearVertexColors",
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 0.8799999952316284
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "smg_VertexColorMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "COLOR_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 360,
+      "max": [
+        0.11100000143051147,
+        0.12200000137090683,
+        0.27000001072883606
+      ],
+      "min": [
+        -0.11100000143051147,
+        -0.36500000953674316,
+        -0.7369999885559082
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 360,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 360,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 540,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 4320,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4320,
+      "byteOffset": 4320,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4320,
+      "byteOffset": 8640,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1080,
+      "byteOffset": 12960,
+      "target": 34963
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 14040,
+      "uri": "smg.bin"
+    }
+  ]
+}

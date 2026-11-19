@@ -71,6 +71,19 @@ async function connectSignal(){
  try{await job;}finally{if(signalConnecting===job)signalConnecting=null;}
 }
 async function enterLobby(){await connectSignal();$('account-name').textContent=account.name;$('logout').classList.remove('hidden');show('lobby-view');await refresh(true);void careerUI.refresh();clearInterval(refreshTimer);refreshTimer=setInterval(()=>{if(!room)refresh().catch(()=>{});},5000);}
+function showVersion(id,mode,value){
+  if(typeof value!=='string')return;
+  const version=value.replace(/^(?:moba-)?v?/i,'');
+  if(version)$(id).textContent=mode+' v'+version;
+}
+void fetch('/health',{cache:'no-store'}).then(r=>r.ok?r.json():null)
+  .then(s=>showVersion('pve-version','PVE',s?.build)).catch(()=>{});
+void fetch('/moba/status',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{
+  if(!s?.enabled)return;
+  showVersion('moba-version','MOBA',s.version);
+  $('moba-entry').classList.remove('hidden');
+  $('moba-open').onclick=()=>{if(!room&&!leaving)location.href='/moba/index.html';};
+}).catch(()=>{});
 function renderLobbyState(){
  if(!account)return;
  if(room)careerUI.hide();

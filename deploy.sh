@@ -50,7 +50,8 @@ if [[ -n $(ls -A "$release_data") ]]; then
   exit 1
 fi
 node "$release_root/tools/verify-docker-release.mjs" "$release_root"
-expected_version=$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).version)' "$release_root/release-manifest.json")
+expected_version=$(node -p 'require(process.argv[1]).version' "$release_root/release-manifest.json")
+expected_moba=$(node -p 'require(process.argv[1]).mobaVersion' "$release_root/release-manifest.json")
 
 if [[ -z "$data_arg" ]]; then
   data_path="$repo_root/data"
@@ -70,12 +71,22 @@ export OFFICE99_PORT="$port"
 export OFFICE99_DATA_DIR="$data_path"
 cd -- "$release_root"
 docker compose config --quiet
-node tools/build-docker-release.mjs . --tag office99-lan:local
+node tools/build-docker-release.mjs . --tag office99-lan:moba-050
 docker compose up -d --no-build
 
 healthy=0
 for ((attempt=0; attempt<45; attempt++)); do
-  if node -e 'fetch("http://127.0.0.1:"+process.argv[1]+"/health",{signal:AbortSignal.timeout(3000)}).then(async r=>{const body=await r.json();process.exit(r.ok&&body.ready&&body.build===process.argv[2]?0:1)}).catch(()=>process.exit(1))' "$port" "$expected_version" >/dev/null 2>&1; then
+  if node -e '
+    const [port,pve,moba]=process.argv.slice(1), origin="http://127.0.0.1:"+port;
+    async function read(route) {
+      const response=await fetch(origin+route,{signal:AbortSignal.timeout(3000)});
+      if(!response.ok) throw Error(route);
+      return response.json();
+    }
+    Promise.all([read("/health"),read("/moba/status")]).then(([h,m])=>{
+      process.exit(h.ready&&h.build===pve&&m.enabled&&m.version===moba?0:1);
+    }).catch(()=>process.exit(1));
+  ' "$port" "$expected_version" "$expected_moba" >/dev/null 2>&1; then
     healthy=1
     break
   fi

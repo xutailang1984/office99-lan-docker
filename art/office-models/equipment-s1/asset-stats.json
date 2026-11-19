@@ -1,0 +1,307 @@
+{
+  "blenderVersion": "5.2.1 LTS",
+  "candidateOnly": true,
+  "integrated": false,
+  "assets": [
+    {
+      "id": "pistol",
+      "triangles": 108,
+      "sourceVertices": 72,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.10899999737739563,
+          -0.3799999952316284,
+          -0.527999997138977
+        ],
+        "max": [
+          0.10899999737739563,
+          0.12950000166893005,
+          0.10499999672174454
+        ],
+        "size": [
+          0.21799999475479126,
+          0.5094999969005585,
+          0.6329999938607216
+        ]
+      },
+      "exportVertices": 216,
+      "files": {
+        "pistol.gltf": {
+          "bytes": 2076,
+          "sha256": "ad5164e5fe923a01b915d297e990d381b69a554a834ede05ecc32859b851a080"
+        },
+        "pistol.bin": {
+          "bytes": 8424,
+          "sha256": "fd31286ad3477f941061c88cb5cd2f7963caacb80626af5475760da563e8dab3"
+        },
+        "pistol.blend": {
+          "bytes": 89824,
+          "sha256": "79da51857fef363cf02be3fc1a323cc28e250f100370c2abe0f5a6c61e7168da"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "smg",
+      "triangles": 180,
+      "sourceVertices": 120,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.11100000143051147,
+          -0.36500000953674316,
+          -0.7369999885559082
+        ],
+        "max": [
+          0.11100000143051147,
+          0.12200000137090683,
+          0.27000001072883606
+        ],
+        "size": [
+          0.22200000286102295,
+          0.48700001090765,
+          1.0069999992847443
+        ]
+      },
+      "exportVertices": 360,
+      "files": {
+        "smg.gltf": {
+          "bytes": 2072,
+          "sha256": "afbd35a5288c89c9a813b84a5b5984279aaf76382b452dab65dbe902555ac894"
+        },
+        "smg.bin": {
+          "bytes": 14040,
+          "sha256": "3ea110b6496a83ebc00e6e4159adba060baea38aff02bff69d5645adc868862b"
+        },
+        "smg.blend": {
+          "bytes": 90720,
+          "sha256": "3e41eedf1e88b24de1fb739c22d6f2eba5be8a4ed11f4612e04fec3efce28cbc"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "lmg",
+      "triangles": 204,
+      "sourceVertices": 136,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.1809999942779541,
+          -0.3400000035762787,
+          -0.9729999899864197
+        ],
+        "max": [
+          0.1809999942779541,
+          0.15549999475479126,
+          0.36000001430511475
+        ],
+        "size": [
+          0.3619999885559082,
+          0.49549999833106995,
+          1.3330000042915344
+        ]
+      },
+      "exportVertices": 408,
+      "files": {
+        "lmg.gltf": {
+          "bytes": 2069,
+          "sha256": "c5ebd79cd0c0c3fef4b6c246e797bfdb9011758c4eeac27c0d36ff847ff6afbd"
+        },
+        "lmg.bin": {
+          "bytes": 15912,
+          "sha256": "1fbe2d9eb6db2c27c84f4ff516b3ba274865f323628fa1d59445b57ddc643324"
+        },
+        "lmg.blend": {
+          "bytes": 91004,
+          "sha256": "7836a06c0df83a669449df07e29460b534334e6517902f492e9a1550cc9a0c3d"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "rod_light",
+      "triangles": 332,
+      "sourceVertices": 472,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.03500000014901161,
+          -0.12999999523162842,
+          -0.12099999934434891
+        ],
+        "max": [
+          0.17000000178813934,
+          1.3250000476837158,
+          0.039000000804662704
+        ],
+        "size": [
+          0.20500000193715096,
+          1.4550000429153442,
+          0.1600000001490116
+        ]
+      },
+      "exportVertices": 648,
+      "files": {
+        "rod_light.gltf": {
+          "bytes": 2092,
+          "sha256": "f4c81b3d8cd54b6f99a5873ba71663b0d6e6e0b4630b074bef0c17fd168a4434"
+        },
+        "rod_light.bin": {
+          "bytes": 25320,
+          "sha256": "962e67e73b8396b1ccda9b566cf218d28420f1ece1ac6d9f86b711f22105922c"
+        },
+        "rod_light.blend": {
+          "bytes": 93499,
+          "sha256": "0702f53c83d6ae1fd32e8c7afe040e366e2ee10cffc09365c5924f4e8e6aa112"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "rod_heavy",
+      "triangles": 368,
+      "sourceVertices": 496,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.05400000140070915,
+          -0.12999999523162842,
+          -0.12099999934434891
+        ],
+        "max": [
+          0.17000000178813934,
+          1.3250000476837158,
+          0.04500000178813934
+        ],
+        "size": [
+          0.2240000031888485,
+          1.4550000429153442,
+          0.16600000113248825
+        ]
+      },
+      "exportVertices": 720,
+      "files": {
+        "rod_heavy.gltf": {
+          "bytes": 2092,
+          "sha256": "f6c2f377d45109e5ade86a8306b0f8aafd006922b774a1e2df9429477e198fec"
+        },
+        "rod_heavy.bin": {
+          "bytes": 28128,
+          "sha256": "3c1723cf00c583380dcbfa0621b1aff61d7e47e387c0fd15a856966607b69fba"
+        },
+        "rod_heavy.blend": {
+          "bytes": 93958,
+          "sha256": "a20c9ef5a8e3d43ffe59a4605964ac9a9772439fe601dda2e27eeba961b829ea"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "rod_magnet",
+      "triangles": 392,
+      "sourceVertices": 512,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.05249999836087227,
+          -0.12999999523162842,
+          -0.12700000405311584
+        ],
+        "max": [
+          0.17000000178813934,
+          1.3250000476837158,
+          0.039000000804662704
+        ],
+        "size": [
+          0.2225000001490116,
+          1.4550000429153442,
+          0.16600000485777855
+        ]
+      },
+      "exportVertices": 768,
+      "files": {
+        "rod_magnet.gltf": {
+          "bytes": 2096,
+          "sha256": "bc6e8e1e13d055491f81d536cc55dcad12ef19eaec84ea645ae591cf3b49261e"
+        },
+        "rod_magnet.bin": {
+          "bytes": 30000,
+          "sha256": "e9902859288879d8588550144d09855fcee66d3ad8bf3f2dafd39949e261b379"
+        },
+        "rod_magnet.blend": {
+          "bytes": 94303,
+          "sha256": "39717fcf9700c1b81ccaf654662cac99d57cd5efd6b3d174dae0ea9561e6f12f"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    }
+  ]
+}

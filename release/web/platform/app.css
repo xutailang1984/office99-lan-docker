@@ -23,6 +23,9 @@ header,main,footer { position:relative; z-index:1; width:100%; max-width:var(--p
 #account-name { max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pill { display:inline-flex; align-items:center; gap:8px; border:0; border-radius:0; padding:0; cursor:default; font-size:12px; color:#b7d0ca; }
 .pill i { width:6px; height:6px; border-radius:50%; background:var(--mint); }
+.build-badge { flex-wrap:wrap; gap:2px 12px; font-variant-numeric:tabular-nums; }
+.build-badge>span { white-space:nowrap; }
+.build-badge>span:empty { display:none; }
 main { margin-block:0 40px; padding-top:52px; }
 footer { display:flex; justify-content:space-between; gap:16px; padding-bottom:24px; color:#8da8af; font-size:11px; }
 h1,h2,p { margin:0; }
@@ -207,7 +210,10 @@ body.in-game #toast { position:absolute; left:16px; right:16px; top:16px; bottom
 }
 @media(max-width:700px) {
  :root { --page-pad:16px; }.app-header { min-height:72px; gap:12px; }.brand { font-size:16px; gap:8px; }.brand-mark { width:32px; height:32px; }
- .brand small { font-size:8px; }.top-right { gap:8px; }.build-badge,#account-name { display:none; }
+ .app-header { display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:8px; row-gap:3px; align-content:center; padding-block:10px; }
+ .brand { grid-column:1; grid-row:1; }.brand small { font-size:8px; }
+ .top-right { display:contents; }.build-badge { grid-column:1; grid-row:2; font-size:11px; }
+ #account-name { display:none; }#logout { grid-column:2; grid-row:1 / span 2; }
  main { margin-block:20px 28px; }.page-heading { gap:12px; margin-bottom:20px; }.page-heading h1 { font-size:23px; }.page-heading .eyebrow { display:none; }.page-heading p { font-size:12px; }
  .room-side { grid-template-columns:1fr; }.brief-panel { display:none; }.roster-panel,#room-chat-slot #chat { padding:16px; }
  body.in-game { --chat-dock-width:0px; --chat-dock-height:48px; }body.in-game.chat-open { --chat-dock-width:0px; --chat-dock-height:clamp(160px,35vh,280px); }

@@ -1,0 +1,257 @@
+{
+  "blenderVersion": "5.2.1 LTS",
+  "candidateOnly": true,
+  "integrated": false,
+  "assets": [
+    {
+      "id": "bandage",
+      "triangles": 152,
+      "sourceVertices": 228,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.11800000071525574,
+          -0.04399999976158142,
+          -0.15800000727176666
+        ],
+        "max": [
+          0.10499999672174454,
+          0.1860000044107437,
+          -0.0364999994635582
+        ],
+        "size": [
+          0.22299999743700027,
+          0.23000000417232513,
+          0.12150000780820847
+        ]
+      },
+      "exportVertices": 300,
+      "files": {
+        "bandage.gltf": {
+          "bytes": 1603,
+          "sha256": "0e0c896538632ccfe820ed42dae0247b367819f4bbd796961393bcba9a91b918"
+        },
+        "bandage.bin": {
+          "bytes": 11712,
+          "sha256": "f4265f5c17bc0dd2f63ffb1448e00c5c56f69d5f7a59c5602df124d7656aeac5"
+        },
+        "bandage.blend": {
+          "bytes": 90964,
+          "sha256": "0c4d9a2fe0599017abff0616cfcc6b10cc3aaa5ede75373c53ffc7a578fbcd2a"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "repair_kit",
+      "triangles": 188,
+      "sourceVertices": 120,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.12099999934434891,
+          -0.04500000178813934,
+          -0.19099999964237213
+        ],
+        "max": [
+          0.12099999934434891,
+          0.2745000123977661,
+          -0.017999999225139618
+        ],
+        "size": [
+          0.24199999868869781,
+          0.31950001418590546,
+          0.1730000004172325
+        ]
+      },
+      "exportVertices": 360,
+      "files": {
+        "repair_kit.gltf": {
+          "bytes": 1615,
+          "sha256": "553e68e39f4aefa664afbb07c426a956e2c6ca0221253b23b0b79a010b54bbcd"
+        },
+        "repair_kit.bin": {
+          "bytes": 14088,
+          "sha256": "2d7f9ae22d807916c3bfd2ccde41e48335ebfbe31b0d7aeeb16b1c82db2793a7"
+        },
+        "repair_kit.blend": {
+          "bytes": 90856,
+          "sha256": "367484f4a897ac2bebde926b0492e2aefef61c684830cddf965cd5f635650334"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "coffee_flask",
+      "triangles": 172,
+      "sourceVertices": 104,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.09300000220537186,
+          -0.04699999839067459,
+          -0.14350000023841858
+        ],
+        "max": [
+          0.11999999731779099,
+          0.28999999165534973,
+          0.024000000208616257
+        ],
+        "size": [
+          0.21299999952316284,
+          0.3369999900460243,
+          0.16750000044703484
+        ]
+      },
+      "exportVertices": 312,
+      "files": {
+        "coffee_flask.gltf": {
+          "bytes": 1621,
+          "sha256": "de4c0e3a0052aafdc00d9c9f5b3e0d8ded672ea70a6448842e95ae7e64678cc8"
+        },
+        "coffee_flask.bin": {
+          "bytes": 12264,
+          "sha256": "0d5246c199c345f8a2d8cf726271194877baefa555068338c0f08d9d24df5ea7"
+        },
+        "coffee_flask.blend": {
+          "bytes": 90552,
+          "sha256": "efec0f1c51ca0299c2727f8d34891c2bfbd495b61ab050da865f865c8b40ea81"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "flash_note",
+      "triangles": 84,
+      "sourceVertices": 54,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.1120000034570694,
+          -0.07050000131130219,
+          -0.08799999952316284
+        ],
+        "max": [
+          0.10999999940395355,
+          0.20000000298023224,
+          -0.017000000923871994
+        ],
+        "size": [
+          0.22200000286102295,
+          0.2705000042915344,
+          0.07099999859929085
+        ]
+      },
+      "exportVertices": 162,
+      "files": {
+        "flash_note.gltf": {
+          "bytes": 1612,
+          "sha256": "f25bbc354073487c50d45a71cab38bf2de0c45dc01bdc8817b6d5b6987d2ce03"
+        },
+        "flash_note.bin": {
+          "bytes": 6336,
+          "sha256": "45aa66fe2b2b2d9ff82038204671eeb9e34c85377bd032fbd32b459c3ae49c53"
+        },
+        "flash_note.blend": {
+          "bytes": 89550,
+          "sha256": "b5402c2a32d9cfffb5a3fc49e0fbcd52f03d37894ef91defd5abfae4249b05c9"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    },
+    {
+      "id": "decoy_alarm",
+      "triangles": 300,
+      "sourceVertices": 184,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.12300000339746475,
+          -0.027000000700354576,
+          -0.18199999630451202
+        ],
+        "max": [
+          0.12300000339746475,
+          0.27399998903274536,
+          -0.003000000026077032
+        ],
+        "size": [
+          0.2460000067949295,
+          0.30099998973309994,
+          0.178999996278435
+        ]
+      },
+      "exportVertices": 552,
+      "files": {
+        "decoy_alarm.gltf": {
+          "bytes": 1621,
+          "sha256": "cd84bdfb261dff47bdf7a9bae8fff5cced77c7d10bc5e191fc459b6db66a26a8"
+        },
+        "decoy_alarm.bin": {
+          "bytes": 21672,
+          "sha256": "4161dc8acd88de330d7bd0952e2acbd1df16c9fe1520ac9766f83848b1197d12"
+        },
+        "decoy_alarm.blend": {
+          "bytes": 92051,
+          "sha256": "8ba1a104a8cc77642175ee8ab99f7b050d2f7dbec2c5cde44418ce5cd2babff7"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    }
+  ]
+}

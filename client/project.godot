@@ -1,0 +1,24 @@
+config_version=5
+
+[application]
+config/name="办公室的99夜"
+config/version="0.18.0"
+run/main_scene="res://boot.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.67, 0.82, 0.80, 1)
+; The non-threaded Web export must not enqueue worker-pool culling groups.
+limits/spatial_indexer/threaded_cull_minimum_instances.web=1000000
+
+[audio]
+driver/enable_input=false

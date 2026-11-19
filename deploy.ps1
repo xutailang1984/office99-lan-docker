@@ -40,7 +40,7 @@ if (@(Get-ChildItem -LiteralPath $releaseData -Force).Count -ne 0) {
 
 & node (Join-Path $releaseRoot 'tools/verify-docker-release.mjs') $releaseRoot
 if ($LASTEXITCODE -ne 0) { throw '发布包校验失败，停止部署。' }
-$expectedVersion = (Get-Content -LiteralPath (Join-Path $releaseRoot 'release-manifest.json') -Raw | ConvertFrom-Json).version
+$manifest = Get-Content -LiteralPath (Join-Path $releaseRoot 'release-manifest.json') -Raw | ConvertFrom-Json
 
 if ([string]::IsNullOrWhiteSpace($DataDir)) {
     $dataPath = Join-Path $repoRoot 'data'
@@ -72,7 +72,7 @@ try {
 
     & docker compose config --quiet
     if ($LASTEXITCODE -ne 0) { throw 'Docker Compose 配置无效。' }
-    & node tools/build-docker-release.mjs . --tag office99-lan:local
+    & node tools/build-docker-release.mjs . --tag office99-lan:moba-050
     if ($LASTEXITCODE -ne 0) { throw 'Docker 镜像构建或校验失败。' }
     & docker compose up -d --no-build
     if ($LASTEXITCODE -ne 0) { throw 'Docker 服务启动失败。' }
@@ -82,7 +82,9 @@ try {
     for ($attempt = 0; $attempt -lt 45; $attempt++) {
         try {
             $result = Invoke-RestMethod -Uri ($url + 'health') -TimeoutSec 3
-            if ($result.ready -eq $true -and $result.build -eq $expectedVersion) { $healthy = $true; break }
+            $moba = Invoke-RestMethod -Uri ($url + 'moba/status') -TimeoutSec 3
+            if ($result.ready -eq $true -and $result.build -eq $manifest.version -and
+                $moba.enabled -eq $true -and $moba.version -eq $manifest.mobaVersion) { $healthy = $true; break }
         } catch { }
         Start-Sleep -Seconds 2
     }

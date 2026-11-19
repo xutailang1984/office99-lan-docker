@@ -1,0 +1,118 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.2.40",
+    "version": "2.0",
+    "extras": {
+      "bufferSha256": "3c1723cf00c583380dcbfa0621b1aff61d7e47e387c0fd15a856966607b69fba"
+    }
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "rod_heavy"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "OfficeLinearVertexColors",
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 0.8799999952316284
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "rod_heavy_VertexColorMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "COLOR_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 720,
+      "max": [
+        0.17000000178813934,
+        1.3250000476837158,
+        0.04500000178813934
+      ],
+      "min": [
+        -0.05400000140070915,
+        -0.12999999523162842,
+        -0.12099999934434891
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 720,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 720,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 1104,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 8640,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 8640,
+      "byteOffset": 8640,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 8640,
+      "byteOffset": 17280,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2208,
+      "byteOffset": 25920,
+      "target": 34963
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 28128,
+      "uri": "rod_heavy.bin"
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "license": "Original project assets; no third-party model or texture inputs.",
+  "blender_version": "5.2.1 LTS",
+  "coordinate_system": {
+    "blender_up": "+Z",
+    "blender_forward": "-Y",
+    "gltf_godot_up": "+Y",
+    "gltf_godot_forward": "+Z",
+    "origin": "Ground/base centered; rod at bottom of grip"
+  },
+  "assets": [
+    {
+      "name": "fisherman",
+      "file": "fisherman.glb",
+      "vertices": 216,
+      "polygons": 162,
+      "triangles": 324,
+      "dimensions_blender_m": [
+        0.9342,
+        0.59,
+        1.61
+      ],
+      "materials": 10
+    },
+    {
+      "name": "fish",
+      "file": "fish.glb",
+      "vertices": 128,
+      "polygons": 96,
+      "triangles": 192,
+      "dimensions_blender_m": [
+        0.4083,
+        0.7035,
+        0.3751
+      ],
+      "materials": 5
+    },
+    {
+      "name": "goldfish",
+      "file": "goldfish.glb",
+      "vertices": 128,
+      "polygons": 96,
+      "triangles": 192,
+      "dimensions_blender_m": [
+        0.4083,
+        0.7035,
+        0.3751
+      ],
+      "materials": 5
+    },
+    {
+      "name": "crab",
+      "file": "crab.glb",
+      "vertices": 224,
+      "polygons": 168,
+      "triangles": 336,
+      "dimensions_blender_m": [
+        0.83,
+        0.7625,
+        0.4063
+      ],
+      "materials": 4
+    },
+    {
+      "name": "rod",
+      "file": "rod.glb",
+      "vertices": 80,
+      "polygons": 60,
+      "triangles": 120,
+      "dimensions_blender_m": [
+        0.2075,
+        0.435,
+        1.8429
+      ],
+      "materials": 7
+    },
+    {
+      "name": "shop",
+      "file": "shop.glb",
+      "vertices": 222,
+      "polygons": 167,
+      "triangles": 332,
+      "dimensions_blender_m": [
+        2.8,
+        2.0335,
+        2.545
+      ],
+      "materials": 8
+    },
+    {
+      "name": "palm",
+      "file": "palm.glb",
+      "vertices": 272,
+      "polygons": 204,
+      "triangles": 408,
+      "dimensions_blender_m": [
+        2.8865,
+        2.5853,
+        2.5489
+      ],
+      "materials": 5
+    },
+    {
+      "name": "crate",
+      "file": "crate.glb",
+      "vertices": 120,
+      "polygons": 90,
+      "triangles": 180,
+      "dimensions_blender_m": [
+        0.69,
+        0.5835,
+        0.5575
+      ],
+      "materials": 5
+    }
+  ]
+}

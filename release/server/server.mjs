@@ -464,6 +464,8 @@ export async function createGameServer(options = {}) {
     economyVersion,
     ...(economyVersion===1?{config:JSON.parse(await readFile(path.join(webRoot,'platform','balance.json'),'utf8'))}:{}),
   }) : null;
+  const mobaEnabled=options.moba??process.env.OFFICE99_MOBA==='1';
+  const moba=platform&&mobaEnabled?(await import('./moba/service.mjs')).createMobaService({authenticate:platform.authenticate}):null;
   const httpServer = http.createServer(async (request, response) => {
     response.setHeader('X-Content-Type-Options', 'nosniff');
     if(request.socket.encrypted||/^(localhost|127\.\d+\.\d+\.\d+|\[::1\])(?::\d+)?$/i.test(request.headers.host??''))response.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
@@ -481,6 +483,8 @@ export async function createGameServer(options = {}) {
         response.end(JSON.stringify({ error: { code: 'LEGACY_RETIRED', message: '旧版入口已停用，请回到最新大厅。', location: '/' } })); return;
       }
     }
+    if(moba&&!closed&&moba.handleRequest(request,response))return;
+    if(!moba&&pathname==='/moba/status'){response.writeHead(200,{'Content-Type':MIME['.json'],'Cache-Control':'no-store'});response.end(JSON.stringify({enabled:false}));return;}
     if(platform&&!closed&&await platform.handleRequest(request,response))return;
     if (pathname === '/shutdown' && request.method === 'POST') {
       const remote = request.socket.remoteAddress;
@@ -489,7 +493,7 @@ export async function createGameServer(options = {}) {
       const tokenOK = typeof supplied === 'string' && shutdownToken.length >= 32 && Buffer.byteLength(supplied) === Buffer.byteLength(shutdownToken) && timingSafeEqual(Buffer.from(supplied), Buffer.from(shutdownToken));
       if (!allowed || request.headers.origin || !tokenOK) { response.writeHead(403); response.end(); return; }
       closed = true;
-      try { if (survival) await survival.stop(); if (platform) await platform.stop(); markDirty(); await flushSave(); } catch { closed = false; response.writeHead(500); response.end('Save failed'); return; }
+      try { if (moba) await moba.stop(); if (survival) await survival.stop(); if (platform) await platform.stop(); markDirty(); await flushSave(); } catch { closed = false; response.writeHead(500); response.end('Save failed'); return; }
       response.writeHead(200, { 'Content-Type': MIME['.json'], Connection: 'close' });
       response.end(JSON.stringify({ ok: true, pid: process.pid, saved: true }));
       setImmediate(() => stop().catch(() => { console.error('存档写入失败，请检查服务器目录。'); process.exitCode = 1; }));
@@ -501,7 +505,7 @@ export async function createGameServer(options = {}) {
       const survivalStatus = survival?.status() ?? null;
       const ready = !closed && (!survivalStatus || survivalStatus.ready) && (!platformStatus || platformStatus.ready);
       response.setHeader('Content-Type', MIME['.json']);
-      response.end(JSON.stringify({ ok: ready, service: 'voxel-fishing', build: '0.18.0', pid: process.pid, ready, players: players.size + (survivalStatus?.players ?? 0), classicPlayers: players.size, maxPlayers: testLegacyModes ? maxPlayers : 8, mode: testLegacyModes ? 'isolated-legacy-test' : 'latest-only', legacyEnabled: testLegacyModes, survival: survivalStatus, platform: platformStatus }));
+      response.end(JSON.stringify({ ok: ready, service: 'voxel-fishing', build: '0.18.0', pid: process.pid, ready, players: players.size + (survivalStatus?.players ?? 0), classicPlayers: players.size, maxPlayers: testLegacyModes ? maxPlayers : 8, mode: testLegacyModes ? 'isolated-legacy-test' : 'latest-only', legacyEnabled: testLegacyModes, survival: survivalStatus, platform: platformStatus,...(moba?{moba:moba.status()}: {}) }));
       return;
     }
     if (closed) { response.writeHead(503); response.end(); return; }
@@ -523,6 +527,7 @@ export async function createGameServer(options = {}) {
     let pathname;
     try { pathname = new URL(request.url, 'http://localhost').pathname; } catch { socket.destroy(); return; }
     if(platform&&!closed&&pathname==='/platform/signal'){platform.handleUpgrade(request,socket,head);return;}
+    if(moba&&!closed&&pathname==='/moba/socket'){moba.handleUpgrade(request,socket,head);return;}
     if (!testLegacyModes) { socket.end('HTTP/1.1 410 Gone\r\nConnection: close\r\nContent-Length: 0\r\n\r\n'); return; }
     if (closed || (pathname !== '/ws' && pathname !== '/survival/ws') || wss.clients.size >= 12) { socket.destroy(); return; }
     // Block cross-site browser requests; direct native clients have no Origin header.
@@ -633,6 +638,7 @@ export async function createGameServer(options = {}) {
   } catch (error) {
     clearInterval(tick); clearInterval(saveTimer); clearInterval(heartbeat);
     wss.close();
+    if (moba) await moba.stop();
     if (survival) await survival.stop();
     if (platform) await platform.stop();
     throw error;
@@ -641,6 +647,7 @@ export async function createGameServer(options = {}) {
     if (stopping) return stopping;
     closed = true;
     stopping = (async () => {
+      if (moba) await moba.stop();
       if (survival) await survival.stop();
       if (platform) await platform.stop();
       markDirty(); await flushSave();

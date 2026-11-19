@@ -1,0 +1,10 @@
+import {HEROES,ITEMS,VERSION,RULES} from '../../server/moba/catalog.mjs';
+import {MAP} from '../../server/moba/map.mjs';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+const destination=path.resolve(import.meta.dirname,'../../client/moba/data.json');
+await mkdir(path.dirname(destination),{recursive:true});
+const value=JSON.stringify({version:VERSION,rules:RULES,map:MAP,heroes:HEROES,items:ITEMS});
+await writeFile(destination,value);assert.equal(await readFile(destination,'utf8'),value);
+console.log('MOBA_SHARED_DATA_VERIFIED');

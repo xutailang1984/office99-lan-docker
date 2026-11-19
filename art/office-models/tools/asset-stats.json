@@ -1,0 +1,57 @@
+{
+  "blenderVersion": "5.2.1 LTS",
+  "candidateOnly": true,
+  "integrated": false,
+  "assets": [
+    {
+      "id": "repair_kit",
+      "triangles": 188,
+      "sourceVertices": 120,
+      "meshObjects": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "boundsGodot": {
+        "min": [
+          -0.12099999934434891,
+          -0.04399999976158142,
+          -0.19099999964237213
+        ],
+        "max": [
+          0.12099999934434891,
+          0.27649998664855957,
+          -0.017999999225139618
+        ],
+        "size": [
+          0.24199999868869781,
+          0.320499986410141,
+          0.1730000004172325
+        ]
+      },
+      "exportVertices": 360,
+      "files": {
+        "repair_kit.gltf": {
+          "bytes": 2096,
+          "sha256": "89e000cef605f64bc8212d6512521cf57cf0b8f1ea8b8cf20a6cfcbc394c6338"
+        },
+        "repair_kit.bin": {
+          "bytes": 14088,
+          "sha256": "7b7fcd1136672424f0aaf81eb912dfe83fe0fb26a360b710358833397f37adb8"
+        },
+        "repair_kit.blend": {
+          "bytes": 90817,
+          "sha256": "628d479288681548137308fdb60438bbd5b129877bdfe7b9f75335f6f137cd02"
+        }
+      },
+      "originGodot": [
+        0,
+        0,
+        0
+      ],
+      "godotUp": "+Y",
+      "godotFront": "-Z",
+      "vertexColorSpace": "linear COLOR_0",
+      "rendered": false
+    }
+  ]
+}

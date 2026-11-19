@@ -6,3 +6,10 @@
 /deploy.ps1 text eol=lf
 /*.md text eol=lf
 /third-party-licenses/** -text
+/.github/** text eol=lf
+/client/** -text
+/server/** -text
+/art/** -text
+/docs/** text eol=lf
+/tools/** text eol=lf
+/scripts/** text eol=lf

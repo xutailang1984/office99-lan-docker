@@ -1,0 +1,118 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.2.40",
+    "version": "2.0",
+    "extras": {
+      "bufferSha256": "7b7fcd1136672424f0aaf81eb912dfe83fe0fb26a360b710358833397f37adb8"
+    }
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "repair_kit"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "OfficeLinearVertexColors",
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 0.8799999952316284
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "repair_kit_VertexColorMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "COLOR_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 360,
+      "max": [
+        0.12099999934434891,
+        0.27649998664855957,
+        -0.017999999225139618
+      ],
+      "min": [
+        -0.12099999934434891,
+        -0.04399999976158142,
+        -0.19099999964237213
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 360,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 360,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 564,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 4320,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4320,
+      "byteOffset": 4320,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4320,
+      "byteOffset": 8640,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1128,
+      "byteOffset": 12960,
+      "target": 34963
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 14088,
+      "uri": "repair_kit.bin"
+    }
+  ]
+}

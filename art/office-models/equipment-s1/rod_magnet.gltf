@@ -1,0 +1,118 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.2.40",
+    "version": "2.0",
+    "extras": {
+      "bufferSha256": "e9902859288879d8588550144d09855fcee66d3ad8bf3f2dafd39949e261b379"
+    }
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "rod_magnet"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "OfficeLinearVertexColors",
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 0.8799999952316284
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "rod_magnet_VertexColorMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "COLOR_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 768,
+      "max": [
+        0.17000000178813934,
+        1.3250000476837158,
+        0.039000000804662704
+      ],
+      "min": [
+        -0.05249999836087227,
+        -0.12999999523162842,
+        -0.12700000405311584
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 768,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 768,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 1176,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 9216,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 9216,
+      "byteOffset": 9216,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 9216,
+      "byteOffset": 18432,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2352,
+      "byteOffset": 27648,
+      "target": 34963
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 30000,
+      "uri": "rod_magnet.bin"
+    }
+  ]
+}

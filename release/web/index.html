@@ -5,7 +5,7 @@
 <div class="ambient" aria-hidden="true"></div>
 <header class="app-header">
  <a class="brand" href="/" aria-label="办公室的99夜首页"><img class="brand-mark" src="/platform/icons/briefcase.svg" alt=""><span>办公室的99夜<small>OFFICE / 99N</small></span></a>
- <div class="top-right"><span class="pill build-badge"><i></i>局域网 · v0.18.0</span><span id="account-name"></span><button id="logout" class="quiet hidden">退出账号</button></div>
+ <div class="top-right"><span class="pill build-badge" aria-label="游戏版本"><span id="pve-version"></span><span id="moba-version"></span></span><span id="account-name"></span><button id="logout" class="quiet hidden">退出账号</button></div>
 </header>
 <main id="shell">
  <section id="auth-view" class="auth-layout">
@@ -15,6 +15,7 @@
  <section id="lobby-view" class="hidden">
   <div class="page-heading"><div><div class="eyebrow">合作大厅</div><h1>今天，一起守夜。</h1><p id="lobby-message" class="muted">继续冒险，或加入正在等待你的队伍。</p></div><button id="new-adventure" class="primary"><i class="ic icon-plus" aria-hidden="true"></i>新建冒险</button></div>
   <section id="mission-entry" class="training-card" aria-labelledby="mission-entry-title"><span class="training-mark ic icon-briefcase" aria-hidden="true"></span><div class="training-copy"><div class="training-title"><h2 id="mission-entry-title">入职任务</h2><span id="mission-entry-tag" class="training-tag">推荐</span></div><p id="mission-entry-detail">先试试操作，再和同事一起冒险。</p></div><div class="training-actions"><button id="mission-entry-secondary" class="quiet" type="button">暂时跳过</button><button id="mission-entry-primary" class="primary" type="button">开始任务</button></div></section>
+  <section id="moba-entry" class="training-card hidden" aria-labelledby="moba-title"><span class="training-mark ic icon-users" aria-hidden="true"></span><div class="training-copy"><div class="training-title"><h2 id="moba-title">办公室争霸</h2><span class="training-tag">5V5</span></div><p>选英雄，推三路。每局重新成长。</p></div><div class="training-actions"><button id="moba-open" class="primary" type="button">进入对战</button></div></section>
   <div class="lobby-columns">
    <section class="list-panel" aria-labelledby="adventures-heading"><div class="section-title"><h2 id="adventures-heading"><i class="ic icon-home" aria-hidden="true"></i>我的冒险 <span id="adventure-count" class="count"></span></h2><span class="section-note">进度自动保存</span></div><div id="adventure-list" class="list"></div></section>
    <section class="list-panel" aria-labelledby="rooms-heading"><div class="section-title"><h2 id="rooms-heading"><i class="ic icon-users" aria-hidden="true"></i>局域网房间 <span id="room-count" class="count"></span></h2><button id="refresh" class="icon-action" aria-label="刷新房间" title="刷新房间"><i class="ic icon-refresh" aria-hidden="true"></i></button></div><div id="room-list" class="list"></div><p class="panel-note">游玩中也可加入 · 最多 8 人</p></section>

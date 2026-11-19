@@ -1,0 +1,92 @@
+{
+  "version": "0.8.3",
+  "blender": "5.2.1 LTS",
+  "coordinates": "Godot +Y up / front -Z / base ground at Y=0",
+  "license": "Original project geometry; no external assets",
+  "items": [
+    {
+      "id": "station_supply",
+      "triangles": 400,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "bounds": {
+        "min": [
+          -0.824999988079071,
+          0.0,
+          -0.5174999833106995
+        ],
+        "max": [
+          0.824999988079071,
+          1.6399999856948853,
+          0.5
+        ]
+      },
+      "bytes": 32483,
+      "gltfSha256": "c472b277a792b4ab581590bb003a9a42db8d90e5531a7a2120e7d1b13157a322"
+    },
+    {
+      "id": "station_storage",
+      "triangles": 444,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "bounds": {
+        "min": [
+          -0.824999988079071,
+          0.0,
+          -0.5375000238418579
+        ],
+        "max": [
+          0.824999988079071,
+          1.3600000143051147,
+          0.5
+        ]
+      },
+      "bytes": 36210,
+      "gltfSha256": "8b57768e3e0f1bb072fac91c2f6de4b7586ec6a48a136d2e6787fc503d685f42"
+    },
+    {
+      "id": "station_upgrade",
+      "triangles": 524,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "bounds": {
+        "min": [
+          -0.824999988079071,
+          0.0,
+          -0.5199999809265137
+        ],
+        "max": [
+          0.824999988079071,
+          1.6950000524520874,
+          0.5019999742507935
+        ]
+      },
+      "bytes": 41892,
+      "gltfSha256": "5229aa63d5d4d18d7e3469e4f19a9676ff8bcb92c4e800847b0fd17f9743c0fe"
+    },
+    {
+      "id": "station_recycle",
+      "triangles": 420,
+      "surfaces": 1,
+      "materials": 1,
+      "textures": 0,
+      "bounds": {
+        "min": [
+          -0.824999988079071,
+          0.0,
+          -0.5849999785423279
+        ],
+        "max": [
+          0.824999988079071,
+          1.565000057220459,
+          0.5
+        ]
+      },
+      "bytes": 34337,
+      "gltfSha256": "eba5f4444b4481cef70f4d850350fc734534f49c3f7dd0d548a3d064b6e90aa7"
+    }
+  ]
+}

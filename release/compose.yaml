@@ -2,8 +2,10 @@ name: office99
 
 services:
   game:
-    image: office99-lan:local
+    image: office99-lan:moba-050
     pull_policy: never
+    environment:
+      OFFICE99_MOBA: "1"
     ports:
       - "${OFFICE99_PORT:-8080}:8080"
     volumes:

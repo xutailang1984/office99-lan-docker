@@ -1,37 +1,57 @@
 {
   "schema": 1,
   "version": "0.18.0",
-  "source": "workspace-export",
-  "fileCount": 235,
-  "pckSha256": "a98aab23455ecc63acf9dcbe9c58b1aff8cc99a55e5a47bfe88c489caf219f15",
+  "mobaVersion": "moba-0.5.0",
+  "source": "verified-release",
+  "fileCount": 250,
   "files": {
     ".dockerignore": {
-      "bytes": 245,
-      "sha256": "cf84b8e9cfef4d20c333ded8d7e201f8b0cb7275139a482159b71b9d369a5bc2"
+      "bytes": 278,
+      "sha256": "1ffb0c887595223ea99a0dd61bb9aa5064484d15637747268d5cf8dfdf918820"
     },
     "compose.yaml": {
-      "bytes": 464,
-      "sha256": "10b950e02654a87969ee4c65d8de8042bca290e08a3049c40a3a11ab4df4140d"
+      "bytes": 509,
+      "sha256": "828f9e56fa0a0008d9caf824e9c66e1ef31207b73c686e4150b9979def7ed450"
     },
     "docker/healthcheck.mjs": {
-      "bytes": 781,
-      "sha256": "903660194f5194af2d0ded94d726e8cf127c236335905c4f38d2ce401453af87"
+      "bytes": 1066,
+      "sha256": "9db849cd4b72dfd78ef84cb4bd2aad1852904f402eb8ba2e2b76f845923239e8"
     },
     "Dockerfile": {
-      "bytes": 1446,
-      "sha256": "f4e732ef699d394c8dfc009fc016f5c5a330c2668f35ff8b3804b7575a538190"
+      "bytes": 1552,
+      "sha256": "9d096033bad7e5eaa8f9efe5f92ef97eb5731fe034fe9f9cdfcc6e8cf0984069"
     },
     "docs/DOCKER-DEPLOYMENT.md": {
       "bytes": 5600,
       "sha256": "a351467dac1929285af26999bc20d990ed2a61bfe970ebdfd79a2ccc1275da91"
+    },
+    "server/moba/catalog.mjs": {
+      "bytes": 13001,
+      "sha256": "5a77af3b22f577995eef5a6072028d466de60d2de05e7e5e932e28a6a7e5b7ae"
+    },
+    "server/moba/map.mjs": {
+      "bytes": 9816,
+      "sha256": "3d22267f621a90d3cb54ad885e30a81ade554bcc0a1d007d235074fc59d8d992"
+    },
+    "server/moba/service.mjs": {
+      "bytes": 16270,
+      "sha256": "cfa424e0d415222ca52172f4f5e7ee9e8a32c72e891e3e49faf443d280f02f6e"
+    },
+    "server/moba/wire.mjs": {
+      "bytes": 6160,
+      "sha256": "409787ecf6dcd5f7725c076e572294bf05c9ed7a11c3e105ccd9bf114af2d897"
+    },
+    "server/moba/world.mjs": {
+      "bytes": 80506,
+      "sha256": "f31943fc53c3646423ad5b97bd4b514d63d0521980af6e9e4b2ee74eaa34f372"
     },
     "server/package-lock.json": {
       "bytes": 915,
       "sha256": "dead598e54a3fae9cd80abf6f2f19c54f5c99fff4bb18859ff8b47627758e1bc"
     },
     "server/package.json": {
-      "bytes": 415,
-      "sha256": "670ad768592b2a1006aac58874aa62f6dc2a4abec702f0affb1b472eb50da027"
+      "bytes": 489,
+      "sha256": "5743198b9773482be56fea21db1b4bd53bb5e54a235649f40f52916c3318a113"
     },
     "server/platform/careers.mjs": {
       "bytes": 5668,
@@ -62,16 +82,16 @@
       "sha256": "9a505c765209ff59a36064c3a196cca95854e37c88f519fa0629601e91817874"
     },
     "server/platform/service.mjs": {
-      "bytes": 55384,
-      "sha256": "31b568e4d024022d999664e5c899ce930a3aba724897675a99c3407885e24785"
+      "bytes": 55526,
+      "sha256": "181ee1e9dc9b1a2ccbfd42a9d7cf3a412e6fb7984b16cd8754d54b4b63527cdd"
     },
     "server/platform/storage-policy.mjs": {
       "bytes": 14882,
       "sha256": "7157baccebe189ceca554ccb9bedd3a8b4cbdf80d54cf8eb567662387c798ab1"
     },
     "server/server.mjs": {
-      "bytes": 46368,
-      "sha256": "3bd47326273eec9b2a91a3515ff1f9c6d019428d93881d4eab71c7a0d730fb14"
+      "bytes": 47044,
+      "sha256": "03b769d4a8559440e9232e334e3ceeb9385720e523481832576f2241db9d430d"
     },
     "server/survival/assembly-config.mjs": {
       "bytes": 9032,
@@ -634,16 +654,16 @@
       "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
     },
     "web/index.html": {
-      "bytes": 10441,
-      "sha256": "77e3c63f7c8c3d521328e676b45ec093155d110ff258aae39dca60a1ea00c7f1"
+      "bytes": 10971,
+      "sha256": "376adcf530f435f347f762ff088d2d81d5d7638128ad0ea03112c70b25fab3a7"
     },
     "web/index.js": {
       "bytes": 279815,
       "sha256": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba"
     },
     "web/index.pck": {
-      "bytes": 9671912,
-      "sha256": "a98aab23455ecc63acf9dcbe9c58b1aff8cc99a55e5a47bfe88c489caf219f15"
+      "bytes": 9762504,
+      "sha256": "bf62b64621fabcfcaf93da277e0a2b31c694ebf756598ed5747bd92539545d42"
     },
     "web/index.png": {
       "bytes": 21443,
@@ -657,13 +677,53 @@
       "bytes": 175,
       "sha256": "a6e302069293159c9baa7ee2f7ff258a0b6d29614fae22f903e80123f3be54db"
     },
+    "web/moba/app.mjs": {
+      "bytes": 42135,
+      "sha256": "d69ce698bfdf93ef80aafc3450384d96612afb867fde1e5ed65ac8a03acf6c9e"
+    },
+    "web/moba/host-worker.mjs": {
+      "bytes": 4271,
+      "sha256": "d308c0e0367c23939b43938b826af89b4d7a645e787c3fd1e9bc6a28c425484c"
+    },
+    "web/moba/index.html": {
+      "bytes": 8050,
+      "sha256": "5ce392e6dc48e98bb48fd3aae7cb44f353cdf21da76f6c83f1c0df82fbc3f843"
+    },
+    "web/moba/input-router.mjs": {
+      "bytes": 2744,
+      "sha256": "4f4544f6c19ba27d0e9e018681e07e0864dec5ede854fc4675eff82cbd3e6063"
+    },
+    "web/moba/sim/catalog.mjs": {
+      "bytes": 13001,
+      "sha256": "5a77af3b22f577995eef5a6072028d466de60d2de05e7e5e932e28a6a7e5b7ae"
+    },
+    "web/moba/sim/map.mjs": {
+      "bytes": 9816,
+      "sha256": "3d22267f621a90d3cb54ad885e30a81ade554bcc0a1d007d235074fc59d8d992"
+    },
+    "web/moba/sim/wire.mjs": {
+      "bytes": 6160,
+      "sha256": "409787ecf6dcd5f7725c076e572294bf05c9ed7a11c3e105ccd9bf114af2d897"
+    },
+    "web/moba/sim/world.mjs": {
+      "bytes": 80506,
+      "sha256": "f31943fc53c3646423ad5b97bd4b514d63d0521980af6e9e4b2ee74eaa34f372"
+    },
+    "web/moba/style.css": {
+      "bytes": 16615,
+      "sha256": "e801f0896588f862d44e35a221bb79221306cbdfefed0bb68123534608aeb190"
+    },
+    "web/moba-play.html": {
+      "bytes": 14555,
+      "sha256": "3ff5c36507b214016c8bbb242963e39be16d9fc9107c57798c81e654f051dbf7"
+    },
     "web/platform/app.css": {
-      "bytes": 22895,
-      "sha256": "4dca6271d6915b84bdf0639e32c5b7016559c2b9b77e1c4e5b18fba25c175855"
+      "bytes": 23348,
+      "sha256": "d03574df98f8b59176e066594bf3ecc97941cc43cb66d1727c6d1d1ae19b19ef"
     },
     "web/platform/app.mjs": {
-      "bytes": 52837,
-      "sha256": "cd895eac2d876585ea07126c4cbe3bd298d8f1d8d223d32afc8054751615cc2f"
+      "bytes": 53459,
+      "sha256": "39448393ad0ffe153ed98efa829d966229fd8fa410f032f2bee227b98cb011ae"
     },
     "web/platform/balance.json": {
       "bytes": 54891,
@@ -754,8 +814,8 @@
       "sha256": "9d855cf8aab176e80a0448bee43c56338d28c59ec91637ce034cced006e282a2"
     },
     "web/platform/index.html": {
-      "bytes": 10441,
-      "sha256": "77e3c63f7c8c3d521328e676b45ec093155d110ff258aae39dca60a1ea00c7f1"
+      "bytes": 10971,
+      "sha256": "376adcf530f435f347f762ff088d2d81d5d7638128ad0ea03112c70b25fab3a7"
     },
     "web/platform/IslandSans.ttf": {
       "bytes": 10589076,
@@ -943,7 +1003,7 @@
     },
     "web/play.html": {
       "bytes": 14368,
-      "sha256": "09a1b0738f6eb15dfcea66c758c180bd43966959b6c9fa1497968e0ce54af594"
+      "sha256": "7f518e77daf7d2100bbe79af14c5cc067e2ba7e36815edf04b2ee0854a6045cb"
     }
   }
 }

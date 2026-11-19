@@ -1,0 +1,226 @@
+{
+  "version": 1,
+  "sample_rate": 48000,
+  "channels": 1,
+  "bits_per_sample": 16,
+  "license": "CC0 1.0 source derivatives and original procedural layers",
+  "generator": "tools/audio/generate-office45.mjs",
+  "dependencies": [
+    {
+      "file": "interactions/archive_rummage_01.wav",
+      "sha256": "f4a9de11c240a68a8534cb01c5407ce975ee93fa57412195ae49fc9b9ed718ec"
+    },
+    {
+      "file": "interactions/archive_rummage_03.wav",
+      "sha256": "69328daf523fd5101782ad7d2337ec49ea6f20abfc10922ff14d0e77648b6ca7"
+    },
+    {
+      "file": "interactions/archive_open_01.wav",
+      "sha256": "52a6caf79fedb74b1c27f0b23b7f96100f56f52e869a03ae80a2bf5d41720644"
+    },
+    {
+      "file": "interactions/archive_open_02.wav",
+      "sha256": "d461013152a726650ae7033b4d4439496b8fcb3008671d9573de30934563654a"
+    },
+    {
+      "file": "impacts/enemy_body_01.wav",
+      "sha256": "0f64569958865758cd706141659aa00cae3469e890843819b958d38623bfbe82"
+    },
+    {
+      "file": "impacts/enemy_armor_01.wav",
+      "sha256": "021df442d08adb7de3e760f1cb4c2b63bc3770ef1d5708f2241335300ac1c0f5"
+    },
+    {
+      "file": "impacts/glass_01.wav",
+      "sha256": "af402a7e563e2c0eee8978c36d34aa1b48b8c81b5c8f8a6d3ebcc919e8544df7"
+    }
+  ],
+  "cues": {
+    "motor_start": {
+      "seconds": 0.85,
+      "gain": 0.58,
+      "priority": 64,
+      "cooldown_ms": 300,
+      "description": "机械卡扣、渐快低转速电机、短纸屑尾声"
+    },
+    "paper_wave": {
+      "seconds": 0.78,
+      "gain": 0.6,
+      "priority": 66,
+      "cooldown_ms": 260,
+      "description": "多层纸张快速滑过，带低纸卷滚动"
+    },
+    "broadcast": {
+      "seconds": 0.58,
+      "gain": 0.42,
+      "priority": 54,
+      "cooldown_ms": 550,
+      "description": "喇叭按键、两段低沉有气声的提示"
+    },
+    "coffee_share": {
+      "seconds": 0.44,
+      "gain": 0.42,
+      "priority": 48,
+      "cooldown_ms": 450,
+      "description": "轻杯碰和短液体晃动"
+    },
+    "highfive": {
+      "seconds": 0.3,
+      "gain": 0.45,
+      "priority": 48,
+      "cooldown_ms": 400,
+      "description": "短掌声、软肉感撞击和轻衣袖"
+    },
+    "paper_throw": {
+      "seconds": 0.37,
+      "gain": 0.35,
+      "priority": 40,
+      "cooldown_ms": 180,
+      "description": "轻纸张抛出和皱折尾声"
+    },
+    "stamp": {
+      "seconds": 0.29,
+      "gain": 0.4,
+      "priority": 43,
+      "cooldown_ms": 240,
+      "description": "短促盖章、木底软撞和抬起卡扣"
+    },
+    "duck": {
+      "seconds": 0.52,
+      "gain": 0.36,
+      "priority": 42,
+      "cooldown_ms": 650,
+      "description": "圆钝双段橡胶吱声，气流和软挤压尾声"
+    }
+  },
+  "records": [
+    {
+      "cue": "motor_start",
+      "file": "motor_start_01.wav",
+      "seconds": 0.85,
+      "peak": 0.72,
+      "rms": 0.15402,
+      "sha256": "2d8cce9ad57d118d2adc75bf37510d94f9928d47c6b81f768e774eccf7d01596"
+    },
+    {
+      "cue": "motor_start",
+      "file": "motor_start_02.wav",
+      "seconds": 0.85,
+      "peak": 0.72,
+      "rms": 0.14857,
+      "sha256": "eeab4d541b3a8aa20cf52f45a405bae72f5b6ae5c7f8d6aad0d0a7a45897cf76"
+    },
+    {
+      "cue": "paper_wave",
+      "file": "paper_wave_01.wav",
+      "seconds": 0.78,
+      "peak": 0.72,
+      "rms": 0.08799,
+      "sha256": "387a01b83543c5b40b5dc4aaab5359befac53fbf0d5a7454f5dedaba0a4a1d33"
+    },
+    {
+      "cue": "paper_wave",
+      "file": "paper_wave_02.wav",
+      "seconds": 0.78,
+      "peak": 0.72,
+      "rms": 0.08121,
+      "sha256": "6d2b65a98eaed4cfa714351ccddee5b3c7572be57c3f6b3c8aa58840efcd1bfa"
+    },
+    {
+      "cue": "broadcast",
+      "file": "broadcast_01.wav",
+      "seconds": 0.58,
+      "peak": 0.72,
+      "rms": 0.22412,
+      "sha256": "cffa944e0e8b99cc29b7b2eb2c939d83522e34ad7f175527ec0eea55b6b9ea4d"
+    },
+    {
+      "cue": "broadcast",
+      "file": "broadcast_02.wav",
+      "seconds": 0.58,
+      "peak": 0.72,
+      "rms": 0.23551,
+      "sha256": "568d2e5108c2ac15a96c64ae73f68e03fdea893e6e8e04367b3c3bd4ddca984a"
+    },
+    {
+      "cue": "coffee_share",
+      "file": "coffee_share_01.wav",
+      "seconds": 0.44,
+      "peak": 0.72,
+      "rms": 0.07583,
+      "sha256": "c4886967dc6e2a59ad3e1259ebd79f1c28c3e84c08b8b786f15d29152e597894"
+    },
+    {
+      "cue": "coffee_share",
+      "file": "coffee_share_02.wav",
+      "seconds": 0.44,
+      "peak": 0.72,
+      "rms": 0.07244,
+      "sha256": "0042050282fb98242ab3f3d8029e0212a2c181964c98010981a4f9c389ee16fe"
+    },
+    {
+      "cue": "highfive",
+      "file": "highfive_01.wav",
+      "seconds": 0.3,
+      "peak": 0.72,
+      "rms": 0.10281,
+      "sha256": "64a2423f5246698390c249fd94a54f09781a1a864608c737d7837a5ccb46521f"
+    },
+    {
+      "cue": "highfive",
+      "file": "highfive_02.wav",
+      "seconds": 0.3,
+      "peak": 0.72,
+      "rms": 0.10596,
+      "sha256": "ef452bc216ed64068b836d8421770b2cbef02d5691f17054dd6d5e3dc1b28fa9"
+    },
+    {
+      "cue": "paper_throw",
+      "file": "paper_throw_01.wav",
+      "seconds": 0.37,
+      "peak": 0.72,
+      "rms": 0.11672,
+      "sha256": "f778dfe57c814605c5e87ae9bacbceeaa03f37cde7b30e77d60186a0aebd0167"
+    },
+    {
+      "cue": "paper_throw",
+      "file": "paper_throw_02.wav",
+      "seconds": 0.37,
+      "peak": 0.72,
+      "rms": 0.11197,
+      "sha256": "96e72fcf9b2afdd1bde31333e1ef7cdd4ad2294b504371eb7e9049eb1caa68b6"
+    },
+    {
+      "cue": "stamp",
+      "file": "stamp_01.wav",
+      "seconds": 0.29,
+      "peak": 0.72,
+      "rms": 0.1238,
+      "sha256": "d7cac140251bd925ea43da6ee98cb955f7dc236dd823f0cb95dc3f2a0c4955cb"
+    },
+    {
+      "cue": "stamp",
+      "file": "stamp_02.wav",
+      "seconds": 0.29,
+      "peak": 0.72,
+      "rms": 0.11895,
+      "sha256": "e6fbe734c996e5ecdef603229f7637a7a2093c0bc0fa2b4a9a9da0b4d18c0f42"
+    },
+    {
+      "cue": "duck",
+      "file": "duck_01.wav",
+      "seconds": 0.52,
+      "peak": 0.72,
+      "rms": 0.23882,
+      "sha256": "d94b210590b90459672bed449d67824089a0970663c12d6daf1e2ae4704c6f1e"
+    },
+    {
+      "cue": "duck",
+      "file": "duck_02.wav",
+      "seconds": 0.52,
+      "peak": 0.72,
+      "rms": 0.2423,
+      "sha256": "929637161562e925136d88ec3f8a55d01b7760175c969bc7c0ad31f2d6ff3bb7"
+    }
+  ]
+}
